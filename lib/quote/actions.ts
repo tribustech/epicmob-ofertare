@@ -9,6 +9,7 @@ import { formAction } from '@/lib/forms/form-action';
 import { cabinetFormSchema, extraPartSchema, toCabinetInput } from './cabinet-form';
 import { buildSnapshot } from './snapshot';
 import { isFrozenStatus } from './basis';
+import { ASSEMBLY_LEG_HEIGHT_PRESETS, ASSEMBLY_NAME_PRESETS } from './assembly-presets';
 import type { CabinetInput } from '@/lib/engine';
 
 const optStr = z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().optional());
@@ -34,6 +35,28 @@ const assemblySchema = z.object({
   name: z.string().trim().min(1, 'Numele ansamblului lipsește'),
   legHeightMm: z.coerce.number().positive(),
 });
+
+const optFreeText = z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().trim().optional());
+const optFreeNumber = z.preprocess(
+  (v) => (v === '' || v == null ? undefined : v),
+  z.coerce.number().positive().optional(),
+);
+
+const newAssemblySchema = z
+  .object({
+    namePreset: z.enum(ASSEMBLY_NAME_PRESETS),
+    name: optFreeText,
+    legHeightPreset: z.enum(ASSEMBLY_LEG_HEIGHT_PRESETS),
+    legHeightMm: optFreeNumber,
+  })
+  .transform((d) => ({
+    name: d.name && d.name.length > 0 ? d.name : d.namePreset,
+    legHeightMm: d.legHeightMm ?? Number(d.legHeightPreset),
+  }))
+  .refine((d) => d.name !== 'Altul', {
+    message: 'Alege un nume — preselecția „Altul" cere numele liber completat',
+    path: ['name'],
+  });
 
 export const createProject = formAction(async (fd: FormData) => {
   const d = projectFormSchema.parse(formDataToObject(fd));
@@ -112,7 +135,7 @@ export const removeFreeLine = formAction(async (projectId: string, index: number
 });
 
 export const addAssembly = formAction(async (projectId: string, fd: FormData) => {
-  const d = assemblySchema.parse(formDataToObject(fd));
+  const d = newAssemblySchema.parse(formDataToObject(fd));
   const count = await prisma.assembly.count({ where: { projectId } });
   await prisma.assembly.create({ data: { projectId, name: d.name, legHeightMm: d.legHeightMm, sortOrder: count } });
   revalidatePath(`/proiecte/${projectId}`);

@@ -1,4 +1,4 @@
-import { loadProject, toQuoteInput, tryComputeQuote } from '@/lib/quote/load';
+import { legHeightByCabinet, loadProject, toQuoteInput, tryComputeQuote } from '@/lib/quote/load';
 import { getQuoteBasis } from '@/lib/quote/basis';
 
 export const dynamic = 'force-dynamic';
@@ -12,7 +12,10 @@ export async function GET(
   if (!data) return new Response('Proiect inexistent', { status: 404 });
   const basis = await getQuoteBasis(data.project);
   if (basis.kind === 'MISSING') return new Response('Proiectul e într-o stare înghețată fără calcul salvat — comută starea.', { status: 400 });
-  const { quote, error } = tryComputeQuote(toQuoteInput(data.project, data.cabinets), basis.snapshot);
+  const { quote, error } = tryComputeQuote(
+    toQuoteInput(data.project, data.cabinets, legHeightByCabinet(data.assemblies, data.cabinets)),
+    basis.snapshot,
+  );
   if (!quote) return new Response(`Eroare de calcul: ${error}`, { status: 400 });
   const file = quote.cutList.find((f) => f.materialId === materialId);
   if (!file) return new Response('Material fără piese în acest proiect', { status: 404 });

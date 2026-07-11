@@ -52,6 +52,7 @@ export function legHeightByCabinet(assemblies: Assembly[], cabinets: LoadedCabin
 export function toQuoteInput(
   project: { markupPct: number; yieldFactor: number; freeLinesJson: string },
   cabinets: LoadedCabinet[],
+  legHeightMap: Map<string, number> = new Map(),
 ): QuoteInput {
   return {
     markupPct: project.markupPct,
@@ -61,6 +62,7 @@ export function toQuoteInput(
       input: c.input,
       hardwareOverrides: c.hardwareOverrides,
       extraParts: c.extraParts,
+      legHeightMm: legHeightMap.get(c.id) ?? null,
     })),
   };
 }
