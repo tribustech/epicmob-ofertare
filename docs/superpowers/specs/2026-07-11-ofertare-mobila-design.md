@@ -47,7 +47,7 @@ Trei zone funcționale:
 ### Corp
 
 - Tip șablon, L×H×A (mm), opțiuni: nr. polițe, nr. uși, nr. sertare + înălțimi fronturi sertar, material carcasă, material fronturi, cu/fără spate + tip montaj spate, sistem sertar (cutie din PAL vs. Blum cu laterale metalice), etichetă (ex. „B1 — corp chiuvetă").
-- **Piese generate** (editabile după generare): denumire, L×l, material, cant pe fiecare din cele 4 laturi (tip cant sau nimic), cantitate. Se pot adăuga piese manuale.
+- **Piese generate**: denumire, L×l, material, cant pe fiecare din cele 4 laturi (tip cant sau nimic), cantitate. *(v1 implementat: piesele se regenerează din opțiunile corpului și din constantele de construcție — nu se editează individual; pentru situații atipice se adaugă **piese manuale suplimentare** per corp. Editarea per-piesă rămâne o extensie posibilă.)*
 - **Feronerie sugerată** (editabilă): linii precompletate din regulile de mai jos; utilizatorul confirmă, modifică, șterge sau adaugă.
 
 ## Motorul parametric
