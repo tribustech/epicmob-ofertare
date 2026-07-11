@@ -17,8 +17,8 @@ Aplicația **epic-mob-ofertare** automatizează pasul schiță → ofertă: intr
 
 ## Arhitectură
 
-- **Next.js (App Router, TypeScript) + PostgreSQL** (Neon / Vercel Postgres), găzduit pe Vercel. Proiect separat de site-ul de prezentare.
-- **Autentificare simplă** (utilizatori ficși, e-mail + parolă sau magic link; fără înregistrare publică).
+- **Next.js (App Router, TypeScript) + SQLite (Prisma)** — aplicație locală, rulează pe calculatorul utilizatorului cu `npm run dev`; datele stau într-un fișier SQLite în proiect. *(Decizie 2026-07-11: inițial era planificat PostgreSQL + Vercel; utilizatorul a ales varianta locală. Dacă aplicația se mută online, se migrează la Postgres și se adaugă autentificare atunci.)*
+- **Fără autentificare** — aplicația e locală, mono-utilizator.
 - **Motorul de calcul e TypeScript pur, fără dependență de DB sau framework** (`lib/engine/`): primește corpuri + cataloage, întoarce piese, necesar de materiale și linii de cost. Testabil izolat; refolosibil ulterior pentru un calculator public pe epicmob.ro (explicit în afara v1).
 
 Trei zone funcționale:
