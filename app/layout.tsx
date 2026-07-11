@@ -1,6 +1,11 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import './globals.css';
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata = { title: 'EpicMob Ofertare' };
 
@@ -16,19 +21,21 @@ const NAV = [
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ro">
+    <html lang="ro" className={cn("font-sans", geist.variable)}>
       <body className="min-h-screen bg-neutral-50 text-neutral-900">
         <header className="border-b bg-white print:hidden">
-          <nav className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-3">
+          <nav className="mx-auto flex max-w-screen-2xl items-center gap-6 px-4 py-3">
             <Link href="/" className="font-bold">EpicMob Ofertare</Link>
-            {NAV.map((item) => (
-              <Link key={item.href} href={item.href} className="text-sm text-neutral-600 hover:text-neutral-900">
-                {item.label}
-              </Link>
-            ))}
+            <div className="flex items-center gap-1">
+              {NAV.map((item) => (
+                <Button key={item.href} asChild variant="ghost" size="sm">
+                  <Link href={item.href}>{item.label}</Link>
+                </Button>
+              ))}
+            </div>
           </nav>
         </header>
-        <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+        <main className="mx-auto max-w-screen-2xl px-4 py-6">{children}</main>
       </body>
     </html>
   );
