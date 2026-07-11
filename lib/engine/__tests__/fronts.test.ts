@@ -36,6 +36,15 @@ describe('expandFronts — uși', () => {
     });
   });
 
+  it('MDF înfoliat: fără cant chiar dacă frontPerimeterId e setat', () => {
+    const input = bazaInput({
+      frontMaterialId: 'mdf-infoliat',
+      edgeBands: { carcassFrontEdgeId: 'abs-04', frontPerimeterId: 'abs-1' },
+    });
+    const { parts } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    expect(parts[0]).toMatchObject({ materialId: 'mdf-infoliat', edges: {} });
+  });
+
   it('avertizează la ușă peste 650mm lățime', () => {
     const input = bazaInput({ widthMm: 700, doors: 1 });
     const { warnings } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);

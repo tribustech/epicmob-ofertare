@@ -17,6 +17,11 @@ export const TEST_CATALOGS: Catalogs = {
       sheetLengthMm: 2800, sheetWidthMm: 2070,
       pricing: { mode: 'PER_SQM', pricePerSqm: 450 },
     },
+    {
+      id: 'mdf-infoliat', name: 'MDF înfoliat', kind: 'MDF_INFOLIAT', thicknessMm: 18,
+      sheetLengthMm: 2800, sheetWidthMm: 2070,
+      pricing: { mode: 'PER_SQM', pricePerSqm: 320 },
+    },
   ],
   edgeBands: [
     { id: 'abs-04', name: 'ABS 0.4mm', thicknessMm: 0.4, pricePerMl: 1 },

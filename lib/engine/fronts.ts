@@ -1,6 +1,6 @@
 import { assertPositiveDim, findMaterial } from './carcass';
 import type {
-  CabinetInput, Catalogs, ConstructionConstants, FrontInfo, Part, PartEdges, Warning,
+  CabinetInput, Catalogs, ConstructionConstants, FrontInfo, MaterialKind, Part, PartEdges, Warning,
 } from './types';
 
 export function drawerFrontHeights(input: CabinetInput, cc: ConstructionConstants): number[] {
@@ -27,7 +27,9 @@ export function expandFronts(
   if (!input.frontMaterialId) return { parts: [], fronts: [], warnings: [] };
 
   const material = findMaterial(catalogs, input.frontMaterialId);
-  const bandId = material.kind === 'MDF_VOPSIT' ? null : input.edgeBands.frontPerimeterId;
+  // MDF vopsit și MDF înfoliat au fața finisată pe toate laturile — fără cant ABS
+  const NO_EDGE_KINDS: MaterialKind[] = ['MDF_VOPSIT', 'MDF_INFOLIAT'];
+  const bandId = NO_EDGE_KINDS.includes(material.kind) ? null : input.edgeBands.frontPerimeterId;
   const edges: PartEdges = bandId ? { l1: bandId, l2: bandId, w1: bandId, w2: bandId } : {};
 
   if (input.blindPanelWidthMm !== undefined && input.blindPanelWidthMm < 0) {

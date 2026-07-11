@@ -66,7 +66,7 @@ Grosime carcasă implicită (18mm), rost între fronturi (3mm), retragere poliț
 | Blat + fund corp | (L − 36) × A | muchia frontală ABS 0.4 |
 | Polițe (n) | (L − 36) × (A − 30) | muchia frontală ABS 0.4 |
 | Spate | PFL 3mm, (L − 4) × (H − 4) în falț, sau pe toată fața — per șablon | fără |
-| Fronturi | împărțire pe lățime cu rost 3mm; material fronturi | 4 laturi ABS 1mm (PAL) / fără (MDF vopsit) |
+| Fronturi | împărțire pe lățime cu rost 3mm; material fronturi | 4 laturi ABS 1mm (PAL/MDF melaminat) / fără (MDF vopsit și MDF înfoliat — fața e finisată pe toate laturile) |
 | Sertar (cutie PAL) | front + 2 laterale cutie + spate cutie + fund | după caz |
 | Sertar (Blum metalic) | doar front + fund + spate cutie mic | după caz |
 
