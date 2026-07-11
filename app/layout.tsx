@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ro">
       <body className="min-h-screen bg-neutral-50 text-neutral-900">
-        <header className="border-b bg-white">
+        <header className="border-b bg-white print:hidden">
           <nav className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-3">
             <Link href="/" className="font-bold">EpicMob Ofertare</Link>
             {NAV.map((item) => (
