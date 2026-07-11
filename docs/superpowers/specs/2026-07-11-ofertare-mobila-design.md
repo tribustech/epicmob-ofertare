@@ -125,6 +125,14 @@ Proiect nou → date client → adaugă corp (șablon + dimensiuni + opțiuni �
 - Calculator public de preț pe epicmob.ro (motorul e pregătit pentru asta).
 - Gestiune stocuri, facturare, mai mulți furnizori de debitare simultan.
 
+## Addendum v1.1 (2026-07-11, feedback utilizator după v1)
+
+1. **Ansambluri** — nivel nou: Proiect → Ansamblu → Corpuri. Ansamblul are nume din preselecții (Bucătărie, Dressing, Corp baie, Living, Hol) sau text liber și **înălțimea picioarelor** (100/150mm implicit, editabil). Toate corpurile de bază din ansamblu primesc automat piciorul din catalog cu lungimea nominală egală cu înălțimea ansamblului (cel mai ieftin la egalitate; fallback piciorul implicit din Setări). Corpurile existente migrează într-un ansamblu implicit. Masca de soclu NU se generează automat în v1.1 (piesă suplimentară manuală).
+2. **Editor de corp condiționat** — tipul corpului e radio/segmented; câmpurile afișate depind de tip: tipuri cu uși → uși + polițe (fără câmpuri de sertare); SERTARE → sertare (fără polițe/uși). Layout pe orizontală: formular stânga, piese + preț live dreapta.
+3. **Prețuri live** — motorul rulează și în browser: editorul arată piesele și costul/prețul estimativ al corpului în timp ce tastezi (estimare: plăci pe arie fără rotunjire la foi, cant, feronerie, manoperă, debitare proporțională; etichetat „estimativ"). Pagina proiectului arată totalul live pentru proiectele în stare CIORNĂ (fără buton de calcul). **La trecerea în TRIMISĂ prețurile se îngheață automat** (snapshot); TRIMISĂ/ACCEPTATĂ folosesc snapshot-ul la rezumat/ofertă/exporturi, cu badge „Prețuri înghețate la {data}" și acțiune explicită de reîmprospătare; revenirea la CIORNĂ redevine live.
+4. **Design system: shadcn/ui** peste Tailwind v4, aplicat pe toate paginile; container lat, grile orizontale, tabele pentru date; componentele proprii de formular devin wrappere peste primitive shadcn.
+5. Corpurile cu uși nu mai expun deloc opțiuni de sertare (mutual exclusiv prin tip); mașina de spălat vase / frigiderul rămân de tratat separat (viitor).
+
 ## Referințe
 
 - Schema de cost în 6 secțiuni: PolyBoard cost report — https://wooddesigner.org/help-centre/polyboard-cut-list-plans-cost-report/
