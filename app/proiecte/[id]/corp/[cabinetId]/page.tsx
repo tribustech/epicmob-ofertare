@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
-import { parseConstruction, toCostCatalogs } from '@/lib/catalog/convert';
-import { expandCabinet, type CabinetInput, type ExpandedCabinet } from '@/lib/engine';
-import { updateCabinet } from '@/lib/quote/actions';
+import { buildHardwareDefaults, parseConstruction, toCostCatalogs } from '@/lib/catalog/convert';
+import { expandCabinet, resolveSuggestions, type CabinetInput, type ExpandedCabinet, type HardwareLine } from '@/lib/engine';
+import { addExtraPart, removeExtraPart, resetCabinetHardware, saveCabinetHardware, updateCabinet } from '@/lib/quote/actions';
+import type { ExtraPart } from '@/lib/quote/cabinet-form';
 import { ActionForm } from '@/components/ActionForm';
+import { DeleteButton } from '@/components/DeleteButton';
 import { NumberInput, Select, SubmitButton, TextInput } from '@/components/forms';
 import { fmtNum } from '@/lib/format';
 
@@ -34,6 +36,12 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
   const materialName = (mid: string) => materials.find((m) => m.id === mid)?.name ?? mid;
   const bandName = (bid?: string) => (bid ? (edgeBands.find((e) => e.id === bid)?.name ?? bid) : '');
 
+  const hardwareItems = await prisma.hardwareItem.findMany({ where: { active: true }, orderBy: [{ category: 'asc' }, { name: 'asc' }] });
+  const hardwareOptions = hardwareItems.map((h) => ({ value: h.id, label: `${h.name} (${h.pricePerUnit} lei)` }));
+  const hardwareName = (hid: string) => hardwareItems.find((h) => h.id === hid)?.name ?? hid;
+  const overrides = cab.hardwareJson ? (JSON.parse(cab.hardwareJson) as HardwareLine[]) : null;
+  const extraParts = JSON.parse(cab.extraPartsJson) as ExtraPart[];
+
   let expanded: ExpandedCabinet | null = null;
   let expandError: string | null = null;
   try {
@@ -52,6 +60,12 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
     expanded = expandCabinet(input, catalogs, cc);
   } catch (e) {
     expandError = e instanceof Error ? e.message : 'Eroare la generarea pieselor';
+  }
+
+  let suggestedLines: HardwareLine[] = [];
+  if (expanded && settings) {
+    const defaults = buildHardwareDefaults(hardwareItems, settings);
+    suggestedLines = resolveSuggestions(expanded.hardware, defaults).lines;
   }
 
   return (
@@ -146,6 +160,85 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
             </table>
           </>
         )}
+      </section>
+
+      <section className="rounded border bg-white p-3">
+        <h2 className="mb-2 font-semibold">Feronerie</h2>
+        {overrides === null ? (
+          <>
+            <p className="mb-2 text-sm text-neutral-600">
+              Sugestii automate (se recalculează la fiecare salvare a corpului). Preia-le în editor doar dacă vrei să le modifici.
+            </p>
+            <ul className="mb-3 space-y-1 text-sm">
+              {suggestedLines.map((l) => (
+                <li key={l.hardwareId}>{l.qty} × {hardwareName(l.hardwareId)}</li>
+              ))}
+              {suggestedLines.length === 0 && <li className="text-neutral-500">Nicio sugestie (corp fără fronturi/sertare).</li>}
+            </ul>
+            <ActionForm action={saveCabinetHardware.bind(null, cabinetId)}>
+              {suggestedLines.map((l) => (
+                <span key={l.hardwareId}>
+                  <input type="hidden" name="hardwareId" value={l.hardwareId} />
+                  <input type="hidden" name="qty" value={l.qty} />
+                </span>
+              ))}
+              <SubmitButton>Preia în editor</SubmitButton>
+            </ActionForm>
+          </>
+        ) : (
+          <>
+            <p className="mb-2 text-sm text-neutral-600">
+              Feronerie editată manual — sugestiile automate nu se mai aplică acestui corp. Cantitate 0 = rândul dispare la salvare.
+            </p>
+            <ActionForm action={saveCabinetHardware.bind(null, cabinetId)} className="space-y-2">
+              {overrides.map((l, i) => (
+                <div key={i} className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                  <div className="col-span-2">
+                    <Select name="hardwareId" label="Produs" options={hardwareOptions} defaultValue={l.hardwareId} />
+                  </div>
+                  <NumberInput name="qty" label="Buc" defaultValue={l.qty} step="1" />
+                </div>
+              ))}
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                <div className="col-span-2">
+                  <Select name="hardwareId" label="Adaugă produs" options={hardwareOptions} allowEmpty />
+                </div>
+                <NumberInput name="qty" label="Buc" defaultValue={0} required={false} step="1" />
+              </div>
+              <div className="flex gap-2">
+                <SubmitButton>Salvează feroneria</SubmitButton>
+              </div>
+            </ActionForm>
+            <div className="mt-2">
+              <ActionForm action={resetCabinetHardware.bind(null, cabinetId)}>
+                <button type="submit" className="rounded border px-3 py-1.5 text-sm hover:bg-neutral-50">
+                  Revino la sugestiile automate
+                </button>
+              </ActionForm>
+            </div>
+          </>
+        )}
+      </section>
+
+      <section className="rounded border bg-white p-3">
+        <h2 className="mb-2 font-semibold">Piese suplimentare</h2>
+        <ul className="mb-3 space-y-2">
+          {extraParts.map((p, i) => (
+            <li key={i} className="flex items-center gap-3 text-sm">
+              <span className="grow">{p.name} — {fmtNum(p.lengthMm, 1)} × {fmtNum(p.widthMm, 1)} mm × {p.qty} buc ({materialName(p.materialId)})</span>
+              <DeleteButton action={removeExtraPart.bind(null, cabinetId, i)} label="Șterge" />
+            </li>
+          ))}
+          {extraParts.length === 0 && <li className="text-sm text-neutral-500">Nicio piesă suplimentară.</li>}
+        </ul>
+        <ActionForm action={addExtraPart.bind(null, cabinetId)} className="grid grid-cols-2 items-end gap-2 md:grid-cols-6">
+          <TextInput name="name" label="Denumire" />
+          <NumberInput name="lengthMm" label="Lungime (mm)" step="1" />
+          <NumberInput name="widthMm" label="Lățime (mm)" step="1" />
+          <NumberInput name="qty" label="Buc" defaultValue={1} step="1" />
+          <Select name="materialId" label="Material" options={materialOptions} />
+          <div><SubmitButton>Adaugă</SubmitButton></div>
+        </ActionForm>
       </section>
     </div>
   );
