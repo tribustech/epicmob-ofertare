@@ -52,4 +52,13 @@ describe('computeQuote — override-uri și piese suplimentare', () => {
     const r = computeQuote(q, snap);
     expect(r.costs.breakdown.hardware).toBeCloseTo(20, 5);
   });
+
+  it('picioarele urmează înălțimea ansamblului', () => {
+    const snap = makeSnapshot();
+    snap.hardware.push({ id: 'p150', name: 'Picior 150', category: 'PICIOR', pricePerUnit: 3, nominalLengthMm: 150, loadClassKg: null, active: true });
+    const q = baseQuote();
+    q.cabinets[0].legHeightMm = 150;
+    const r = computeQuote(q, snap);
+    expect(r.hardwareLines).toContainEqual({ hardwareId: 'p150', qty: 4 });
+  });
 });

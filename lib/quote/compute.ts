@@ -11,6 +11,7 @@ import type {
   HardwareLine, HardwareSuggestion, HardwareSummaryRow, Part, Warning,
 } from '@/lib/engine';
 import type { ExtraPart } from './cabinet-form';
+import { pickLegId } from './legs';
 
 export interface SnapshotData {
   takenAt: string;
@@ -26,6 +27,7 @@ export interface QuoteCabinet {
   input: CabinetInput;
   hardwareOverrides: HardwareLine[] | null;
   extraParts: ExtraPart[];
+  legHeightMm?: number | null;
 }
 
 export interface QuoteInput {
@@ -74,7 +76,11 @@ export function computeQuote(q: QuoteInput, snap: SnapshotData): QuoteResult {
     if (overrides) {
       lines = overrides;
     } else {
-      const r = resolveSuggestions(e.hardware, defaults);
+      const legHeightMm = q.cabinets[i].legHeightMm;
+      const cabinetDefaults = legHeightMm != null
+        ? { ...defaults, legId: pickLegId(snap.hardware, legHeightMm, defaults.legId) }
+        : defaults;
+      const r = resolveSuggestions(e.hardware, cabinetDefaults);
       unresolvedHardware.push(...r.unresolved);
       lines = r.lines;
     }
