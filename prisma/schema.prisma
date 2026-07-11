@@ -62,3 +62,29 @@ model AppSettings {
   defaultLegId     String?
   defaultRailId    String?
 }
+
+model Project {
+  id            String    @id @default(cuid())
+  name          String
+  clientName    String?
+  clientContact String?
+  status        String    @default("CIORNA") // CIORNA | TRIMISA | ACCEPTATA
+  markupPct     Float
+  yieldFactor   Float
+  freeLinesJson String    @default("[]")
+  snapshotJson  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  cabinets      Cabinet[]
+}
+
+model Cabinet {
+  id             String   @id @default(cuid())
+  projectId      String
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sortOrder      Int      @default(0)
+  inputJson      String
+  hardwareJson   String?
+  extraPartsJson String   @default("[]")
+  updatedAt      DateTime @updatedAt
+}
