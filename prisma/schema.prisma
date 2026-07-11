@@ -64,27 +64,40 @@ model AppSettings {
 }
 
 model Project {
-  id            String    @id @default(cuid())
+  id            String     @id @default(cuid())
   name          String
   clientName    String?
   clientContact String?
-  status        String    @default("CIORNA") // CIORNA | TRIMISA | ACCEPTATA
+  status        String     @default("CIORNA") // CIORNA | TRIMISA | ACCEPTATA
   markupPct     Float
   yieldFactor   Float
-  freeLinesJson String    @default("[]")
+  freeLinesJson String     @default("[]")
   snapshotJson  String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
   cabinets      Cabinet[]
+  assemblies    Assembly[]
+}
+
+model Assembly {
+  id          String    @id @default(cuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String
+  legHeightMm Float     @default(100)
+  sortOrder   Int       @default(0)
+  cabinets    Cabinet[]
 }
 
 model Cabinet {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   projectId      String
-  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  sortOrder      Int      @default(0)
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assemblyId     String?
+  assembly       Assembly? @relation(fields: [assemblyId], references: [id], onDelete: SetNull)
+  sortOrder      Int       @default(0)
   inputJson      String
   hardwareJson   String?
-  extraPartsJson String   @default("[]")
-  updatedAt      DateTime @updatedAt
+  extraPartsJson String    @default("[]")
+  updatedAt      DateTime  @updatedAt
 }

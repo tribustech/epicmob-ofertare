@@ -29,7 +29,8 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const data = await loadProject(id);
   if (!data) notFound();
-  const { project, cabinets, snapshot } = data;
+  const { project, assemblies, cabinets, snapshot } = data;
+  const firstAssemblyId = assemblies[0]?.id ?? null;
   const freeLines = JSON.parse(project.freeLinesJson) as { name: string; amount: number }[];
 
   const computed = snapshot ? tryComputeQuote(toQuoteInput(project, cabinets), snapshot) : null;
@@ -62,10 +63,15 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
       <section className="rounded border bg-white p-3">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="font-semibold">Corpuri</h2>
-          <ActionForm action={addCabinet.bind(null, project.id)}>
-            <SubmitButton>Adaugă corp</SubmitButton>
-          </ActionForm>
+          {firstAssemblyId && (
+            <ActionForm action={addCabinet.bind(null, project.id, firstAssemblyId)}>
+              <SubmitButton>Adaugă corp</SubmitButton>
+            </ActionForm>
+          )}
         </div>
+        {!firstAssemblyId && (
+          <p className="mb-2 text-sm text-neutral-500">Adaugă întâi un ansamblu pentru a putea adăuga corpuri.</p>
+        )}
         <ul className="space-y-2">
           {cabinets.map((c) => (
             <li key={c.id} className="flex items-center gap-3 rounded border p-2 text-sm">

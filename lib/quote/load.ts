@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db';
-import type { Project } from '@prisma/client';
+import type { Assembly, Project } from '@prisma/client';
 import type { CabinetInput, HardwareLine } from '@/lib/engine';
 import type { ExtraPart } from './cabinet-form';
 import { computeQuote, type QuoteInput, type QuoteResult, type SnapshotData } from './compute';
@@ -7,6 +7,7 @@ import { computeQuote, type QuoteInput, type QuoteResult, type SnapshotData } fr
 export interface LoadedCabinet {
   id: string;
   sortOrder: number;
+  assemblyId: string | null;
   input: CabinetInput;
   hardwareOverrides: HardwareLine[] | null;
   extraParts: ExtraPart[];
@@ -14,23 +15,40 @@ export interface LoadedCabinet {
 
 export async function loadProject(id: string): Promise<{
   project: Project;
+  assemblies: Assembly[];
   cabinets: LoadedCabinet[];
   snapshot: SnapshotData | null;
 } | null> {
   const project = await prisma.project.findUnique({
     where: { id },
-    include: { cabinets: { orderBy: { sortOrder: 'asc' } } },
+    include: {
+      cabinets: { orderBy: { sortOrder: 'asc' } },
+      assemblies: { orderBy: { sortOrder: 'asc' } },
+    },
   });
   if (!project) return null;
   const cabinets: LoadedCabinet[] = project.cabinets.map((c) => ({
     id: c.id,
     sortOrder: c.sortOrder,
+    assemblyId: c.assemblyId,
     input: JSON.parse(c.inputJson) as CabinetInput,
     hardwareOverrides: c.hardwareJson ? (JSON.parse(c.hardwareJson) as HardwareLine[]) : null,
     extraParts: JSON.parse(c.extraPartsJson) as ExtraPart[],
   }));
   const snapshot = project.snapshotJson ? (JSON.parse(project.snapshotJson) as SnapshotData) : null;
-  return { project, cabinets, snapshot };
+  return { project, assemblies: project.assemblies, cabinets, snapshot };
+}
+
+export function legHeightByCabinet(assemblies: Assembly[], cabinets: LoadedCabinet[]): Map<string, number> {
+  const legHeightByAssembly = new Map(assemblies.map((a) => [a.id, a.legHeightMm]));
+  const map = new Map<string, number>();
+  for (const c of cabinets) {
+    if (c.assemblyId) {
+      const legHeightMm = legHeightByAssembly.get(c.assemblyId);
+      if (legHeightMm !== undefined) map.set(c.id, legHeightMm);
+    }
+  }
+  return map;
 }
 
 export function toQuoteInput(

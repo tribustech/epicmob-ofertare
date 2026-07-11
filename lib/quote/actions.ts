@@ -29,6 +29,11 @@ const freeLineSchema = z.object({
   amount: z.coerce.number().finite(),
 });
 
+const assemblySchema = z.object({
+  name: z.string().trim().min(1, 'Numele ansamblului lipsește'),
+  legHeightMm: z.coerce.number().positive(),
+});
+
 export const createProject = formAction(async (fd: FormData) => {
   const d = projectFormSchema.parse(formDataToObject(fd));
   const settings = await prisma.appSettings.findUnique({ where: { id: 1 } });
@@ -100,7 +105,31 @@ export const removeFreeLine = formAction(async (projectId: string, index: number
   revalidatePath(`/proiecte/${projectId}`);
 });
 
-export const addCabinet = formAction(async (projectId: string) => {
+export const addAssembly = formAction(async (projectId: string, fd: FormData) => {
+  const d = assemblySchema.parse(formDataToObject(fd));
+  const count = await prisma.assembly.count({ where: { projectId } });
+  await prisma.assembly.create({ data: { projectId, name: d.name, legHeightMm: d.legHeightMm, sortOrder: count } });
+  revalidatePath(`/proiecte/${projectId}`);
+});
+
+export const updateAssembly = formAction(async (assemblyId: string, fd: FormData) => {
+  const d = assemblySchema.parse(formDataToObject(fd));
+  const a = await prisma.assembly.update({ where: { id: assemblyId }, data: { name: d.name, legHeightMm: d.legHeightMm } });
+  revalidatePath(`/proiecte/${a.projectId}`);
+});
+
+export const deleteAssembly = formAction(async (assemblyId: string) => {
+  const count = await prisma.cabinet.count({ where: { assemblyId } });
+  if (count > 0) throw new Error('Ansamblul are corpuri — mută-le sau șterge-le întâi.');
+  const a = await prisma.assembly.delete({ where: { id: assemblyId } });
+  revalidatePath(`/proiecte/${a.projectId}`);
+});
+
+export const addCabinet = formAction(async (projectId: string, assemblyId: string) => {
+  const assembly = await prisma.assembly.findUnique({ where: { id: assemblyId } });
+  if (!assembly || assembly.projectId !== projectId) {
+    throw new Error('Ansamblul nu aparține acestui proiect');
+  }
   const pal = await prisma.material.findFirst({ where: { active: true, kind: 'PAL' }, orderBy: { name: 'asc' } });
   const pfl = await prisma.material.findFirst({ where: { active: true, kind: 'PFL' }, orderBy: { name: 'asc' } });
   const band = await prisma.edgeBand.findFirst({ where: { active: true }, orderBy: { thicknessMm: 'asc' } });
@@ -117,7 +146,7 @@ export const addCabinet = formAction(async (projectId: string) => {
     edgeBands: { carcassFrontEdgeId: band.id, frontPerimeterId: band.id },
   };
   const cab = await prisma.cabinet.create({
-    data: { projectId, sortOrder: count, inputJson: JSON.stringify(input) },
+    data: { projectId, assemblyId, sortOrder: count, inputJson: JSON.stringify(input) },
   });
   revalidatePath(`/proiecte/${projectId}`);
   redirect(`/proiecte/${projectId}/corp/${cab.id}`);
