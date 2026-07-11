@@ -56,6 +56,7 @@ export interface ConstructionConstants {
   legsPerCabinet: number;          // picioare per corp cu picioare
   shelfSpanWarnMm: number;         // avertizare poliță peste această deschidere
   doorMaxWidthMm: number;          // avertizare ușă peste această lățime
+  blindPanelDefaultWidthMm: number; // lățime implicită panou orb la corpurile de colț
 }
 
 export type CabinetType = 'BAZA' | 'SUSPENDAT' | 'INALT' | 'SERTARE' | 'COLT';

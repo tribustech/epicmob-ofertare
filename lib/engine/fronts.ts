@@ -27,7 +27,7 @@ export function expandFronts(
   const bandId = material.kind === 'MDF_VOPSIT' ? null : input.edgeBands.frontPerimeterId;
   const edges: PartEdges = bandId ? { l1: bandId, l2: bandId, w1: bandId, w2: bandId } : {};
 
-  const blindW = input.type === 'COLT' ? (input.blindPanelWidthMm ?? 100) : 0;
+  const blindW = input.type === 'COLT' ? (input.blindPanelWidthMm ?? cc.blindPanelDefaultWidthMm) : 0;
   const usableW = input.widthMm - 2 * cc.outerGapMm - blindW;
   const frontH = input.heightMm - 2 * cc.outerGapMm;
 

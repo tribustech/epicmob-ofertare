@@ -79,4 +79,10 @@ describe('expandFronts — panou orb (COLT)', () => {
     expect(blind).toMatchObject({ widthMm: 100, lengthMm: 716 });
     expect(door.widthMm).toBeCloseTo(496, 5); // 600 − 4 − 100
   });
+
+  it('folosește lățimea implicită din constante când blindPanelWidthMm lipsește', () => {
+    const input = bazaInput({ type: 'COLT' });
+    const { parts } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    expect(parts.find((p) => p.name === 'Panou orb')!.widthMm).toBe(100);
+  });
 });

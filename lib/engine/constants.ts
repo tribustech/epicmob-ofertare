@@ -16,4 +16,5 @@ export const DEFAULT_CONSTRUCTION: ConstructionConstants = {
   legsPerCabinet: 4,
   shelfSpanWarnMm: 900,
   doorMaxWidthMm: 650,
+  blindPanelDefaultWidthMm: 100,
 };
