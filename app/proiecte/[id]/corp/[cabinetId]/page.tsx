@@ -20,6 +20,37 @@ const TYPE_OPTIONS = [
   { value: 'COLT', label: 'Corp de colț' },
 ];
 
+function optionsWithCurrent<T extends { id: string; name: string; active: boolean }>(
+  rows: T[],
+  currentId: string | null | undefined,
+  formatActive: (r: T) => string = (r) => r.name,
+): { value: string; label: string }[] {
+  const opts = rows.filter((r) => r.active).map((r) => ({ value: r.id, label: formatActive(r) }));
+  if (currentId && !opts.some((o) => o.value === currentId)) {
+    const row = rows.find((r) => r.id === currentId);
+    if (row) opts.push({ value: row.id, label: `${row.name} (dezactivat)` });
+  }
+  return opts;
+}
+
+function isInactiveId(rows: { id: string; active: boolean }[], id: string | null | undefined): boolean {
+  return !!id && rows.some((r) => r.id === id && !r.active);
+}
+
+function sameHardwareMultiset(a: HardwareLine[], b: HardwareLine[]): boolean {
+  if (a.length !== b.length) return false;
+  const key = (l: HardwareLine) => `${l.hardwareId}:${l.qty}`;
+  const counts = new Map<string, number>();
+  for (const l of a) counts.set(key(l), (counts.get(key(l)) ?? 0) + 1);
+  for (const l of b) {
+    const k = key(l);
+    const c = counts.get(k);
+    if (!c) return false;
+    counts.set(k, c - 1);
+  }
+  return true;
+}
+
 export default async function CorpPage({ params }: { params: Promise<{ id: string; cabinetId: string }> }) {
   const { id, cabinetId } = await params;
   const cab = await prisma.cabinet.findUnique({ where: { id: cabinetId } });
@@ -27,17 +58,18 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
   const input = JSON.parse(cab.inputJson) as CabinetInput;
 
   const [materials, edgeBands, settings] = await Promise.all([
-    prisma.material.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
-    prisma.edgeBand.findMany({ where: { active: true }, orderBy: { thicknessMm: 'asc' } }),
+    prisma.material.findMany({ orderBy: { name: 'asc' } }),
+    prisma.edgeBand.findMany({ orderBy: { thicknessMm: 'asc' } }),
     prisma.appSettings.findUnique({ where: { id: 1 } }),
   ]);
-  const materialOptions = materials.map((m) => ({ value: m.id, label: m.name }));
-  const bandOptions = edgeBands.map((e) => ({ value: e.id, label: e.name }));
+  const activeMaterials = materials.filter((m) => m.active);
   const materialName = (mid: string) => materials.find((m) => m.id === mid)?.name ?? mid;
   const bandName = (bid?: string) => (bid ? (edgeBands.find((e) => e.id === bid)?.name ?? bid) : '');
 
-  const hardwareItems = await prisma.hardwareItem.findMany({ where: { active: true }, orderBy: [{ category: 'asc' }, { name: 'asc' }] });
-  const hardwareOptions = hardwareItems.map((h) => ({ value: h.id, label: `${h.name} (${h.pricePerUnit} lei)` }));
+  const hardwareItems = await prisma.hardwareItem.findMany({ orderBy: [{ category: 'asc' }, { name: 'asc' }] });
+  const activeHardwareItems = hardwareItems.filter((h) => h.active);
+  const hardwareLabel = (h: (typeof hardwareItems)[number]) => `${h.name} (${h.pricePerUnit} lei)`;
+  const hardwareOptions = optionsWithCurrent(activeHardwareItems, undefined, hardwareLabel);
   const hardwareName = (hid: string) => hardwareItems.find((h) => h.id === hid)?.name ?? hid;
   const overrides = cab.hardwareJson ? (JSON.parse(cab.hardwareJson) as HardwareLine[]) : null;
   const extraParts = JSON.parse(cab.extraPartsJson) as ExtraPart[];
@@ -63,10 +95,24 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
   }
 
   let suggestedLines: HardwareLine[] = [];
+  let unresolvedSuggestions: { category: string; name: string; qty: number }[] = [];
   if (expanded && settings) {
-    const defaults = buildHardwareDefaults(hardwareItems, settings);
-    suggestedLines = resolveSuggestions(expanded.hardware, defaults).lines;
+    const defaults = buildHardwareDefaults(activeHardwareItems, settings);
+    const resolved = resolveSuggestions(expanded.hardware, defaults);
+    suggestedLines = resolved.lines;
+    unresolvedSuggestions = resolved.unresolved;
   }
+
+  const hasInactiveRefs =
+    isInactiveId(materials, input.carcassMaterialId) ||
+    isInactiveId(materials, input.frontMaterialId) ||
+    isInactiveId(materials, input.back.materialId) ||
+    isInactiveId(materials, input.drawers?.bottomMaterialId) ||
+    isInactiveId(edgeBands, input.edgeBands.carcassFrontEdgeId) ||
+    isInactiveId(edgeBands, input.edgeBands.frontPerimeterId) ||
+    (overrides !== null && overrides.some((l) => isInactiveId(hardwareItems, l.hardwareId)));
+
+  const overridesStale = overrides !== null && !sameHardwareMultiset(overrides, suggestedLines);
 
   return (
     <div className="space-y-8">
@@ -80,6 +126,11 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
         <p className="mb-3 text-sm text-neutral-600">
           Câmpurile de sertare contează doar la tipul „Corp cu sertare"; panoul orb doar la „Corp de colț". Salvează pentru a regenera piesele.
         </p>
+        {hasInactiveRefs && (
+          <p className="mb-3 rounded bg-amber-50 px-2 py-1 text-sm text-amber-800">
+            ⚠ Corpul folosește materiale/feronerie dezactivate — verifică selecturile marcate „(dezactivat)".
+          </p>
+        )}
         <ActionForm action={updateCabinet.bind(null, cabinetId)} className="space-y-3">
           <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
             <TextInput name="label" label="Etichetă" defaultValue={input.label} />
@@ -89,10 +140,10 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
             <NumberInput name="depthMm" label="Adâncime A (mm)" defaultValue={input.depthMm} step="1" />
             <NumberInput name="shelves" label="Polițe" defaultValue={input.shelves} step="1" />
             <NumberInput name="doors" label="Uși" defaultValue={input.doors} step="1" />
-            <Select name="carcassMaterialId" label="Material carcasă" options={materialOptions} defaultValue={input.carcassMaterialId} />
-            <Select name="frontMaterialId" label="Material fronturi" options={materialOptions} defaultValue={input.frontMaterialId} allowEmpty />
-            <Select name="carcassFrontEdgeId" label="Cant carcasă" options={bandOptions} defaultValue={input.edgeBands.carcassFrontEdgeId} />
-            <Select name="frontPerimeterId" label="Cant fronturi" options={bandOptions} defaultValue={input.edgeBands.frontPerimeterId} allowEmpty />
+            <Select name="carcassMaterialId" label="Material carcasă" options={optionsWithCurrent(materials, input.carcassMaterialId)} defaultValue={input.carcassMaterialId} />
+            <Select name="frontMaterialId" label="Material fronturi" options={optionsWithCurrent(materials, input.frontMaterialId)} defaultValue={input.frontMaterialId} allowEmpty />
+            <Select name="carcassFrontEdgeId" label="Cant carcasă" options={optionsWithCurrent(edgeBands, input.edgeBands.carcassFrontEdgeId)} defaultValue={input.edgeBands.carcassFrontEdgeId} />
+            <Select name="frontPerimeterId" label="Cant fronturi" options={optionsWithCurrent(edgeBands, input.edgeBands.frontPerimeterId)} defaultValue={input.edgeBands.frontPerimeterId} allowEmpty />
             <NumberInput name="blindPanelWidthMm" label="Panou orb (mm, colț)" defaultValue={input.blindPanelWidthMm ?? null} required={false} step="1" />
           </div>
           <p className="text-xs text-neutral-500">
@@ -104,7 +155,7 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
               <input type="checkbox" name="backEnabled" defaultChecked={input.back.enabled} />
               <span>Cu spate</span>
             </label>
-            <Select name="backMaterialId" label="Material spate" options={materialOptions} defaultValue={input.back.materialId} allowEmpty />
+            <Select name="backMaterialId" label="Material spate" options={optionsWithCurrent(materials, input.back.materialId)} defaultValue={input.back.materialId} allowEmpty />
             <Select
               name="backMount" label="Montaj spate"
               options={[{ value: 'FALT', label: 'În falț' }, { value: 'APLICAT', label: 'Aplicat' }]}
@@ -116,7 +167,7 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
               options={[{ value: 'METAL_BOX', label: 'Blum (laterale metalice)' }, { value: 'PAL_BOX', label: 'Cutie din PAL' }]}
               defaultValue={input.drawers?.system ?? 'METAL_BOX'}
             />
-            <Select name="drawersBottomMaterialId" label="Fund sertare" options={materialOptions} defaultValue={input.drawers?.bottomMaterialId} allowEmpty />
+            <Select name="drawersBottomMaterialId" label="Fund sertare" options={optionsWithCurrent(materials, input.drawers?.bottomMaterialId)} defaultValue={input.drawers?.bottomMaterialId} allowEmpty />
             <div className="col-span-2">
               <TextInput
                 name="drawerFrontHeightsMm" label="Înălțimi fronturi sertar (mm, cu virgulă; gol = egale)"
@@ -176,7 +227,12 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
               {suggestedLines.map((l) => (
                 <li key={l.hardwareId}>{l.qty} × {hardwareName(l.hardwareId)}</li>
               ))}
-              {suggestedLines.length === 0 && <li className="text-neutral-500">Nicio sugestie (corp fără fronturi/sertare).</li>}
+              {unresolvedSuggestions.map((s, i) => (
+                <li key={`unresolved-${i}`} className="text-amber-800">⚠ {s.qty} × {s.name} — fără produs implicit (setează în Setări)</li>
+              ))}
+              {suggestedLines.length === 0 && unresolvedSuggestions.length === 0 && (
+                <li className="text-neutral-500">Nicio sugestie (corp fără fronturi/sertare).</li>
+              )}
             </ul>
             <ActionForm action={saveCabinetHardware.bind(null, cabinetId)}>
               {suggestedLines.map((l) => (
@@ -193,11 +249,16 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
             <p className="mb-2 text-sm text-neutral-600">
               Feronerie editată manual — sugestiile automate nu se mai aplică acestui corp. Cantitate 0 = rândul dispare la salvare.
             </p>
+            {overridesStale && (
+              <p className="mb-2 rounded bg-amber-50 px-2 py-1 text-sm text-amber-800">
+                ⚠ Sugestiile automate pentru dimensiunile curente diferă de feroneria editată — verifică (ex. număr balamale).
+              </p>
+            )}
             <ActionForm action={saveCabinetHardware.bind(null, cabinetId)} className="space-y-2">
               {overrides.map((l, i) => (
                 <div key={i} className="grid grid-cols-2 gap-2 md:grid-cols-4">
                   <div className="col-span-2">
-                    <Select name="hardwareId" label="Produs" options={hardwareOptions} defaultValue={l.hardwareId} />
+                    <Select name="hardwareId" label="Produs" options={optionsWithCurrent(hardwareItems, l.hardwareId, hardwareLabel)} defaultValue={l.hardwareId} />
                   </div>
                   <NumberInput name="qty" label="Buc" defaultValue={l.qty} step="1" />
                 </div>
@@ -239,7 +300,7 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
           <NumberInput name="lengthMm" label="Lungime (mm)" step="1" />
           <NumberInput name="widthMm" label="Lățime (mm)" step="1" />
           <NumberInput name="qty" label="Buc" defaultValue={1} step="1" />
-          <Select name="materialId" label="Material" options={materialOptions} />
+          <Select name="materialId" label="Material" options={activeMaterials.map((m) => ({ value: m.id, label: m.name }))} />
           <div><SubmitButton>Adaugă</SubmitButton></div>
         </ActionForm>
       </section>

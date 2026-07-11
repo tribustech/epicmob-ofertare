@@ -8,6 +8,7 @@ import { formDataToObject } from '@/lib/catalog/schemas';
 import { formAction } from '@/lib/forms/form-action';
 import { cabinetFormSchema, extraPartSchema, toCabinetInput } from './cabinet-form';
 import { buildSnapshot } from './snapshot';
+import type { CabinetInput } from '@/lib/engine';
 
 const optStr = z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().optional());
 
@@ -67,6 +68,7 @@ export const duplicateProject = formAction(async (id: string) => {
       markupPct: project.markupPct,
       yieldFactor: project.yieldFactor,
       freeLinesJson: project.freeLinesJson,
+      snapshotJson: project.snapshotJson,
       cabinets: {
         create: project.cabinets.map((c) => ({
           sortOrder: c.sortOrder,
@@ -104,7 +106,7 @@ export const addCabinet = formAction(async (projectId: string) => {
   const band = await prisma.edgeBand.findFirst({ where: { active: true }, orderBy: { thicknessMm: 'asc' } });
   if (!pal || !band) throw new Error('Adaugă întâi un material PAL și un cant în cataloage');
   const count = await prisma.cabinet.count({ where: { projectId } });
-  const input = {
+  const input: CabinetInput = {
     label: `C${count + 1}`,
     type: 'BAZA',
     widthMm: 600, heightMm: 720, depthMm: 560,
