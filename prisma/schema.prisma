@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Material {
+  id            String   @id @default(cuid())
+  name          String
+  kind          String   // PAL | MDF_VOPSIT | MDF_MELAMINAT | MDF_INFOLIAT | PFL
+  thicknessMm   Float
+  sheetLengthMm Float
+  sheetWidthMm  Float
+  pricingMode   String   // PER_SHEET | PER_SQM
+  pricePerSheet Float?
+  pricePerSqm   Float?
+  active        Boolean  @default(true)
+  updatedAt     DateTime @updatedAt
+}
+
+model EdgeBand {
+  id          String   @id @default(cuid())
+  name        String
+  thicknessMm Float
+  pricePerMl  Float
+  active      Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+}
+
+model HardwareItem {
+  id              String   @id @default(cuid())
+  name            String
+  category        String   // BALAMA | SERTAR | MANER | PICIOR | SINA_SUSPENDARE | ACCESORIU
+  pricePerUnit    Float
+  nominalLengthMm Float?
+  loadClassKg     Float?
+  active          Boolean  @default(true)
+  updatedAt       DateTime @updatedAt
+}
+
+model CuttingRate {
+  id             String @id @default(cuid())
+  maxThicknessMm Float
+  pricePerSheet  Float
+}
+
+model LaborRate {
+  cabinetType String @id // BAZA | SUSPENDAT | INALT | SERTARE | COLT
+  price       Float
+}
+
+model AppSettings {
+  id               Int     @id @default(1)
+  markupPct        Float
+  sheetYieldFactor Float
+  constructionJson String
+  defaultHingeId   String?
+  defaultHandleId  String?
+  defaultLegId     String?
+  defaultRailId    String?
+}
