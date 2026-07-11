@@ -23,7 +23,7 @@ Aplicația **epic-mob-ofertare** automatizează pasul schiță → ofertă: intr
 
 Trei zone funcționale:
 
-1. **Cataloage** — întreținute rar de utilizator.
+1. **Cataloage** — zonă de administrare separată de proiecte, unde se actualizează ușor toate prețurile (materiale, canturi, feronerie, servicii, manoperă) și setările; modificările afectează doar proiectele viitoare, nu ofertele deja calculate (vezi snapshot-ul de prețuri).
 2. **Proiecte** — munca zilnică de ofertare.
 3. **Exporturi** — documentele finale.
 
