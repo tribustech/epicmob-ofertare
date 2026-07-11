@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { loadProject, toQuoteInput, tryComputeQuote } from '@/lib/quote/load';
+import { getQuoteBasis } from '@/lib/quote/basis';
 import { PrintButton } from '@/components/PrintButton';
 import { fmtLei } from '@/lib/format';
 
@@ -15,15 +16,17 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
   const { id } = await params;
   const data = await loadProject(id);
   if (!data) notFound();
-  const { project, cabinets, snapshot } = data;
+  const { project, cabinets } = data;
 
-  if (!snapshot) {
+  const basis = await getQuoteBasis(project);
+  if (basis.kind === 'MISSING') {
     return (
       <p className="text-sm">
-        Proiectul nu are un calcul salvat — <Link href={`/proiecte/${id}`} className="underline">înapoi la proiect</Link> și apasă „Calculează".
+        Proiectul e într-o stare înghețată dar nu are un calcul salvat — <Link href={`/proiecte/${id}`} className="underline">înapoi la proiect</Link> și comută starea pentru a genera un calcul.
       </p>
     );
   }
+  const snapshot = basis.snapshot;
   const { quote, error } = tryComputeQuote(toQuoteInput(project, cabinets), snapshot);
   if (!quote) return <p className="text-sm text-red-700">Eroare de calcul: {error}</p>;
 

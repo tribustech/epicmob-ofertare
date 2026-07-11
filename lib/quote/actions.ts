@@ -8,6 +8,7 @@ import { formDataToObject } from '@/lib/catalog/schemas';
 import { formAction } from '@/lib/forms/form-action';
 import { cabinetFormSchema, extraPartSchema, toCabinetInput } from './cabinet-form';
 import { buildSnapshot } from './snapshot';
+import { isFrozenStatus } from './basis';
 import type { CabinetInput } from '@/lib/engine';
 
 const optStr = z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().optional());
@@ -53,7 +54,12 @@ export const createProject = formAction(async (fd: FormData) => {
 
 export const updateProjectSettings = formAction(async (id: string, fd: FormData) => {
   const d = projectSettingsSchema.parse(formDataToObject(fd));
-  await prisma.project.update({ where: { id }, data: d });
+  const project = await prisma.project.findUniqueOrThrow({ where: { id } });
+  const data: typeof d & { snapshotJson?: string } = { ...d };
+  if (isFrozenStatus(d.status) && (!isFrozenStatus(project.status) || !project.snapshotJson)) {
+    data.snapshotJson = JSON.stringify(await buildSnapshot());
+  }
+  await prisma.project.update({ where: { id }, data });
   revalidatePath(`/proiecte/${id}`);
 });
 
@@ -223,11 +229,12 @@ export const removeExtraPart = formAction(async (cabinetId: string, index: numbe
   revalidatePath(`/proiecte/${cab.projectId}/corp/${cabinetId}`);
 });
 
-export const recalculateProject = formAction(async (projectId: string) => {
-  const snapshot = await buildSnapshot();
+export const refreshFrozenPrices = formAction(async (projectId: string) => {
+  const project = await prisma.project.findUniqueOrThrow({ where: { id: projectId } });
+  if (!isFrozenStatus(project.status)) throw new Error('Proiectul e ciornă — prețurile sunt deja live.');
   await prisma.project.update({
     where: { id: projectId },
-    data: { snapshotJson: JSON.stringify(snapshot) },
+    data: { snapshotJson: JSON.stringify(await buildSnapshot()) },
   });
   revalidatePath(`/proiecte/${projectId}`);
 });

@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { loadProject, toQuoteInput, tryComputeQuote } from '@/lib/quote/load';
+import { getQuoteBasis } from '@/lib/quote/basis';
 import {
   addCabinet, addFreeLine, deleteCabinet, deleteProject, duplicateCabinet,
-  recalculateProject, removeFreeLine, updateProjectSettings,
+  refreshFrozenPrices, removeFreeLine, updateProjectSettings,
 } from '@/lib/quote/actions';
 import { ActionForm } from '@/components/ActionForm';
 import { DeleteButton } from '@/components/DeleteButton';
@@ -29,12 +30,14 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const data = await loadProject(id);
   if (!data) notFound();
-  const { project, assemblies, cabinets, snapshot } = data;
+  const { project, assemblies, cabinets } = data;
   const firstAssemblyId = assemblies[0]?.id ?? null;
   const freeLines = JSON.parse(project.freeLinesJson) as { name: string; amount: number }[];
 
-  const computed = snapshot ? tryComputeQuote(toQuoteInput(project, cabinets), snapshot) : null;
+  const basis = await getQuoteBasis(project);
+  const computed = basis.kind !== 'MISSING' ? tryComputeQuote(toQuoteInput(project, cabinets), basis.snapshot) : null;
   const quote = computed?.quote ?? null;
+  const snapshot = basis.kind !== 'MISSING' ? basis.snapshot : null;
   const materialName = (mid: string) =>
     snapshot?.materials.find((m) => m.id === mid)?.name ?? mid;
   const bandLabel = (bid: string) =>
@@ -111,17 +114,30 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
       <section className="rounded border bg-white p-3">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="font-semibold">Calcul și ofertă</h2>
-          <ActionForm action={recalculateProject.bind(null, project.id)}>
-            <SubmitButton>{snapshot ? 'Recalculează cu prețurile curente' : 'Calculează'}</SubmitButton>
-          </ActionForm>
+          {basis.kind === 'LIVE' && (
+            <span className="rounded bg-green-50 px-2 py-1 text-xs font-medium text-green-700">Prețuri live</span>
+          )}
+          {basis.kind === 'FROZEN' && (
+            <div className="flex items-center gap-2">
+              <span className="rounded bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800">
+                Prețuri înghețate la {new Date(basis.snapshot.takenAt).toLocaleString('ro-RO')}
+              </span>
+              <ActionForm action={refreshFrozenPrices.bind(null, project.id)}>
+                <SubmitButton>Reîmprospătează prețurile</SubmitButton>
+              </ActionForm>
+            </div>
+          )}
         </div>
 
-        {!snapshot && <p className="text-sm text-neutral-600">Apasă „Calculează" pentru a copia prețurile curente în proiect și a vedea rezumatul.</p>}
+        {basis.kind === 'MISSING' && (
+          <p className="text-sm text-neutral-600">
+            Proiectul e într-o stare înghețată dar nu are un calcul salvat — comută starea înapoi la „Ciornă" și apoi la starea dorită pentru a genera un calcul.
+          </p>
+        )}
         {computed?.error && <p className="rounded bg-red-50 px-2 py-1 text-sm text-red-700">{computed.error}</p>}
 
         {quote && snapshot && (
           <div className="space-y-4">
-            <p className="text-xs text-neutral-500">Prețuri copiate la: {new Date(snapshot.takenAt).toLocaleString('ro-RO')}</p>
 
             {quote.warnings.length > 0 && (
               <ul className="space-y-1">

@@ -17,7 +17,6 @@ export async function loadProject(id: string): Promise<{
   project: Project;
   assemblies: Assembly[];
   cabinets: LoadedCabinet[];
-  snapshot: SnapshotData | null;
 } | null> {
   const project = await prisma.project.findUnique({
     where: { id },
@@ -35,8 +34,7 @@ export async function loadProject(id: string): Promise<{
     hardwareOverrides: c.hardwareJson ? (JSON.parse(c.hardwareJson) as HardwareLine[]) : null,
     extraParts: JSON.parse(c.extraPartsJson) as ExtraPart[],
   }));
-  const snapshot = project.snapshotJson ? (JSON.parse(project.snapshotJson) as SnapshotData) : null;
-  return { project, assemblies: project.assemblies, cabinets, snapshot };
+  return { project, assemblies: project.assemblies, cabinets };
 }
 
 export function legHeightByCabinet(assemblies: Assembly[], cabinets: LoadedCabinet[]): Map<string, number> {
