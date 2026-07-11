@@ -3,6 +3,8 @@ import { createCuttingRate, deleteCuttingRate, updateCuttingRate } from '@/lib/c
 import { NumberInput, SubmitButton } from '@/components/forms';
 import { DeleteButton } from '@/components/DeleteButton';
 
+export const dynamic = 'force-dynamic';
+
 function RateFields({ r }: { r?: { maxThicknessMm: number; pricePerSheet: number } }) {
   return (
     <div className="grid grid-cols-2 gap-2">

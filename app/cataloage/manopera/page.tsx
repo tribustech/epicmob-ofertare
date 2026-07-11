@@ -2,6 +2,8 @@ import { prisma } from '@/lib/db';
 import { updateLaborRate } from '@/lib/catalog/actions';
 import { NumberInput, SubmitButton } from '@/components/forms';
 
+export const dynamic = 'force-dynamic';
+
 const TYPE_LABELS: Record<string, string> = {
   BAZA: 'Corp bază', SUSPENDAT: 'Corp suspendat', INALT: 'Corp înalt',
   SERTARE: 'Corp cu sertare', COLT: 'Corp de colț',

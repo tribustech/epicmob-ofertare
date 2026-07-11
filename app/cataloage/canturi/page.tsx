@@ -3,6 +3,8 @@ import { createEdgeBand, deactivateEdgeBand, updateEdgeBand } from '@/lib/catalo
 import { NumberInput, SubmitButton, TextInput } from '@/components/forms';
 import { DeleteButton } from '@/components/DeleteButton';
 
+export const dynamic = 'force-dynamic';
+
 function EdgeBandFields({ e }: { e?: { name: string; thicknessMm: number; pricePerMl: number } }) {
   return (
     <div className="grid grid-cols-3 gap-2">

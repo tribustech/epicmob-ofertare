@@ -3,6 +3,8 @@ import { createHardware, deactivateHardware, updateHardware } from '@/lib/catalo
 import { NumberInput, Select, SubmitButton, TextInput } from '@/components/forms';
 import { DeleteButton } from '@/components/DeleteButton';
 
+export const dynamic = 'force-dynamic';
+
 const CATEGORY_OPTIONS = [
   { value: 'BALAMA', label: 'Balama' },
   { value: 'SERTAR', label: 'Sertar / glisiere' },

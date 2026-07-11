@@ -3,6 +3,8 @@ import { createMaterial, deactivateMaterial, updateMaterial } from '@/lib/catalo
 import { NumberInput, Select, SubmitButton, TextInput } from '@/components/forms';
 import { DeleteButton } from '@/components/DeleteButton';
 
+export const dynamic = 'force-dynamic';
+
 const KIND_OPTIONS = [
   { value: 'PAL', label: 'PAL melaminat' },
   { value: 'MDF_MELAMINAT', label: 'MDF melaminat' },

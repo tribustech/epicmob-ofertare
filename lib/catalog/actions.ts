@@ -56,14 +56,27 @@ function hardwareData(fd: FormData) {
 export async function createHardware(fd: FormData) {
   await prisma.hardwareItem.create({ data: hardwareData(fd) });
   revalidatePath('/cataloage/feronerie');
+  revalidatePath('/setari');
 }
 export async function updateHardware(id: string, fd: FormData) {
   await prisma.hardwareItem.update({ where: { id }, data: hardwareData(fd) });
   revalidatePath('/cataloage/feronerie');
+  revalidatePath('/setari');
 }
 export async function deactivateHardware(id: string) {
+  const settings = await prisma.appSettings.findUnique({ where: { id: 1 } });
+  if (
+    settings &&
+    (id === settings.defaultHingeId ||
+      id === settings.defaultHandleId ||
+      id === settings.defaultLegId ||
+      id === settings.defaultRailId)
+  ) {
+    throw new Error('Feroneria este setată ca implicită în Setări — schimbă întâi setarea, apoi dezactiveaz-o.');
+  }
   await prisma.hardwareItem.update({ where: { id }, data: { active: false } });
   revalidatePath('/cataloage/feronerie');
+  revalidatePath('/setari');
 }
 
 export async function createCuttingRate(fd: FormData) {

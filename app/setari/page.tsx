@@ -3,6 +3,8 @@ import { updateConstruction, updateSettings } from '@/lib/catalog/actions';
 import { parseConstruction } from '@/lib/catalog/convert';
 import { NumberInput, Select, SubmitButton } from '@/components/forms';
 
+export const dynamic = 'force-dynamic';
+
 const CONSTRUCTION_LABELS: Record<string, string> = {
   frontGapMm: 'Rost între fronturi (mm)',
   outerGapMm: 'Rost la marginea corpului (mm)',
