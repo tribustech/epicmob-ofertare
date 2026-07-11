@@ -1,4 +1,4 @@
-import { findMaterial } from './carcass';
+import { assertPositiveDim, findMaterial } from './carcass';
 import { drawerFrontHeights } from './fronts';
 import type { CabinetInput, Catalogs, ConstructionConstants, Part, Warning } from './types';
 
@@ -48,8 +48,13 @@ export function expandDrawerBoxes(
 
   for (const frontH of heights) {
     if (drawers.system === 'PAL_BOX') {
-      const boxW = innerW - cc.palBoxSlideAllowanceMm;
+      const boxW = assertPositiveDim(
+        innerW - cc.palBoxSlideAllowanceMm, 'lățime cutie sertar (PAL_BOX)', input.label,
+      );
       const boxH = Math.max(frontH - cc.palBoxHeightDeductMm, cc.palBoxMinHeightMm);
+      const boxInnerW = assertPositiveDim(
+        boxW - 2 * t, 'lățime față/spate cutie sertar (PAL_BOX)', input.label,
+      );
       push({
         cabinetLabel: input.label, name: 'Laterală sertar',
         lengthMm: nominalMm, widthMm: boxH, qty: 2,
@@ -57,7 +62,7 @@ export function expandDrawerBoxes(
       });
       push({
         cabinetLabel: input.label, name: 'Față/Spate cutie sertar',
-        lengthMm: boxW - 2 * t, widthMm: boxH, qty: 2,
+        lengthMm: boxInnerW, widthMm: boxH, qty: 2,
         materialId: carcass.id, edges: { l1: fe },
       });
       push({
@@ -66,7 +71,9 @@ export function expandDrawerBoxes(
         materialId: bottom.id, edges: {},
       });
     } else {
-      const bottomW = innerW - cc.metalBoxBottomDeductMm;
+      const bottomW = assertPositiveDim(
+        innerW - cc.metalBoxBottomDeductMm, 'lățime fund sertar (METAL_BOX)', input.label,
+      );
       push({
         cabinetLabel: input.label, name: 'Fund sertar',
         lengthMm: nominalMm, widthMm: bottomW, qty: 1,

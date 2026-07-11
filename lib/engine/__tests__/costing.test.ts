@@ -76,4 +76,30 @@ describe('computeCosts — cazuri particulare', () => {
       }),
     ).toThrow(/feronerie/i);
   });
+
+  it('cuttingRates date descrescător produc același cost de debitare ca sortate crescător', () => {
+    const expanded = expandCabinet(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const REVERSED_CATALOGS: CostCatalogs = {
+      ...COST_CATALOGS,
+      cuttingRates: [...COST_CATALOGS.cuttingRates].reverse(),
+    };
+
+    const argsFor = (catalogs: CostCatalogs) => ({
+      parts: expanded.parts,
+      hardwareLines: [
+        { hardwareId: 'blum-cliptop', qty: 2 },
+        { hardwareId: 'maner-std', qty: 1 },
+        { hardwareId: 'picior-std', qty: 4 },
+      ],
+      cabinets: [expanded.input],
+      freeLines: [],
+      markupPct: 30,
+      yieldFactor: 0.8,
+      catalogs,
+    });
+
+    const sorted = computeCosts(argsFor(COST_CATALOGS));
+    const reversed = computeCosts(argsFor(REVERSED_CATALOGS));
+    expect(reversed.breakdown.cuttingService).toBeCloseTo(sorted.breakdown.cuttingService, 5);
+  });
 });

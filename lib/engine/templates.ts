@@ -15,6 +15,9 @@ export function expandCabinet(
   if (input.type !== 'SERTARE' && input.drawers) {
     throw new Error(`Corpul ${input.label}: sertarele sunt permise doar la tipul SERTARE`);
   }
+  if (input.type === 'SERTARE' && input.doors > 0) {
+    throw new Error(`Corpul ${input.label}: tipul SERTARE nu poate avea uși`);
+  }
   if (input.doors > 0 && !input.frontMaterialId) {
     throw new Error(`Corpul ${input.label}: ușile cer un material de front`);
   }

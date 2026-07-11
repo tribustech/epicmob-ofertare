@@ -41,6 +41,9 @@ export function computeCosts(args: {
 }): CostResult {
   const { catalogs } = args;
   const needs = computeMaterialNeeds(args.parts, catalogs, args.yieldFactor);
+  // catalogs.cuttingRates nu e garantat sortat de apelant — sortăm o copie crescător
+  // pentru a găsi cel mai mic maxThicknessMm ≥ grosime.
+  const rates = [...catalogs.cuttingRates].sort((a, b) => a.maxThicknessMm - b.maxThicknessMm);
 
   let boards = 0;
   let cuttingService = 0;
@@ -51,7 +54,7 @@ export function computeCosts(args: {
     } else {
       const sheets = need.sheets ?? 0;
       boards += sheets * material.pricing.pricePerSheet;
-      const rate = catalogs.cuttingRates.find((r) => r.maxThicknessMm >= material.thicknessMm);
+      const rate = rates.find((r) => r.maxThicknessMm >= material.thicknessMm);
       if (rate) cuttingService += sheets * rate.pricePerSheet;
     }
   }

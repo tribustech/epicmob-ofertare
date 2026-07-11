@@ -1,4 +1,4 @@
-import { findMaterial } from './carcass';
+import { assertPositiveDim, findMaterial } from './carcass';
 import type {
   CabinetInput, Catalogs, ConstructionConstants, FrontInfo, Part, PartEdges, Warning,
 } from './types';
@@ -9,6 +9,9 @@ export function drawerFrontHeights(input: CabinetInput, cc: ConstructionConstant
   if (drawers.frontHeightsMm) {
     if (drawers.frontHeightsMm.length !== drawers.count) {
       throw new Error(`Corpul ${input.label}: frontHeightsMm nu corespunde cu numărul de sertare`);
+    }
+    if (drawers.frontHeightsMm.some((h) => h <= 0)) {
+      throw new Error(`Corpul ${input.label}: frontHeightsMm conține o valoare imposibilă`);
     }
     return drawers.frontHeightsMm;
   }
@@ -27,9 +30,16 @@ export function expandFronts(
   const bandId = material.kind === 'MDF_VOPSIT' ? null : input.edgeBands.frontPerimeterId;
   const edges: PartEdges = bandId ? { l1: bandId, l2: bandId, w1: bandId, w2: bandId } : {};
 
+  if (input.blindPanelWidthMm !== undefined && input.blindPanelWidthMm < 0) {
+    throw new Error(
+      `Corpul ${input.label}: blindPanelWidthMm nu poate fi negativ (${input.blindPanelWidthMm}mm)`,
+    );
+  }
   const blindW = input.type === 'COLT' ? (input.blindPanelWidthMm ?? cc.blindPanelDefaultWidthMm) : 0;
-  const usableW = input.widthMm - 2 * cc.outerGapMm - blindW;
-  const frontH = input.heightMm - 2 * cc.outerGapMm;
+  const usableW = assertPositiveDim(
+    input.widthMm - 2 * cc.outerGapMm - blindW, 'lățime utilă fronturi', input.label,
+  );
+  const frontH = assertPositiveDim(input.heightMm - 2 * cc.outerGapMm, 'înălțime front', input.label);
 
   const parts: Part[] = [];
   const fronts: FrontInfo[] = [];
@@ -57,7 +67,9 @@ export function expandFronts(
     }
     for (const h of heights) fronts.push({ kind: 'SERTAR', widthMm: usableW, heightMm: h });
   } else if (input.doors > 0) {
-    const doorW = (usableW - (input.doors - 1) * cc.frontGapMm) / input.doors;
+    const doorW = assertPositiveDim(
+      (usableW - (input.doors - 1) * cc.frontGapMm) / input.doors, 'lățime ușă', input.label,
+    );
     parts.push({
       cabinetLabel: input.label, name: 'Ușă',
       lengthMm: frontH, widthMm: doorW, qty: input.doors,

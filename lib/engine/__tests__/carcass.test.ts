@@ -48,4 +48,14 @@ describe('expandCarcass', () => {
     const input = bazaInput({ carcassMaterialId: 'nu-exista' });
     expect(() => expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION)).toThrow(/material/i);
   });
+
+  it('spate activat fără materialId → eroare', () => {
+    const input = bazaInput({ back: { enabled: true, mount: 'FALT' } });
+    expect(() => expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION)).toThrow(/spate/i);
+  });
+
+  it('corp cu W mai mic decât 2×grosime → eroare dimensiune imposibilă', () => {
+    const input = bazaInput({ widthMm: 30 });
+    expect(() => expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION)).toThrow(/imposibilă/i);
+  });
 });

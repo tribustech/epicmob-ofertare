@@ -19,8 +19,12 @@ function formatMm(n: number): string {
 }
 
 export function cutListCsv(parts: Part[], catalogs: Catalogs): CutListFile[] {
-  const bandName = (id?: string) =>
-    id ? (catalogs.edgeBands.find((b) => b.id === id)?.name ?? id) : '';
+  const bandName = (id?: string) => {
+    if (!id) return '';
+    const band = catalogs.edgeBands.find((b) => b.id === id);
+    if (!band) throw new Error(`Cant inexistent în catalog: ${id}`);
+    return band.name;
+  };
 
   const byMaterial = new Map<string, Part[]>();
   for (const p of parts) {

@@ -6,6 +6,14 @@ export function findMaterial(catalogs: Catalogs, id: string) {
   return m;
 }
 
+/** Validează că o dimensiune derivată e strict pozitivă; altfel aruncă eroare cu eticheta corpului. */
+export function assertPositiveDim(valueMm: number, what: string, label: string): number {
+  if (valueMm <= 0) {
+    throw new Error(`Corpul ${label}: dimensiune imposibilă pentru ${what} (${valueMm}mm)`);
+  }
+  return valueMm;
+}
+
 export function expandCarcass(
   input: CabinetInput,
   catalogs: Catalogs,
@@ -17,7 +25,7 @@ export function expandCarcass(
   const carcass = findMaterial(catalogs, input.carcassMaterialId);
   const t = carcass.thicknessMm;
   const fe = input.edgeBands.carcassFrontEdgeId;
-  const innerW = W - 2 * t;
+  const innerW = assertPositiveDim(W - 2 * t, 'lățime interioară corp', label);
 
   const parts: Part[] = [
     {
@@ -33,15 +41,19 @@ export function expandCarcass(
   ];
 
   if (input.shelves > 0) {
+    const shelfW = assertPositiveDim(D - cc.shelfSetbackMm, 'lățime poliță', label);
     parts.push({
       cabinetLabel: label, name: 'Poliță',
-      lengthMm: innerW, widthMm: D - cc.shelfSetbackMm, qty: input.shelves,
+      lengthMm: innerW, widthMm: shelfW, qty: input.shelves,
       materialId: carcass.id, edges: { l1: fe },
     });
   }
 
   if (input.back.enabled) {
-    const back = findMaterial(catalogs, input.back.materialId ?? '');
+    if (!input.back.materialId) {
+      throw new Error(`Corpul ${label}: spate activat fără material`);
+    }
+    const back = findMaterial(catalogs, input.back.materialId);
     const isFalt = input.back.mount === 'FALT';
     parts.push({
       cabinetLabel: label, name: 'Spate',

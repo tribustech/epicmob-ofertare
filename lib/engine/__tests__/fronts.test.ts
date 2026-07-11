@@ -85,4 +85,28 @@ describe('expandFronts — panou orb (COLT)', () => {
     const { parts } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
     expect(parts.find((p) => p.name === 'Panou orb')!.widthMm).toBe(100);
   });
+
+  it('blindPanelWidthMm ≥ widthMm → eroare (ușă imposibilă)', () => {
+    const input = bazaInput({ type: 'COLT', blindPanelWidthMm: 600 });
+    expect(() => expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION)).toThrow(/imposibilă/i);
+  });
+
+  it('blindPanelWidthMm negativ → eroare', () => {
+    const input = bazaInput({ type: 'COLT', blindPanelWidthMm: -10 });
+    expect(() => expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION)).toThrow(/negativ/i);
+  });
+});
+
+describe('expandFronts — validare frontHeightsMm', () => {
+  it('frontHeightsMm cu valoare 0 → eroare', () => {
+    const input = sertareInput();
+    input.drawers!.frontHeightsMm = [0, 283, 283];
+    expect(() => drawerFrontHeights(input, DEFAULT_CONSTRUCTION)).toThrow(/imposibilă/i);
+  });
+
+  it('frontHeightsMm cu valoare negativă → eroare', () => {
+    const input = sertareInput();
+    input.drawers!.frontHeightsMm = [-50, 283, 283];
+    expect(() => drawerFrontHeights(input, DEFAULT_CONSTRUCTION)).toThrow(/imposibilă/i);
+  });
 });

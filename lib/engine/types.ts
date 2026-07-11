@@ -86,7 +86,7 @@ export interface CabinetInput {
     carcassFrontEdgeId: string;    // cant muchii frontale carcasă (uzual ABS 0.4)
     frontPerimeterId: string | null; // cant fronturi PAL (uzual ABS 1); MDF vopsit = fără
   };
-  blindPanelWidthMm?: number;      // doar COLT; implicit 100
+  blindPanelWidthMm?: number;      // doar COLT; implicit cc.blindPanelDefaultWidthMm
 }
 
 export interface PartEdges {
@@ -150,6 +150,7 @@ export interface HardwareLine {
   qty: number;
 }
 
+/** Potrivirea alege cel mai mic maxThicknessMm ≥ grosimea plăcii; lista nu trebuie să fie pre-sortată. */
 export interface CuttingRate {
   maxThicknessMm: number;
   pricePerSheet: number;

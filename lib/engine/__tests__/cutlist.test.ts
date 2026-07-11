@@ -28,6 +28,16 @@ describe('cutListCsv', () => {
     // zecimale cu virgulă
     expect(mdf.csv).toContain('B1;Ușă;716;296,5;2;;;;');
   });
+
+  it('piesă cu cant inexistent în catalog → eroare', () => {
+    const parts: Part[] = [
+      {
+        cabinetLabel: 'B1', name: 'Laterală', lengthMm: 720, widthMm: 560, qty: 2,
+        materialId: 'pal-alb', edges: { l1: 'cant-inexistent' },
+      },
+    ];
+    expect(() => cutListCsv(parts, TEST_CATALOGS)).toThrow(/cant/i);
+  });
 });
 
 describe('aggregateHardware', () => {

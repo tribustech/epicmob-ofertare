@@ -59,4 +59,14 @@ describe('expandCabinet', () => {
     const input = bazaInput({ frontMaterialId: null, doors: 1 });
     expect(() => expandCabinet(input, TEST_CATALOGS, cc)).toThrow(/front/i);
   });
+
+  it('SERTARE cu doors > 0 → eroare', () => {
+    const input = bazaInput({
+      type: 'SERTARE', doors: 1,
+      drawers: { count: 3, system: 'PAL_BOX', bottomMaterialId: 'pfl-alb' },
+      frontMaterialId: 'pal-alb',
+      edgeBands: { carcassFrontEdgeId: 'abs-04', frontPerimeterId: 'abs-1' },
+    });
+    expect(() => expandCabinet(input, TEST_CATALOGS, cc)).toThrow(/uși/i);
+  });
 });

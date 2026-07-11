@@ -66,4 +66,10 @@ describe('expandDrawerBoxes — METAL_BOX', () => {
     });
     expect(parts.some((p) => p.name === 'Laterală sertar')).toBe(false);
   });
+
+  it('corp foarte îngust → eroare dimensiune imposibilă pentru fundul sertarului', () => {
+    const input = sertareInput('METAL_BOX');
+    input.widthMm = 120;
+    expect(() => expandDrawerBoxes(input, TEST_CATALOGS, cc)).toThrow(/imposibilă/i);
+  });
 });
