@@ -176,6 +176,7 @@ export const duplicateCabinet = formAction(async (cabinetId: string) => {
   await prisma.cabinet.create({
     data: {
       projectId: cab.projectId,
+      assemblyId: cab.assemblyId,
       sortOrder: count,
       inputJson: JSON.stringify(input),
       hardwareJson: cab.hardwareJson,
