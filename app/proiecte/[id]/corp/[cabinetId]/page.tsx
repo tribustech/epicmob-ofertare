@@ -146,7 +146,7 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {hasInactiveRefs && (
-        <Alert variant="destructive">
+        <Alert className="border-amber-300 bg-amber-50 text-amber-800">
           <AlertDescription>
             Corpul folosește materiale/feronerie dezactivate — verifică selecturile marcate „(dezactivat)".
           </AlertDescription>
@@ -210,7 +210,7 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
                 Feronerie editată manual — sugestiile automate nu se mai aplică acestui corp. Cantitate 0 = rândul dispare la salvare.
               </p>
               {overridesStale && (
-                <Alert className="mb-2">
+                <Alert className="mb-2 border-amber-300 bg-amber-50 text-amber-800">
                   <AlertDescription>
                     ⚠ Sugestiile automate pentru dimensiunile curente diferă de feroneria editată — verifică (ex. număr balamale).
                   </AlertDescription>

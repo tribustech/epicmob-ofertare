@@ -53,7 +53,7 @@ export function toCabinetInput(d: CabinetFormData): CabinetInput {
     widthMm: d.widthMm,
     heightMm: d.heightMm,
     depthMm: d.depthMm,
-    shelves: d.shelves,
+    shelves: d.type === 'SERTARE' ? 0 : d.shelves,
     doors: d.type === 'SERTARE' ? 0 : d.doors,
     drawers:
       d.type === 'SERTARE'
