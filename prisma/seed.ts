@@ -61,7 +61,8 @@ async function main() {
     id: 1,
     markupPct: 30,
     sheetYieldFactor: 0.8,
-    constructionJson: JSON.stringify(DEFAULT_CONSTRUCTION),
+    // convenția atelierului EpicMob: rost 2mm între uși, 1mm la margine → ușă = L/n − 2mm, H − 2mm
+    constructionJson: JSON.stringify({ ...DEFAULT_CONSTRUCTION, frontGapMm: 2, outerGapMm: 1 }),
     defaultHingeId: 'balama-blum-cliptop',
     defaultHandleId: 'maner-standard',
     defaultLegId: 'picior-reglabil',

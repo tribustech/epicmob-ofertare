@@ -95,6 +95,9 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
             <Select name="frontPerimeterId" label="Cant fronturi" options={bandOptions} defaultValue={input.edgeBands.frontPerimeterId} allowEmpty />
             <NumberInput name="blindPanelWidthMm" label="Panou orb (mm, colț)" defaultValue={input.blindPanelWidthMm ?? null} required={false} step="1" />
           </div>
+          <p className="text-xs text-neutral-500">
+            Convenție atelier: până în 600mm lățime → 1 ușă; peste → 2 uși. Corpurile suspendate tip hotă se fac cu tipul „Corp suspendat".
+          </p>
 
           <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
             <label className="flex items-center gap-2 text-sm">
