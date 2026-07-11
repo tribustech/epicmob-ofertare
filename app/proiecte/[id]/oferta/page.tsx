@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { legHeightByCabinet, loadProject, toQuoteInput, tryComputeQuote } from '@/lib/quote/load';
+import { legHeightByCabinet, loadProject, toQuoteInput, tryComputeQuote, type LoadedCabinet } from '@/lib/quote/load';
 import { getQuoteBasis } from '@/lib/quote/basis';
 import { PrintButton } from '@/components/PrintButton';
+import { Badge } from '@/components/ui/badge';
 import { fmtLei } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -33,6 +34,15 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
   const materialName = (mid: string | null) =>
     mid ? (snapshot.materials.find((m) => m.id === mid)?.name ?? mid) : '—';
 
+  const cabinetsByAssembly = new Map<string, LoadedCabinet[]>();
+  for (const c of cabinets) {
+    if (!c.assemblyId) continue;
+    const list = cabinetsByAssembly.get(c.assemblyId) ?? [];
+    list.push(c);
+    cabinetsByAssembly.set(c.assemblyId, list);
+  }
+  const unassigned = cabinets.filter((c) => !c.assemblyId);
+
   return (
     <div className="mx-auto max-w-2xl space-y-6 bg-white p-6 print:p-0">
       <div className="flex items-start justify-between">
@@ -45,26 +55,36 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
             <p className="text-sm text-neutral-600">Client: {project.clientName} {project.clientContact ? `· ${project.clientContact}` : ''}</p>
           )}
         </div>
-        <PrintButton />
+        <div className="flex flex-col items-end gap-2">
+          {basis.kind === 'LIVE' && (
+            <Badge className="print:hidden bg-green-600 text-white hover:bg-green-600">Prețuri live</Badge>
+          )}
+          {basis.kind === 'FROZEN' && (
+            <Badge variant="outline" className="print:hidden border-amber-500 text-amber-700">
+              Prețuri înghețate la {new Date(basis.snapshot.takenAt).toLocaleDateString('ro-RO')}
+            </Badge>
+          )}
+          <PrintButton />
+        </div>
       </div>
 
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b text-left text-neutral-600">
-            <th className="py-1">Corp</th><th>Tip</th><th>Dimensiuni (L×H×A mm)</th><th>Fronturi</th>
-          </tr>
-        </thead>
-        <tbody>
-          {cabinets.map((c) => (
-            <tr key={c.id} className="border-b last:border-0">
-              <td className="py-1">{c.input.label}</td>
-              <td>{TYPE_LABELS[c.input.type] ?? c.input.type}</td>
-              <td>{c.input.widthMm} × {c.input.heightMm} × {c.input.depthMm}</td>
-              <td>{materialName(c.input.frontMaterialId)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {assemblies.map((a) => {
+        const assemblyCabinets = cabinetsByAssembly.get(a.id) ?? [];
+        if (assemblyCabinets.length === 0) return null;
+        return (
+          <div key={a.id} className="space-y-2">
+            <h2 className="text-sm font-semibold">{a.name}</h2>
+            <CabinetsTable cabinets={assemblyCabinets} materialName={materialName} />
+          </div>
+        );
+      })}
+
+      {unassigned.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold">Alte corpuri</h2>
+          <CabinetsTable cabinets={unassigned} materialName={materialName} />
+        </div>
+      )}
 
       <div className="rounded border p-4 text-right">
         <div className="text-sm text-neutral-600">Preț total (materiale, feronerie, manoperă și montaj incluse)</div>
@@ -76,5 +96,27 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
         EpicMob · contact@epicmob.ro · +40 750 402 027
       </p>
     </div>
+  );
+}
+
+function CabinetsTable({ cabinets, materialName }: { cabinets: LoadedCabinet[]; materialName: (mid: string | null) => string }) {
+  return (
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="border-b text-left text-neutral-600">
+          <th className="py-1">Corp</th><th>Tip</th><th>Dimensiuni (L×H×A mm)</th><th>Fronturi</th>
+        </tr>
+      </thead>
+      <tbody>
+        {cabinets.map((c) => (
+          <tr key={c.id} className="border-b last:border-0">
+            <td className="py-1">{c.input.label}</td>
+            <td>{TYPE_LABELS[c.input.type] ?? c.input.type}</td>
+            <td>{c.input.widthMm} × {c.input.heightMm} × {c.input.depthMm}</td>
+            <td>{materialName(c.input.frontMaterialId)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
