@@ -192,6 +192,14 @@ export const updateCabinet = formAction(async (cabinetId: string, fd: FormData) 
   revalidatePath(`/proiecte/${cab.projectId}`);
 });
 
+export const updateCabinetData = formAction(async (cabinetId: string, data: Record<string, string>) => {
+  const d = cabinetFormSchema.parse(data);
+  const input = toCabinetInput(d);
+  const cab = await prisma.cabinet.update({ where: { id: cabinetId }, data: { inputJson: JSON.stringify(input) } });
+  revalidatePath(`/proiecte/${cab.projectId}/corp/${cabinetId}`);
+  revalidatePath(`/proiecte/${cab.projectId}`);
+});
+
 export const deleteCabinet = formAction(async (cabinetId: string) => {
   const cab = await prisma.cabinet.delete({ where: { id: cabinetId } });
   revalidatePath(`/proiecte/${cab.projectId}`);
