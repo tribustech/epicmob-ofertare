@@ -1,0 +1,69 @@
+import { DEFAULT_CONSTRUCTION } from './constants';
+import { computeCosts, type CostCatalogs, type CostResult } from './costing';
+import { resolveSuggestions } from './hardware';
+import { expandCabinet } from './templates';
+import type {
+  CabinetInput, ConstructionConstants, ExpandedCabinet, FreeLine,
+  HardwareDefaults, HardwareLine, HardwareSuggestion, Part, Warning,
+} from './types';
+
+export interface ProjectInput {
+  cabinets: CabinetInput[];
+  freeLines: FreeLine[];
+  markupPct: number;
+  yieldFactor: number;
+}
+
+export interface ProjectCatalogs extends CostCatalogs {
+  hardwareDefaults: HardwareDefaults;
+}
+
+export interface ProjectResult {
+  cabinets: ExpandedCabinet[];
+  parts: Part[];
+  hardwareLines: HardwareLine[];
+  unresolvedHardware: HardwareSuggestion[];
+  costs: CostResult;
+  warnings: Warning[];
+}
+
+export function computeProject(
+  project: ProjectInput,
+  catalogs: ProjectCatalogs,
+  cc: ConstructionConstants = DEFAULT_CONSTRUCTION,
+): ProjectResult {
+  const cabinets = project.cabinets.map((c) => expandCabinet(c, catalogs, cc));
+  const parts = cabinets.flatMap((c) => c.parts);
+  const suggestions = cabinets.flatMap((c) => c.hardware);
+  const { lines, unresolved } = resolveSuggestions(suggestions, catalogs.hardwareDefaults);
+
+  const costs = computeCosts({
+    parts,
+    hardwareLines: lines,
+    cabinets: project.cabinets,
+    freeLines: project.freeLines,
+    markupPct: project.markupPct,
+    yieldFactor: project.yieldFactor,
+    catalogs,
+  });
+
+  return {
+    cabinets,
+    parts,
+    hardwareLines: lines,
+    unresolvedHardware: unresolved,
+    costs,
+    warnings: cabinets.flatMap((c) => c.warnings),
+  };
+}
+
+// API public al motorului — consumat de aplicația web (Planul 2)
+export { DEFAULT_CONSTRUCTION } from './constants';
+export { expandCabinet } from './templates';
+export { computeMaterialNeeds, type BoardNeed, type EdgingNeed } from './needs';
+export { computeCosts, type CostCatalogs, type CostBreakdown, type CostResult } from './costing';
+export { cutListCsv, aggregateHardware, type CutListFile, type HardwareSummaryRow } from './cutlist';
+export { suggestHardware, resolveSuggestions } from './hardware';
+export { suggestHingeCount, doorWeightKg } from './hinges';
+export { pickSlideNominal } from './drawers';
+export * from './types';
