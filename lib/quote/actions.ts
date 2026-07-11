@@ -93,26 +93,53 @@ export const deleteProject = formAction(async (id: string) => {
 });
 
 export const duplicateProject = formAction(async (id: string) => {
-  const project = await prisma.project.findUniqueOrThrow({ where: { id }, include: { cabinets: true } });
-  const copy = await prisma.project.create({
-    data: {
-      name: `${project.name} (copie)`,
-      clientName: project.clientName,
-      clientContact: project.clientContact,
-      markupPct: project.markupPct,
-      yieldFactor: project.yieldFactor,
-      freeLinesJson: project.freeLinesJson,
-      snapshotJson: project.snapshotJson,
-      cabinets: {
-        create: project.cabinets.map((c) => ({
+  const project = await prisma.project.findUniqueOrThrow({
+    where: { id },
+    include: { assemblies: true, cabinets: true },
+  });
+
+  const copy = await prisma.$transaction(async (tx) => {
+    const copy = await tx.project.create({
+      data: {
+        name: `${project.name} (copie)`,
+        clientName: project.clientName,
+        clientContact: project.clientContact,
+        markupPct: project.markupPct,
+        yieldFactor: project.yieldFactor,
+        freeLinesJson: project.freeLinesJson,
+        snapshotJson: project.snapshotJson,
+      },
+    });
+
+    const assemblyIdMap = new Map<string, string>();
+    for (const a of project.assemblies) {
+      const newAssembly = await tx.assembly.create({
+        data: {
+          projectId: copy.id,
+          name: a.name,
+          legHeightMm: a.legHeightMm,
+          sortOrder: a.sortOrder,
+        },
+      });
+      assemblyIdMap.set(a.id, newAssembly.id);
+    }
+
+    for (const c of project.cabinets) {
+      await tx.cabinet.create({
+        data: {
+          projectId: copy.id,
+          assemblyId: c.assemblyId ? (assemblyIdMap.get(c.assemblyId) ?? null) : null,
           sortOrder: c.sortOrder,
           inputJson: c.inputJson,
           hardwareJson: c.hardwareJson,
           extraPartsJson: c.extraPartsJson,
-        })),
-      },
-    },
+        },
+      });
+    }
+
+    return copy;
   });
+
   revalidatePath('/proiecte');
   redirect(`/proiecte/${copy.id}`);
 });
@@ -179,17 +206,6 @@ export const addCabinet = formAction(async (projectId: string, assemblyId: strin
   });
   revalidatePath(`/proiecte/${projectId}`);
   redirect(`/proiecte/${projectId}/corp/${cab.id}`);
-});
-
-export const updateCabinet = formAction(async (cabinetId: string, fd: FormData) => {
-  const d = cabinetFormSchema.parse(formDataToObject(fd));
-  const input = toCabinetInput(d);
-  const cab = await prisma.cabinet.update({
-    where: { id: cabinetId },
-    data: { inputJson: JSON.stringify(input) },
-  });
-  revalidatePath(`/proiecte/${cab.projectId}/corp/${cabinetId}`);
-  revalidatePath(`/proiecte/${cab.projectId}`);
 });
 
 export const updateCabinetData = formAction(async (cabinetId: string, data: Record<string, string>) => {

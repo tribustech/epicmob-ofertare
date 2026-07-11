@@ -5,6 +5,7 @@ import { buildHardwareDefaults, parseConstruction, toCostCatalogs } from '@/lib/
 import { expandCabinet, resolveSuggestions, type CabinetInput, type ExpandedCabinet, type HardwareLine } from '@/lib/engine';
 import { addExtraPart, removeExtraPart, resetCabinetHardware, saveCabinetHardware, updateCabinetData } from '@/lib/quote/actions';
 import { buildSnapshot } from '@/lib/quote/snapshot';
+import { pickLegId } from '@/lib/quote/legs';
 import type { ExtraPart } from '@/lib/quote/cabinet-form';
 import { CabinetEditorForm, type FieldOption } from '@/components/CabinetEditorForm';
 import { ActionForm } from '@/components/ActionForm';
@@ -122,6 +123,9 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
   let unresolvedSuggestions: { category: string; name: string; qty: number }[] = [];
   if (expanded && settings) {
     const defaults = buildHardwareDefaults(activeHardwareItems, settings);
+    if (legHeightMm != null) {
+      defaults.legId = pickLegId(hardwareItems, legHeightMm, defaults.legId);
+    }
     const resolved = resolveSuggestions(expanded.hardware, defaults);
     suggestedLines = resolved.lines;
     unresolvedSuggestions = resolved.unresolved;
