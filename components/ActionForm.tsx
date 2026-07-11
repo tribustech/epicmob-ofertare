@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 import type { ReactNode } from 'react';
 import type { FormState } from '@/lib/forms/form-action';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export function ActionForm(props: {
   action: (fd: FormData) => Promise<FormState>;
@@ -16,7 +17,9 @@ export function ActionForm(props: {
   return (
     <form action={dispatch} className={props.className}>
       {state.error && (
-        <p className="mb-2 rounded bg-red-50 px-2 py-1 text-sm text-red-700">{state.error}</p>
+        <Alert variant="destructive" className="mb-2">
+          <AlertDescription>{state.error}</AlertDescription>
+        </Alert>
       )}
       {props.children}
     </form>

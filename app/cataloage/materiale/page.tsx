@@ -3,6 +3,7 @@ import { createMaterial, deactivateMaterial, updateMaterial } from '@/lib/catalo
 import { NumberInput, Select, SubmitButton, TextInput } from '@/components/forms';
 import { DeleteButton } from '@/components/DeleteButton';
 import { ActionForm } from '@/components/ActionForm';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,29 +44,33 @@ export default async function MaterialePage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-xl font-bold">Materiale plăci</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Materiale plăci</h1>
 
-      <ul className="space-y-4">
+      <div className="space-y-3">
         {materials.map((m) => (
-          <li key={m.id} className="rounded border bg-white p-3">
-            <div className="flex items-end gap-3">
+          <Card key={m.id}>
+            <CardContent className="flex items-end gap-3">
               <ActionForm action={updateMaterial.bind(null, m.id)} className="grow space-y-2">
                 <MaterialFields m={m} />
                 <SubmitButton>Salvează</SubmitButton>
               </ActionForm>
               <DeleteButton action={deactivateMaterial.bind(null, m.id)} />
-            </div>
-          </li>
+            </CardContent>
+          </Card>
         ))}
-      </ul>
+      </div>
 
-      <section className="rounded border bg-white p-3">
-        <h2 className="mb-2 font-semibold">Adaugă material</h2>
-        <ActionForm action={createMaterial} className="space-y-2">
-          <MaterialFields />
-          <SubmitButton>Adaugă</SubmitButton>
-        </ActionForm>
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>Adaugă material</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ActionForm action={createMaterial} className="space-y-2">
+            <MaterialFields />
+            <SubmitButton>Adaugă</SubmitButton>
+          </ActionForm>
+        </CardContent>
+      </Card>
     </div>
   );
 }

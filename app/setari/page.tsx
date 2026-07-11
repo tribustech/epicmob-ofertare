@@ -1,8 +1,9 @@
 import { prisma } from '@/lib/db';
 import { updateConstruction, updateSettings } from '@/lib/catalog/actions';
 import { parseConstruction } from '@/lib/catalog/convert';
-import { NumberInput, Select, SubmitButton } from '@/components/forms';
+import { NumberInput, Select, SubmitButton, TextInput } from '@/components/forms';
 import { ActionForm } from '@/components/ActionForm';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,51 +37,58 @@ export default async function SetariPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-xl font-bold">Setări</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Setări</h1>
 
-      <section className="rounded border bg-white p-3">
-        <h2 className="mb-2 font-semibold">Ofertare și feronerie implicită</h2>
-        <ActionForm action={updateSettings} className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            <NumberInput name="markupPct" label="Adaos implicit (%)" defaultValue={settings.markupPct} />
-            <NumberInput name="sheetYieldFactor" label="Factor utilizare foaie (0–1)" defaultValue={settings.sheetYieldFactor} step="0.01" />
-          </div>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-            <Select name="defaultHingeId" label="Balama implicită" options={byCategory('BALAMA')} defaultValue={settings.defaultHingeId} allowEmpty />
-            <Select name="defaultHandleId" label="Mâner implicit" options={byCategory('MANER')} defaultValue={settings.defaultHandleId} allowEmpty />
-            <Select name="defaultLegId" label="Picior implicit" options={byCategory('PICIOR')} defaultValue={settings.defaultLegId} allowEmpty />
-            <Select name="defaultRailId" label="Șină implicită" options={byCategory('SINA_SUSPENDARE')} defaultValue={settings.defaultRailId} allowEmpty />
-          </div>
-          <SubmitButton>Salvează setările</SubmitButton>
-        </ActionForm>
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>Ofertare și feronerie implicită</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ActionForm action={updateSettings} className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <NumberInput name="markupPct" label="Adaos implicit (%)" defaultValue={settings.markupPct} />
+              <NumberInput name="sheetYieldFactor" label="Factor utilizare foaie (0–1)" defaultValue={settings.sheetYieldFactor} step="0.01" />
+            </div>
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+              <Select name="defaultHingeId" label="Balama implicită" options={byCategory('BALAMA')} defaultValue={settings.defaultHingeId} allowEmpty />
+              <Select name="defaultHandleId" label="Mâner implicit" options={byCategory('MANER')} defaultValue={settings.defaultHandleId} allowEmpty />
+              <Select name="defaultLegId" label="Picior implicit" options={byCategory('PICIOR')} defaultValue={settings.defaultLegId} allowEmpty />
+              <Select name="defaultRailId" label="Șină implicită" options={byCategory('SINA_SUSPENDARE')} defaultValue={settings.defaultRailId} allowEmpty />
+            </div>
+            <SubmitButton>Salvează setările</SubmitButton>
+          </ActionForm>
+        </CardContent>
+      </Card>
 
-      <section className="rounded border bg-white p-3">
-        <h2 className="mb-2 font-semibold">Constante de construcție</h2>
-        <p className="mb-3 text-sm text-neutral-600">
-          Regulile după care se generează piesele. Modifică doar dacă atelierul lucrează altfel.
-        </p>
-        <ActionForm action={updateConstruction} className="space-y-3">
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-            {Object.entries(CONSTRUCTION_LABELS).map(([key, label]) => (
-              <NumberInput
-                key={key} name={key} label={label}
-                defaultValue={construction[key as keyof typeof construction] as number}
-                step="0.001"
-              />
-            ))}
-            <label className="col-span-2 block text-sm">
-              <span className="text-neutral-600">Lungimi nominale glisiere (mm, separate prin virgulă)</span>
-              <input
-                type="text" name="slideNominalsMm"
-                defaultValue={construction.slideNominalsMm.join(', ')}
-                className="w-full rounded border border-neutral-300 px-2 py-1 text-sm"
-              />
-            </label>
-          </div>
-          <SubmitButton>Salvează constantele</SubmitButton>
-        </ActionForm>
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>Constante de construcție</CardTitle>
+          <CardDescription>
+            Regulile după care se generează piesele. Modifică doar dacă atelierul lucrează altfel.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ActionForm action={updateConstruction} className="space-y-3">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+              {Object.entries(CONSTRUCTION_LABELS).map(([key, label]) => (
+                <NumberInput
+                  key={key} name={key} label={label}
+                  defaultValue={construction[key as keyof typeof construction] as number}
+                  step="0.001"
+                />
+              ))}
+              <div className="col-span-2">
+                <TextInput
+                  name="slideNominalsMm"
+                  label="Lungimi nominale glisiere (mm, separate prin virgulă)"
+                  defaultValue={construction.slideNominalsMm.join(', ')}
+                />
+              </div>
+            </div>
+            <SubmitButton>Salvează constantele</SubmitButton>
+          </ActionForm>
+        </CardContent>
+      </Card>
     </div>
   );
 }

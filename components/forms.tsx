@@ -1,13 +1,28 @@
 import type { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 
-const inputCls = 'w-full rounded border border-neutral-300 px-2 py-1 text-sm';
+const selectCls = cn(
+  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none',
+  'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50',
+  'disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50',
+  'md:text-sm dark:bg-input/30 dark:disabled:bg-input/80',
+);
 
 export function TextInput(props: { name: string; label: string; defaultValue?: string; required?: boolean }) {
   return (
-    <label className="block text-sm">
-      <span className="text-neutral-600">{props.label}</span>
-      <input type="text" name={props.name} defaultValue={props.defaultValue} required={props.required ?? true} className={inputCls} />
-    </label>
+    <div className="grid gap-1">
+      <Label htmlFor={props.name}>{props.label}</Label>
+      <Input
+        id={props.name}
+        type="text"
+        name={props.name}
+        defaultValue={props.defaultValue}
+        required={props.required ?? true}
+      />
+    </div>
   );
 }
 
@@ -15,14 +30,18 @@ export function NumberInput(props: {
   name: string; label: string; defaultValue?: number | null; required?: boolean; step?: string; min?: string;
 }) {
   return (
-    <label className="block text-sm">
-      <span className="text-neutral-600">{props.label}</span>
-      <input
-        type="number" name={props.name} step={props.step ?? '0.01'} min={props.min ?? '0'}
-        defaultValue={props.defaultValue ?? undefined} required={props.required ?? true}
-        className={inputCls}
+    <div className="grid gap-1">
+      <Label htmlFor={props.name}>{props.label}</Label>
+      <Input
+        id={props.name}
+        type="number"
+        name={props.name}
+        step={props.step ?? '0.01'}
+        min={props.min ?? '0'}
+        defaultValue={props.defaultValue ?? undefined}
+        required={props.required ?? true}
       />
-    </label>
+    </div>
   );
 }
 
@@ -31,22 +50,18 @@ export function Select(props: {
   defaultValue?: string | null; allowEmpty?: boolean;
 }) {
   return (
-    <label className="block text-sm">
-      <span className="text-neutral-600">{props.label}</span>
-      <select name={props.name} defaultValue={props.defaultValue ?? ''} className={inputCls}>
+    <div className="grid gap-1">
+      <Label htmlFor={props.name}>{props.label}</Label>
+      <select id={props.name} name={props.name} defaultValue={props.defaultValue ?? ''} className={selectCls}>
         {props.allowEmpty && <option value="">—</option>}
         {props.options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
-    </label>
+    </div>
   );
 }
 
 export function SubmitButton({ children }: { children: ReactNode }) {
-  return (
-    <button type="submit" className="rounded bg-neutral-900 px-3 py-1.5 text-sm text-white hover:bg-neutral-700">
-      {children}
-    </button>
-  );
+  return <Button type="submit">{children}</Button>;
 }

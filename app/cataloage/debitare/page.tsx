@@ -3,6 +3,8 @@ import { createCuttingRate, deleteCuttingRate, updateCuttingRate } from '@/lib/c
 import { NumberInput, SubmitButton } from '@/components/forms';
 import { DeleteButton } from '@/components/DeleteButton';
 import { ActionForm } from '@/components/ActionForm';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,30 +21,48 @@ export default async function DebitarePage() {
   const rates = await prisma.cuttingRate.findMany({ orderBy: { maxThicknessMm: 'asc' } });
   return (
     <div className="space-y-8">
-      <h1 className="text-xl font-bold">Tarife debitare (per foaie)</h1>
-      <p className="text-sm text-neutral-600">
-        Se aplică tariful cu cea mai mică grosime maximă care acoperă grosimea plăcii.
-      </p>
-      <ul className="space-y-4">
-        {rates.map((r) => (
-          <li key={r.id} className="rounded border bg-white p-3">
-            <div className="flex items-end gap-3">
-              <ActionForm action={updateCuttingRate.bind(null, r.id)} className="grow space-y-2">
-                <RateFields r={r} />
-                <SubmitButton>Salvează</SubmitButton>
-              </ActionForm>
-              <DeleteButton action={deleteCuttingRate.bind(null, r.id)} />
-            </div>
-          </li>
-        ))}
-      </ul>
-      <section className="rounded border bg-white p-3">
-        <h2 className="mb-2 font-semibold">Adaugă tarif</h2>
-        <ActionForm action={createCuttingRate} className="space-y-2">
-          <RateFields />
-          <SubmitButton>Adaugă</SubmitButton>
-        </ActionForm>
-      </section>
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight">Tarife debitare (per foaie)</h1>
+        <p className="text-sm text-muted-foreground">
+          Se aplică tariful cu cea mai mică grosime maximă care acoperă grosimea plăcii.
+        </p>
+      </div>
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Tarif</TableHead>
+              <TableHead className="w-px">Acțiuni</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rates.map((r) => (
+              <TableRow key={r.id}>
+                <TableCell>
+                  <ActionForm action={updateCuttingRate.bind(null, r.id)} className="flex items-end gap-3">
+                    <RateFields r={r} />
+                    <SubmitButton>Salvează</SubmitButton>
+                  </ActionForm>
+                </TableCell>
+                <TableCell>
+                  <DeleteButton action={deleteCuttingRate.bind(null, r.id)} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Adaugă tarif</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ActionForm action={createCuttingRate} className="space-y-2">
+            <RateFields />
+            <SubmitButton>Adaugă</SubmitButton>
+          </ActionForm>
+        </CardContent>
+      </Card>
     </div>
   );
 }

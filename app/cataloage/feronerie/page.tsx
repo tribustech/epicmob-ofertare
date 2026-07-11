@@ -3,6 +3,7 @@ import { createHardware, deactivateHardware, updateHardware } from '@/lib/catalo
 import { NumberInput, Select, SubmitButton, TextInput } from '@/components/forms';
 import { DeleteButton } from '@/components/DeleteButton';
 import { ActionForm } from '@/components/ActionForm';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,30 +38,36 @@ export default async function FeroneriePage() {
   });
   return (
     <div className="space-y-8">
-      <h1 className="text-xl font-bold">Feronerie</h1>
-      <p className="text-sm text-neutral-600">
-        La sertare/glisiere completează lungimea nominală — aplicația alege automat setul potrivit după adâncimea corpului.
-      </p>
-      <ul className="space-y-4">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight">Feronerie</h1>
+        <p className="text-sm text-muted-foreground">
+          La sertare/glisiere completează lungimea nominală — aplicația alege automat setul potrivit după adâncimea corpului.
+        </p>
+      </div>
+      <div className="space-y-3">
         {items.map((h) => (
-          <li key={h.id} className="rounded border bg-white p-3">
-            <div className="flex items-end gap-3">
+          <Card key={h.id}>
+            <CardContent className="flex items-end gap-3">
               <ActionForm action={updateHardware.bind(null, h.id)} className="grow space-y-2">
                 <HardwareFields h={h} />
                 <SubmitButton>Salvează</SubmitButton>
               </ActionForm>
               <DeleteButton action={deactivateHardware.bind(null, h.id)} />
-            </div>
-          </li>
+            </CardContent>
+          </Card>
         ))}
-      </ul>
-      <section className="rounded border bg-white p-3">
-        <h2 className="mb-2 font-semibold">Adaugă feronerie</h2>
-        <ActionForm action={createHardware} className="space-y-2">
-          <HardwareFields />
-          <SubmitButton>Adaugă</SubmitButton>
-        </ActionForm>
-      </section>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Adaugă feronerie</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ActionForm action={createHardware} className="space-y-2">
+            <HardwareFields />
+            <SubmitButton>Adaugă</SubmitButton>
+          </ActionForm>
+        </CardContent>
+      </Card>
     </div>
   );
 }

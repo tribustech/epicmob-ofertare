@@ -3,6 +3,7 @@ import { createEdgeBand, deactivateEdgeBand, updateEdgeBand } from '@/lib/catalo
 import { NumberInput, SubmitButton, TextInput } from '@/components/forms';
 import { DeleteButton } from '@/components/DeleteButton';
 import { ActionForm } from '@/components/ActionForm';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,27 +21,31 @@ export default async function CanturiPage() {
   const bands = await prisma.edgeBand.findMany({ where: { active: true }, orderBy: { thicknessMm: 'asc' } });
   return (
     <div className="space-y-8">
-      <h1 className="text-xl font-bold">Canturi ABS</h1>
-      <ul className="space-y-4">
+      <h1 className="text-2xl font-semibold tracking-tight">Canturi ABS</h1>
+      <div className="space-y-3">
         {bands.map((e) => (
-          <li key={e.id} className="rounded border bg-white p-3">
-            <div className="flex items-end gap-3">
+          <Card key={e.id}>
+            <CardContent className="flex items-end gap-3">
               <ActionForm action={updateEdgeBand.bind(null, e.id)} className="grow space-y-2">
                 <EdgeBandFields e={e} />
                 <SubmitButton>Salvează</SubmitButton>
               </ActionForm>
               <DeleteButton action={deactivateEdgeBand.bind(null, e.id)} />
-            </div>
-          </li>
+            </CardContent>
+          </Card>
         ))}
-      </ul>
-      <section className="rounded border bg-white p-3">
-        <h2 className="mb-2 font-semibold">Adaugă cant</h2>
-        <ActionForm action={createEdgeBand} className="space-y-2">
-          <EdgeBandFields />
-          <SubmitButton>Adaugă</SubmitButton>
-        </ActionForm>
-      </section>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Adaugă cant</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ActionForm action={createEdgeBand} className="space-y-2">
+            <EdgeBandFields />
+            <SubmitButton>Adaugă</SubmitButton>
+          </ActionForm>
+        </CardContent>
+      </Card>
     </div>
   );
 }
