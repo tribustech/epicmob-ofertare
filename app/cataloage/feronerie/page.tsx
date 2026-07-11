@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db';
 import { createHardware, deactivateHardware, updateHardware } from '@/lib/catalog/actions';
 import { NumberInput, Select, SubmitButton, TextInput } from '@/components/forms';
 import { DeleteButton } from '@/components/DeleteButton';
+import { ActionForm } from '@/components/ActionForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,10 +45,10 @@ export default async function FeroneriePage() {
         {items.map((h) => (
           <li key={h.id} className="rounded border bg-white p-3">
             <div className="flex items-end gap-3">
-              <form action={updateHardware.bind(null, h.id)} className="grow space-y-2">
+              <ActionForm action={updateHardware.bind(null, h.id)} className="grow space-y-2">
                 <HardwareFields h={h} />
                 <SubmitButton>Salvează</SubmitButton>
-              </form>
+              </ActionForm>
               <DeleteButton action={deactivateHardware.bind(null, h.id)} />
             </div>
           </li>
@@ -55,10 +56,10 @@ export default async function FeroneriePage() {
       </ul>
       <section className="rounded border bg-white p-3">
         <h2 className="mb-2 font-semibold">Adaugă feronerie</h2>
-        <form action={createHardware} className="space-y-2">
+        <ActionForm action={createHardware} className="space-y-2">
           <HardwareFields />
           <SubmitButton>Adaugă</SubmitButton>
-        </form>
+        </ActionForm>
       </section>
     </div>
   );

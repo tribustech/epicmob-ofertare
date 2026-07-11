@@ -12,13 +12,13 @@ export function TextInput(props: { name: string; label: string; defaultValue?: s
 }
 
 export function NumberInput(props: {
-  name: string; label: string; defaultValue?: number | null; required?: boolean; step?: string;
+  name: string; label: string; defaultValue?: number | null; required?: boolean; step?: string; min?: string;
 }) {
   return (
     <label className="block text-sm">
       <span className="text-neutral-600">{props.label}</span>
       <input
-        type="number" name={props.name} step={props.step ?? '0.01'} min="0"
+        type="number" name={props.name} step={props.step ?? '0.01'} min={props.min ?? '0'}
         defaultValue={props.defaultValue ?? undefined} required={props.required ?? true}
         className={inputCls}
       />

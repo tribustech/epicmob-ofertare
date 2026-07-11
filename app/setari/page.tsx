@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db';
 import { updateConstruction, updateSettings } from '@/lib/catalog/actions';
 import { parseConstruction } from '@/lib/catalog/convert';
 import { NumberInput, Select, SubmitButton } from '@/components/forms';
+import { ActionForm } from '@/components/ActionForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,7 +40,7 @@ export default async function SetariPage() {
 
       <section className="rounded border bg-white p-3">
         <h2 className="mb-2 font-semibold">Ofertare și feronerie implicită</h2>
-        <form action={updateSettings} className="space-y-3">
+        <ActionForm action={updateSettings} className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <NumberInput name="markupPct" label="Adaos implicit (%)" defaultValue={settings.markupPct} />
             <NumberInput name="sheetYieldFactor" label="Factor utilizare foaie (0–1)" defaultValue={settings.sheetYieldFactor} step="0.01" />
@@ -51,7 +52,7 @@ export default async function SetariPage() {
             <Select name="defaultRailId" label="Șină implicită" options={byCategory('SINA_SUSPENDARE')} defaultValue={settings.defaultRailId} allowEmpty />
           </div>
           <SubmitButton>Salvează setările</SubmitButton>
-        </form>
+        </ActionForm>
       </section>
 
       <section className="rounded border bg-white p-3">
@@ -59,7 +60,7 @@ export default async function SetariPage() {
         <p className="mb-3 text-sm text-neutral-600">
           Regulile după care se generează piesele. Modifică doar dacă atelierul lucrează altfel.
         </p>
-        <form action={updateConstruction} className="space-y-3">
+        <ActionForm action={updateConstruction} className="space-y-3">
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             {Object.entries(CONSTRUCTION_LABELS).map(([key, label]) => (
               <NumberInput
@@ -78,7 +79,7 @@ export default async function SetariPage() {
             </label>
           </div>
           <SubmitButton>Salvează constantele</SubmitButton>
-        </form>
+        </ActionForm>
       </section>
     </div>
   );

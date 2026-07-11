@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { DEFAULT_CONSTRUCTION } from '@/lib/engine';
+import { formAction } from '@/lib/forms/form-action';
 import {
   cuttingRateSchema, edgeBandSchema, formDataToObject, hardwareSchema,
   laborRateSchema, materialSchema, settingsSchema,
@@ -19,31 +20,31 @@ function materialData(fd: FormData) {
   };
 }
 
-export async function createMaterial(fd: FormData) {
+export const createMaterial = formAction(async (fd: FormData) => {
   await prisma.material.create({ data: materialData(fd) });
   revalidatePath('/cataloage/materiale');
-}
-export async function updateMaterial(id: string, fd: FormData) {
+});
+export const updateMaterial = formAction(async (id: string, fd: FormData) => {
   await prisma.material.update({ where: { id }, data: materialData(fd) });
   revalidatePath('/cataloage/materiale');
-}
-export async function deactivateMaterial(id: string) {
+});
+export const deactivateMaterial = formAction(async (id: string) => {
   await prisma.material.update({ where: { id }, data: { active: false } });
   revalidatePath('/cataloage/materiale');
-}
+});
 
-export async function createEdgeBand(fd: FormData) {
+export const createEdgeBand = formAction(async (fd: FormData) => {
   await prisma.edgeBand.create({ data: edgeBandSchema.parse(formDataToObject(fd)) });
   revalidatePath('/cataloage/canturi');
-}
-export async function updateEdgeBand(id: string, fd: FormData) {
+});
+export const updateEdgeBand = formAction(async (id: string, fd: FormData) => {
   await prisma.edgeBand.update({ where: { id }, data: edgeBandSchema.parse(formDataToObject(fd)) });
   revalidatePath('/cataloage/canturi');
-}
-export async function deactivateEdgeBand(id: string) {
+});
+export const deactivateEdgeBand = formAction(async (id: string) => {
   await prisma.edgeBand.update({ where: { id }, data: { active: false } });
   revalidatePath('/cataloage/canturi');
-}
+});
 
 function hardwareData(fd: FormData) {
   const d = hardwareSchema.parse(formDataToObject(fd));
@@ -53,17 +54,17 @@ function hardwareData(fd: FormData) {
   };
 }
 
-export async function createHardware(fd: FormData) {
+export const createHardware = formAction(async (fd: FormData) => {
   await prisma.hardwareItem.create({ data: hardwareData(fd) });
   revalidatePath('/cataloage/feronerie');
   revalidatePath('/setari');
-}
-export async function updateHardware(id: string, fd: FormData) {
+});
+export const updateHardware = formAction(async (id: string, fd: FormData) => {
   await prisma.hardwareItem.update({ where: { id }, data: hardwareData(fd) });
   revalidatePath('/cataloage/feronerie');
   revalidatePath('/setari');
-}
-export async function deactivateHardware(id: string) {
+});
+export const deactivateHardware = formAction(async (id: string) => {
   const settings = await prisma.appSettings.findUnique({ where: { id: 1 } });
   if (
     settings &&
@@ -77,28 +78,28 @@ export async function deactivateHardware(id: string) {
   await prisma.hardwareItem.update({ where: { id }, data: { active: false } });
   revalidatePath('/cataloage/feronerie');
   revalidatePath('/setari');
-}
+});
 
-export async function createCuttingRate(fd: FormData) {
+export const createCuttingRate = formAction(async (fd: FormData) => {
   await prisma.cuttingRate.create({ data: cuttingRateSchema.parse(formDataToObject(fd)) });
   revalidatePath('/cataloage/debitare');
-}
-export async function updateCuttingRate(id: string, fd: FormData) {
+});
+export const updateCuttingRate = formAction(async (id: string, fd: FormData) => {
   await prisma.cuttingRate.update({ where: { id }, data: cuttingRateSchema.parse(formDataToObject(fd)) });
   revalidatePath('/cataloage/debitare');
-}
-export async function deleteCuttingRate(id: string) {
+});
+export const deleteCuttingRate = formAction(async (id: string) => {
   await prisma.cuttingRate.delete({ where: { id } });
   revalidatePath('/cataloage/debitare');
-}
+});
 
-export async function updateLaborRate(cabinetType: string, fd: FormData) {
+export const updateLaborRate = formAction(async (cabinetType: string, fd: FormData) => {
   const d = laborRateSchema.parse(formDataToObject(fd));
   await prisma.laborRate.update({ where: { cabinetType }, data: { price: d.price } });
   revalidatePath('/cataloage/manopera');
-}
+});
 
-export async function updateSettings(fd: FormData) {
+export const updateSettings = formAction(async (fd: FormData) => {
   const d = settingsSchema.parse(formDataToObject(fd));
   await prisma.appSettings.update({
     where: { id: 1 },
@@ -109,15 +110,16 @@ export async function updateSettings(fd: FormData) {
     },
   });
   revalidatePath('/setari');
-}
+});
 
-export async function updateConstruction(fd: FormData) {
+export const updateConstruction = formAction(async (fd: FormData) => {
   const obj = formDataToObject(fd);
   const construction: Record<string, number | number[]> = {};
   for (const key of Object.keys(DEFAULT_CONSTRUCTION)) {
     if (key === 'slideNominalsMm') {
       const raw = obj[key];
       if (raw !== undefined) {
+        if (raw === '') throw new Error('Lista de lungimi nominale nu poate fi goală');
         construction[key] = raw.split(',').map((s) => {
           const n = Number(s.trim());
           if (!Number.isFinite(n) || n <= 0) throw new Error(`Valoare invalidă în lista de nominale: ${s}`);
@@ -129,7 +131,7 @@ export async function updateConstruction(fd: FormData) {
     const raw = obj[key];
     if (raw !== undefined && raw !== '') {
       const n = Number(raw);
-      if (!Number.isFinite(n)) throw new Error(`Valoare invalidă pentru ${key}: ${raw}`);
+      if (!Number.isFinite(n) || n < 0) throw new Error(`Valoare invalidă pentru ${key}: ${raw}`);
       construction[key] = n;
     }
   }
@@ -138,4 +140,4 @@ export async function updateConstruction(fd: FormData) {
     data: { constructionJson: JSON.stringify({ ...DEFAULT_CONSTRUCTION, ...construction }) },
   });
   revalidatePath('/setari');
-}
+});

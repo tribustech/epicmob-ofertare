@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db';
 import { createMaterial, deactivateMaterial, updateMaterial } from '@/lib/catalog/actions';
 import { NumberInput, Select, SubmitButton, TextInput } from '@/components/forms';
 import { DeleteButton } from '@/components/DeleteButton';
+import { ActionForm } from '@/components/ActionForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,10 +49,10 @@ export default async function MaterialePage() {
         {materials.map((m) => (
           <li key={m.id} className="rounded border bg-white p-3">
             <div className="flex items-end gap-3">
-              <form action={updateMaterial.bind(null, m.id)} className="grow space-y-2">
+              <ActionForm action={updateMaterial.bind(null, m.id)} className="grow space-y-2">
                 <MaterialFields m={m} />
                 <SubmitButton>Salvează</SubmitButton>
-              </form>
+              </ActionForm>
               <DeleteButton action={deactivateMaterial.bind(null, m.id)} />
             </div>
           </li>
@@ -60,10 +61,10 @@ export default async function MaterialePage() {
 
       <section className="rounded border bg-white p-3">
         <h2 className="mb-2 font-semibold">Adaugă material</h2>
-        <form action={createMaterial} className="space-y-2">
+        <ActionForm action={createMaterial} className="space-y-2">
           <MaterialFields />
           <SubmitButton>Adaugă</SubmitButton>
-        </form>
+        </ActionForm>
       </section>
     </div>
   );

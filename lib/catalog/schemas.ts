@@ -26,7 +26,7 @@ export const materialSchema = z
   })
   .refine(
     (d) => (d.pricingMode === 'PER_SHEET' ? d.pricePerSheet !== undefined : d.pricePerSqm !== undefined),
-    { message: 'Lipsește prețul pentru modul de preț ales' },
+    { message: 'Lipsește prețul pentru modul de preț ales', path: ['pricingMode'] },
   );
 
 export const edgeBandSchema = z.object({

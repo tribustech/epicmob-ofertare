@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db';
 import { createEdgeBand, deactivateEdgeBand, updateEdgeBand } from '@/lib/catalog/actions';
 import { NumberInput, SubmitButton, TextInput } from '@/components/forms';
 import { DeleteButton } from '@/components/DeleteButton';
+import { ActionForm } from '@/components/ActionForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,10 +25,10 @@ export default async function CanturiPage() {
         {bands.map((e) => (
           <li key={e.id} className="rounded border bg-white p-3">
             <div className="flex items-end gap-3">
-              <form action={updateEdgeBand.bind(null, e.id)} className="grow space-y-2">
+              <ActionForm action={updateEdgeBand.bind(null, e.id)} className="grow space-y-2">
                 <EdgeBandFields e={e} />
                 <SubmitButton>Salvează</SubmitButton>
-              </form>
+              </ActionForm>
               <DeleteButton action={deactivateEdgeBand.bind(null, e.id)} />
             </div>
           </li>
@@ -35,10 +36,10 @@ export default async function CanturiPage() {
       </ul>
       <section className="rounded border bg-white p-3">
         <h2 className="mb-2 font-semibold">Adaugă cant</h2>
-        <form action={createEdgeBand} className="space-y-2">
+        <ActionForm action={createEdgeBand} className="space-y-2">
           <EdgeBandFields />
           <SubmitButton>Adaugă</SubmitButton>
-        </form>
+        </ActionForm>
       </section>
     </div>
   );
