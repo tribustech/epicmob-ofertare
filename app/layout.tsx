@@ -5,6 +5,7 @@ import './globals.css';
 export const metadata = { title: 'EpicMob Ofertare' };
 
 const NAV = [
+  { href: '/proiecte', label: 'Proiecte' },
   { href: '/cataloage/materiale', label: 'Materiale' },
   { href: '/cataloage/canturi', label: 'Canturi' },
   { href: '/cataloage/feronerie', label: 'Feronerie' },
