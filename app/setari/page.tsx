@@ -82,6 +82,7 @@ export default async function SetariPage() {
                   name="slideNominalsMm"
                   label="Lungimi nominale glisiere (mm, separate prin virgulă)"
                   defaultValue={construction.slideNominalsMm.join(', ')}
+                  required={false}
                 />
               </div>
             </div>
