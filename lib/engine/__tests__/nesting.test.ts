@@ -40,3 +40,34 @@ describe('nestParts — plasare pe o placă', () => {
     expect(() => nestParts([piece('X', 480, 700)], 1000, 500, P)).toThrow(/X/);
   });
 });
+
+describe('nestParts — plăci multiple, pierdere, determinism', () => {
+  it('a treia piesă lată deschide a doua placă', () => {
+    // 3 × (980×238): rafturile 1+2 ocupă 238+4+238 = 480 = lățimea utilă → a 3-a nu mai are loc
+    const r = nestParts([piece('A', 980, 238), piece('B', 980, 238), piece('C', 980, 238)], 1000, 500, P);
+    expect(r.sheets).toHaveLength(2);
+    expect(r.sheets[1].pieces).toEqual([{ label: 'C', lengthMm: 980, widthMm: 238, x: 10, y: 10 }]);
+  });
+
+  it('piesă mai mare decât aria utilă → eroare cu numele piesei', () => {
+    expect(() => nestParts([piece('Laterală L2', 981, 100)], 1000, 500, P))
+      .toThrow(/Laterală L2/);
+  });
+
+  it('pierderea % pe aria plăcii întregi', () => {
+    // o piesă 500×250 pe placă 1000×500 → 1 − 125000/500000 = 75%
+    const r = nestParts([piece('A', 500, 250)], 1000, 500, P);
+    expect(r.wastePct).toBeCloseTo(75, 5);
+  });
+
+  it('fără piese → zero plăci, pierdere 0', () => {
+    const r = nestParts([], 1000, 500, P);
+    expect(r).toEqual({ sheets: [], wastePct: 0 });
+  });
+
+  it('determinist: ordinea din input nu schimbă rezultatul', () => {
+    const a = [piece('A', 400, 300), piece('B', 700, 200), piece('C', 300, 300), piece('D', 900, 100)];
+    const b = [a[3], a[1], a[0], a[2]];
+    expect(nestParts(a, 1000, 500, P)).toEqual(nestParts(b, 1000, 500, P));
+  });
+});
