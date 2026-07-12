@@ -34,7 +34,7 @@ describe('computeCosts — corp bază de referință', () => {
     cabinets: [expanded.input],
     freeLines: [],
     markupPct: 30,
-    yieldFactor: 0.8,
+    nesting: { kerfMm: 4, trimMm: 10 },
     catalogs: COST_CATALOGS,
   });
 
@@ -57,7 +57,7 @@ describe('computeCosts — corp bază de referință', () => {
 describe('computeCosts — cazuri particulare', () => {
   it('linii libere intră în total', () => {
     const r = computeCosts({
-      parts: [], hardwareLines: [], cabinets: [], yieldFactor: 0.8, markupPct: 0,
+      parts: [], hardwareLines: [], cabinets: [], nesting: { kerfMm: 4, trimMm: 10 }, markupPct: 0,
       freeLines: [{ name: 'Blat', amount: 800 }, { name: 'Transport', amount: 200 }],
       catalogs: COST_CATALOGS,
     });
@@ -71,7 +71,7 @@ describe('computeCosts — cazuri particulare', () => {
     expect(() =>
       computeCosts({
         parts: [], hardwareLines: [{ hardwareId: 'nu-exista', qty: 1 }],
-        cabinets: [], freeLines: [], markupPct: 0, yieldFactor: 0.8,
+        cabinets: [], freeLines: [], markupPct: 0, nesting: { kerfMm: 4, trimMm: 10 },
         catalogs: COST_CATALOGS,
       }),
     ).toThrow(/feronerie/i);
@@ -94,7 +94,7 @@ describe('computeCosts — cazuri particulare', () => {
       cabinets: [expanded.input],
       freeLines: [],
       markupPct: 30,
-      yieldFactor: 0.8,
+      nesting: { kerfMm: 4, trimMm: 10 },
       catalogs,
     });
 

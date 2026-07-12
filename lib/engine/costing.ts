@@ -1,5 +1,6 @@
 import { findMaterial } from './carcass';
 import { computeMaterialNeeds, type BoardNeed, type EdgingNeed } from './needs';
+import type { NestParams } from './nesting';
 import type {
   CabinetInput, CabinetType, Catalogs, CuttingRate, FreeLine,
   HardwareItem, HardwareLine, Part,
@@ -36,11 +37,11 @@ export function computeCosts(args: {
   cabinets: CabinetInput[];
   freeLines: FreeLine[];
   markupPct: number;
-  yieldFactor: number;
+  nesting: NestParams;
   catalogs: CostCatalogs;
 }): CostResult {
   const { catalogs } = args;
-  const needs = computeMaterialNeeds(args.parts, catalogs, args.yieldFactor);
+  const needs = computeMaterialNeeds(args.parts, catalogs, args.nesting);
   // catalogs.cuttingRates nu e garantat sortat de apelant — sortăm o copie crescător
   // pentru a găsi cel mai mic maxThicknessMm ≥ grosime.
   const rates = [...catalogs.cuttingRates].sort((a, b) => a.maxThicknessMm - b.maxThicknessMm);

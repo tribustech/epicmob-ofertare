@@ -1,6 +1,7 @@
 import { DEFAULT_CONSTRUCTION } from './constants';
 import { computeCosts, type CostCatalogs, type CostResult } from './costing';
 import { resolveSuggestions } from './hardware';
+import type { NestParams } from './nesting';
 import { expandCabinet } from './templates';
 import type {
   CabinetInput, ConstructionConstants, ExpandedCabinet, FreeLine,
@@ -11,7 +12,7 @@ export interface ProjectInput {
   cabinets: CabinetInput[];
   freeLines: FreeLine[];
   markupPct: number;
-  yieldFactor: number;
+  nesting: NestParams;
 }
 
 export interface ProjectCatalogs extends CostCatalogs {
@@ -43,7 +44,7 @@ export function computeProject(
     cabinets: project.cabinets,
     freeLines: project.freeLines,
     markupPct: project.markupPct,
-    yieldFactor: project.yieldFactor,
+    nesting: project.nesting,
     catalogs,
   });
 
@@ -66,4 +67,6 @@ export { cutListCsv, aggregateHardware, type CutListFile, type HardwareSummaryRo
 export { suggestHardware, resolveSuggestions } from './hardware';
 export { suggestHingeCount, doorWeightKg } from './hinges';
 export { pickSlideNominal } from './drawers';
+export { nestParts, DEFAULT_NEST_PARAMS } from './nesting';
+export type { NestParams, NestPiece, PlacedPiece, SheetLayout, NestResult } from './nesting';
 export * from './types';

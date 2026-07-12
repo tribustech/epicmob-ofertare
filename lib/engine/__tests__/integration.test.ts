@@ -25,7 +25,7 @@ const CATALOGS: ProjectCatalogs = {
 
 describe('computeProject — corp bază de referință (calcul de mână)', () => {
   const result = computeProject(
-    { cabinets: [bazaInput()], freeLines: [], markupPct: 30, yieldFactor: 0.8 },
+    { cabinets: [bazaInput()], freeLines: [], markupPct: 30, nesting: { kerfMm: 4, trimMm: 10 } },
     CATALOGS,
   );
 
@@ -63,7 +63,7 @@ describe('computeProject — feronerie fără default merge în unresolved', () 
     const result = computeProject(
       {
         cabinets: [bazaInput({ type: 'SUSPENDAT', depthMm: 320 })],
-        freeLines: [], markupPct: 30, yieldFactor: 0.8,
+        freeLines: [], markupPct: 30, nesting: { kerfMm: 4, trimMm: 10 },
       },
       CATALOGS,
     );
