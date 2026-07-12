@@ -256,7 +256,8 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                     <ul className="text-sm">
                       {quote.costs.needs.boards.map((b) => (
                         <li key={b.materialId}>
-                          {materialName(b.materialId)}: {fmtNum(b.totalAreaSqm)} m²{b.sheets !== null ? ` → ${b.sheets} foi` : ' (la m²)'}
+                          {materialName(b.materialId)}: {fmtNum(b.totalAreaSqm)} m²
+                          {b.sheets !== null ? ` → ${b.sheets} plăci (pierdere ${fmtNum(b.wastePct ?? 0, 1)}%)` : ' (la m²)'}
                         </li>
                       ))}
                       {quote.costs.needs.edging.map((e) => (
@@ -277,6 +278,9 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                   <div className="flex flex-wrap gap-2">
                     <Button asChild variant="outline" size="sm">
                       <Link href={`/proiecte/${project.id}/oferta`}>Ofertă pentru client (print/PDF)</Link>
+                    </Button>
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/proiecte/${project.id}/plan-debitare`}>Plan debitare (print/PDF)</Link>
                     </Button>
                     {quote.cutList.map((f) => (
                       <Button key={f.materialId} asChild variant="outline" size="sm">
