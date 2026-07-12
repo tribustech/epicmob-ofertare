@@ -43,6 +43,9 @@ describe('settingsSchema', () => {
     expect(() => settingsSchema.parse({
       markupPct: '30', sheetYieldFactor: '0.8', cutKerfMm: '-1', cutTrimMm: '10',
     })).toThrow();
+    expect(() => settingsSchema.parse({
+      markupPct: '30', sheetYieldFactor: '0.8', cutKerfMm: '4', cutTrimMm: '1000',
+    })).toThrow();
   });
 });
 

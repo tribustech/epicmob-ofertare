@@ -257,7 +257,7 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                       {quote.costs.needs.boards.map((b) => (
                         <li key={b.materialId}>
                           {materialName(b.materialId)}: {fmtNum(b.totalAreaSqm)} m²
-                          {b.sheets !== null ? ` → ${b.sheets} plăci (pierdere ${fmtNum(b.wastePct ?? 0, 1)}%)` : ' (la m²)'}
+                          {b.sheets !== null ? ` → ${b.sheets} ${b.sheets === 1 ? 'placă' : 'plăci'} (pierdere ${fmtNum(b.wastePct ?? 0, 1)}%)` : ' (la m²)'}
                         </li>
                       ))}
                       {quote.costs.needs.edging.map((e) => (

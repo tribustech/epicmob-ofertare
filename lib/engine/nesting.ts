@@ -31,8 +31,11 @@ export function nestParts(
     }
   }
 
+  // comparare directă pe string, nu localeCompare — ordinea trebuie să fie
+  // independentă de locale-ul runtime-ului (rulează și în browser).
   const sorted = [...pieces].sort((a, b) =>
-    b.widthMm - a.widthMm || b.lengthMm - a.lengthMm || a.label.localeCompare(b.label));
+    b.widthMm - a.widthMm || b.lengthMm - a.lengthMm ||
+    (a.label < b.label ? -1 : a.label > b.label ? 1 : 0));
 
   const sheets: WorkSheet[] = [];
   for (const p of sorted) {

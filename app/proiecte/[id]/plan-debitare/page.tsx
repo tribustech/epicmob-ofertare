@@ -54,7 +54,7 @@ export default async function PlanDebitarePage({ params }: { params: Promise<{ i
             {b.layout!.map((sheet, i) => (
               <figure key={i} className="space-y-1 break-inside-avoid">
                 <figcaption className="text-xs text-neutral-600">Placa {i + 1} din {b.sheets}</figcaption>
-                <CuttingLayoutSvg layout={sheet} sheetLengthMm={material?.sheetLengthMm ?? 2800} sheetWidthMm={material?.sheetWidthMm ?? 2070} />
+                <CuttingLayoutSvg layout={sheet} sheetLengthMm={material?.sheetLengthMm ?? 2800} sheetWidthMm={material?.sheetWidthMm ?? 2070} patternId={`rest-${b.materialId}-${i}`} />
               </figure>
             ))}
           </section>
