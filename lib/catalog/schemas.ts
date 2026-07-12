@@ -57,6 +57,8 @@ const optId = z.preprocess(emptyToUndefined, z.string().optional());
 export const settingsSchema = z.object({
   markupPct: num.nonnegative(),
   sheetYieldFactor: num.gt(0).lte(1),
+  cutKerfMm: num.nonnegative(),
+  cutTrimMm: num.nonnegative(),
   defaultHingeId: optId,
   defaultHandleId: optId,
   defaultLegId: optId,

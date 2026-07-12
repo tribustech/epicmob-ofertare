@@ -56,6 +56,8 @@ model AppSettings {
   id               Int     @id @default(1)
   markupPct        Float
   sheetYieldFactor Float
+  cutKerfMm        Float   @default(4)
+  cutTrimMm        Float   @default(10)
   constructionJson String
   defaultHingeId   String?
   defaultHandleId  String?

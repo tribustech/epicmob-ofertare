@@ -18,6 +18,8 @@ export interface CuttingRateRow { maxThicknessMm: number; pricePerSheet: number 
 export interface LaborRateRow { cabinetType: string; price: number }
 export interface SettingsRow {
   markupPct: number; sheetYieldFactor: number; constructionJson: string;
+  // opționale: snapshot-urile înghețate dinainte de nesting nu le au
+  cutKerfMm?: number | null; cutTrimMm?: number | null;
   defaultHingeId: string | null; defaultHandleId: string | null;
   defaultLegId: string | null; defaultRailId: string | null;
 }

@@ -105,6 +105,7 @@ export const updateSettings = formAction(async (fd: FormData) => {
     where: { id: 1 },
     data: {
       markupPct: d.markupPct, sheetYieldFactor: d.sheetYieldFactor,
+      cutKerfMm: d.cutKerfMm, cutTrimMm: d.cutTrimMm,
       defaultHingeId: d.defaultHingeId ?? null, defaultHandleId: d.defaultHandleId ?? null,
       defaultLegId: d.defaultLegId ?? null, defaultRailId: d.defaultRailId ?? null,
     },
