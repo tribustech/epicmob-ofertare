@@ -153,7 +153,7 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
             <CardContent>
               <ActionForm action={updateProjectSettings.bind(null, project.id)} className="grid grid-cols-2 items-end gap-2">
                 <NumberInput name="markupPct" label="Adaos (%)" defaultValue={project.markupPct} />
-                <NumberInput name="yieldFactor" label="Factor utilizare foaie" defaultValue={project.yieldFactor} step="0.01" />
+                <NumberInput name="yieldFactor" label="Factor utilizare foaie (doar estimarea per corp)" defaultValue={project.yieldFactor} step="0.01" />
                 <Select name="status" label="Stare" options={STATUS_OPTIONS} defaultValue={project.status} />
                 <div><SubmitButton>Salvează</SubmitButton></div>
               </ActionForm>

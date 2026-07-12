@@ -29,7 +29,7 @@ async function main() {
   try {
     const snapshot = await buildSnapshot();
     const quote = computeQuote(
-      { markupPct: 30, yieldFactor: 0.8, freeLines: [], cabinets: [{ input, hardwareOverrides: null, extraParts: [] }] },
+      { markupPct: 30, freeLines: [], cabinets: [{ input, hardwareOverrides: null, extraParts: [] }] },
       snapshot,
     );
     if (!(quote.costs.totalCost > 0)) throw new Error('Cost total zero');

@@ -4,11 +4,11 @@ import {
   type LaborRateRow, type MaterialRow, type SettingsRow,
 } from '@/lib/catalog/convert';
 import {
-  aggregateHardware, computeCosts, cutListCsv, expandCabinet, resolveSuggestions,
+  aggregateHardware, computeCosts, cutListCsv, DEFAULT_NEST_PARAMS, expandCabinet, resolveSuggestions,
 } from '@/lib/engine';
 import type {
   CabinetInput, CostResult, CutListFile, ExpandedCabinet, FreeLine,
-  HardwareLine, HardwareSuggestion, HardwareSummaryRow, Part, Warning,
+  HardwareLine, HardwareSuggestion, HardwareSummaryRow, NestParams, Part, Warning,
 } from '@/lib/engine';
 import type { ExtraPart } from './cabinet-form';
 import { pickLegId } from './legs';
@@ -32,7 +32,6 @@ export interface QuoteCabinet {
 
 export interface QuoteInput {
   markupPct: number;
-  yieldFactor: number;
   freeLines: FreeLine[];
   cabinets: QuoteCabinet[];
 }
@@ -88,13 +87,19 @@ export function computeQuote(q: QuoteInput, snap: SnapshotData): QuoteResult {
   });
   const hardwareLines: HardwareLine[] = [...byId.entries()].map(([hardwareId, qty]) => ({ hardwareId, qty }));
 
+  // snapshot-urile înghețate dinainte de nesting nu au kerf/trim — cad pe default-uri
+  const nesting: NestParams = {
+    kerfMm: snap.settings.cutKerfMm ?? DEFAULT_NEST_PARAMS.kerfMm,
+    trimMm: snap.settings.cutTrimMm ?? DEFAULT_NEST_PARAMS.trimMm,
+  };
+
   const costs = computeCosts({
     parts,
     hardwareLines,
     cabinets: q.cabinets.map((c) => c.input),
     freeLines: q.freeLines,
     markupPct: q.markupPct,
-    yieldFactor: q.yieldFactor,
+    nesting,
     catalogs,
   });
 

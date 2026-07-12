@@ -30,6 +30,7 @@ export function makeSnapshot(overrides: Partial<SnapshotData> = {}): SnapshotDat
     ],
     settings: {
       markupPct: 30, sheetYieldFactor: 0.8, constructionJson: '{}',
+      cutKerfMm: 4, cutTrimMm: 10,
       defaultHingeId: 'blum-cliptop', defaultHandleId: 'maner-std',
       defaultLegId: 'picior-std', defaultRailId: null,
     },

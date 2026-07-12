@@ -4,7 +4,7 @@ import { makeSnapshot, refCabinet } from './fixtures';
 
 function baseQuote(overrides: Partial<QuoteInput> = {}): QuoteInput {
   return {
-    markupPct: 30, yieldFactor: 0.8, freeLines: [],
+    markupPct: 30, freeLines: [],
     cabinets: [{ input: refCabinet(), hardwareOverrides: null, extraParts: [] }],
     ...overrides,
   };
@@ -60,5 +60,15 @@ describe('computeQuote — override-uri și piese suplimentare', () => {
     q.cabinets[0].legHeightMm = 150;
     const r = computeQuote(q, snap);
     expect(r.hardwareLines).toContainEqual({ hardwareId: 'p150', qty: 4 });
+  });
+
+  it('snapshot vechi fără kerf/trim → default-uri (4/10), nu crash', () => {
+    const snap = makeSnapshot();
+    delete (snap.settings as unknown as Record<string, unknown>).cutKerfMm;
+    delete (snap.settings as unknown as Record<string, unknown>).cutTrimMm;
+    const r = computeQuote(baseQuote(), snap);
+    const pal = r.costs.needs.boards.find((b) => b.materialId === 'pal-alb')!;
+    expect(pal.sheets).toBe(1);
+    expect(pal.layout).not.toBeNull();
   });
 });
