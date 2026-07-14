@@ -11,6 +11,7 @@ import type {
   HardwareLine, HardwareSuggestion, HardwareSummaryRow, NestParams, Part, Warning,
 } from '@/lib/engine';
 import type { ExtraPart } from './cabinet-form';
+import { handleExtraCost, withResolvedHandle, type ProjectHandle } from './handle';
 import { pickLegId } from './legs';
 
 export interface SnapshotData {
@@ -33,6 +34,7 @@ export interface QuoteInput {
   laborPct: number;
   freeLines: FreeLine[];
   cabinets: QuoteCabinet[];
+  projectHandle: ProjectHandle;
 }
 
 export interface QuoteResult {
@@ -53,7 +55,8 @@ export function computeQuote(q: QuoteInput, snap: SnapshotData): QuoteResult {
   const defaults = buildHardwareDefaults(snap.hardware.filter((h) => h.active), snap.settings);
   const cc = parseConstruction(snap.settings.constructionJson);
 
-  const expanded = q.cabinets.map((c) => expandCabinet(c.input, catalogs, cc));
+  const inputs = q.cabinets.map((c) => withResolvedHandle(c.input, q.projectHandle));
+  const expanded = inputs.map((input) => expandCabinet(input, catalogs, cc));
 
   const parts: Part[] = expanded.flatMap((e) => e.parts);
   for (const c of q.cabinets) {
@@ -92,14 +95,21 @@ export function computeQuote(q: QuoteInput, snap: SnapshotData): QuoteResult {
     trimMm: snap.settings.cutTrimMm ?? DEFAULT_NEST_PARAMS.trimMm,
   };
 
+  const handlePrices = {
+    profilJPerFront: snap.settings.profilJPerFront ?? 0,
+    golaPricePerMl: snap.settings.golaPricePerMl ?? 0,
+  };
+  const extraHardware = inputs.flatMap((input) => handleExtraCost(input, handlePrices));
+
   const costs = computeCosts({
     parts,
     hardwareLines,
-    cabinets: q.cabinets.map((c) => c.input),
+    cabinets: inputs,
     freeLines: q.freeLines,
     laborPct: q.laborPct,
     nesting,
     catalogs,
+    extraHardware,
   });
 
   return {

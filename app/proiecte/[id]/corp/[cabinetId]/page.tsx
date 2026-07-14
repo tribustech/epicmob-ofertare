@@ -9,6 +9,7 @@ import {
 import { addExtraPart, removeExtraPart, resetCabinetHardware, saveCabinetHardware, updateCabinetData } from '@/lib/quote/actions';
 import { buildSnapshot } from '@/lib/quote/snapshot';
 import { pickLegId } from '@/lib/quote/legs';
+import { normalizeCabinetInput } from '@/lib/quote/normalize-input';
 import type { ExtraPart } from '@/lib/quote/cabinet-form';
 import { CabinetEditorForm, type FieldOption } from '@/components/CabinetEditorForm';
 import { ActionForm } from '@/components/ActionForm';
@@ -84,7 +85,7 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
   const { id, cabinetId } = await params;
   const cab = await prisma.cabinet.findUnique({ where: { id: cabinetId } });
   if (!cab || cab.projectId !== id) notFound();
-  const input = JSON.parse(cab.inputJson) as CabinetInput;
+  const input = normalizeCabinetInput(JSON.parse(cab.inputJson));
 
   const [project, assembly, materials, edgeBands, settings] = await Promise.all([
     prisma.project.findUniqueOrThrow({ where: { id } }),

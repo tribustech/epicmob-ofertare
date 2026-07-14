@@ -24,6 +24,8 @@ const projectSettingsSchema = z.object({
   laborPct: z.coerce.number().nonnegative(),
   yieldFactor: z.coerce.number().gt(0).lte(1),
   status: z.enum(['CIORNA', 'TRIMISA', 'ACCEPTATA']),
+  handleType: z.enum(['APLICAT', 'BUTON', 'INGROPAT', 'PROFIL_J', 'GOLA', 'PUSH', 'FARA']),
+  handleItemId: optStr,
 });
 
 const freeLineSchema = z.object({
@@ -78,7 +80,11 @@ export const createProject = formAction(async (fd: FormData) => {
 export const updateProjectSettings = formAction(async (id: string, fd: FormData) => {
   const d = projectSettingsSchema.parse(formDataToObject(fd));
   const project = await prisma.project.findUniqueOrThrow({ where: { id } });
-  const data: typeof d & { snapshotJson?: string } = { ...d };
+  // spread-ul cu handleItemId undefined NU șterge coloana — setăm explicit null
+  const data: Omit<typeof d, 'handleItemId'> & { snapshotJson?: string; handleItemId: string | null } = {
+    ...d,
+    handleItemId: d.handleItemId ?? null,
+  };
   if (isFrozenStatus(d.status) && (!isFrozenStatus(project.status) || !project.snapshotJson)) {
     data.snapshotJson = JSON.stringify(await buildSnapshot());
   }
@@ -108,6 +114,8 @@ export const duplicateProject = formAction(async (id: string) => {
         yieldFactor: project.yieldFactor,
         freeLinesJson: project.freeLinesJson,
         snapshotJson: project.snapshotJson,
+        handleType: project.handleType,
+        handleItemId: project.handleItemId,
       },
     });
 

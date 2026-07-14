@@ -1,8 +1,9 @@
 import { prisma } from '@/lib/db';
 import type { Assembly, Project } from '@prisma/client';
-import type { CabinetInput, HardwareLine } from '@/lib/engine';
+import type { CabinetInput, HandleType, HardwareLine } from '@/lib/engine';
 import type { ExtraPart } from './cabinet-form';
 import { computeQuote, type QuoteInput, type QuoteResult, type SnapshotData } from './compute';
+import { normalizeCabinetInput } from './normalize-input';
 
 export interface LoadedCabinet {
   id: string;
@@ -30,7 +31,7 @@ export async function loadProject(id: string): Promise<{
     id: c.id,
     sortOrder: c.sortOrder,
     assemblyId: c.assemblyId,
-    input: JSON.parse(c.inputJson) as CabinetInput,
+    input: normalizeCabinetInput(JSON.parse(c.inputJson)),
     hardwareOverrides: c.hardwareJson ? (JSON.parse(c.hardwareJson) as HardwareLine[]) : null,
     extraParts: JSON.parse(c.extraPartsJson) as ExtraPart[],
   }));
@@ -50,7 +51,7 @@ export function legHeightByCabinet(assemblies: Assembly[], cabinets: LoadedCabin
 }
 
 export function toQuoteInput(
-  project: { laborPct: number; freeLinesJson: string },
+  project: { laborPct: number; freeLinesJson: string; handleType: string; handleItemId: string | null },
   cabinets: LoadedCabinet[],
   legHeightMap: Map<string, number> = new Map(),
 ): QuoteInput {
@@ -63,6 +64,7 @@ export function toQuoteInput(
       extraParts: c.extraParts,
       legHeightMm: legHeightMap.get(c.id) ?? null,
     })),
+    projectHandle: { type: project.handleType as HandleType, itemId: project.handleItemId },
   };
 }
 
