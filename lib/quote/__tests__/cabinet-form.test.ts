@@ -41,6 +41,13 @@ describe('cabinetFormSchema + toCabinetInput', () => {
     });
   });
 
+  it('sertare cu 0 sertare → eroare de validare', () => {
+    const r = cabinetFormSchema.safeParse({
+      ...base, frontType: 'SERTARE', drawersCount: '0', drawersBottomMaterialId: 'pfl',
+    });
+    expect(r.success).toBe(false);
+  });
+
   it('sertare fără fund → eroare de validare', () => {
     const r = cabinetFormSchema.safeParse({ ...base, frontType: 'SERTARE', drawersCount: '2', drawersBottomMaterialId: '' });
     expect(r.success).toBe(false);
