@@ -4,6 +4,7 @@ import { NumberInput, Select, SubmitButton, TextInput } from '@/components/forms
 import { DeleteButton } from '@/components/DeleteButton';
 import { ActionForm } from '@/components/ActionForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MaterialeGalerie, type MaterialCard } from '@/components/MaterialeGalerie';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,14 +41,42 @@ function MaterialFields({ m }: { m?: {
 }
 
 export default async function MaterialePage() {
-  const materials = await prisma.material.findMany({ where: { active: true }, orderBy: { name: 'asc' } });
+  const materials = await prisma.material.findMany({
+    where: { active: true },
+    orderBy: [{ brand: 'asc' }, { name: 'asc' }],
+  });
+
+  const cards: MaterialCard[] = materials.map((m) => ({
+    id: m.id,
+    name: m.name,
+    kind: m.kind,
+    thicknessMm: m.thicknessMm,
+    brand: m.brand,
+    category: m.category,
+    imageUrl: m.imageUrl,
+    decorCode: m.decorCode,
+    pricePerSheet: m.pricePerSheet,
+    pricePerSqm: m.pricePerSqm,
+    pricingMode: m.pricingMode,
+  }));
+
+  // Only hand-created materials (no brand) are editable inline; the seeded
+  // catalog is managed via the read-only gallery above.
+  const manual = materials.filter((m) => m.brand == null);
 
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold tracking-tight">Materiale plăci</h1>
 
-      <div className="space-y-3">
-        {materials.map((m) => (
+      <MaterialeGalerie materials={cards} />
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-medium tracking-tight">Materiale manuale</h2>
+        <p className="text-sm text-muted-foreground">
+          Materialele adăugate manual (fără brand din catalog) pot fi editate sau șterse aici.
+        </p>
+
+        {manual.map((m) => (
           <Card key={m.id}>
             <CardContent className="flex items-end gap-3">
               <ActionForm action={updateMaterial.bind(null, m.id)} className="grow space-y-2">
@@ -58,19 +87,19 @@ export default async function MaterialePage() {
             </CardContent>
           </Card>
         ))}
-      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Adaugă material</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ActionForm action={createMaterial} className="space-y-2">
-            <MaterialFields />
-            <SubmitButton>Adaugă</SubmitButton>
-          </ActionForm>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Adaugă material</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ActionForm action={createMaterial} className="space-y-2">
+              <MaterialFields />
+              <SubmitButton>Adaugă</SubmitButton>
+            </ActionForm>
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }
