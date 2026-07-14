@@ -10,6 +10,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate-sertare": "tsx scripts/migrate-sertare.ts",
     "db:seed": "prisma db seed",
+    "db:seed-decoruri": "tsx scripts/seed-decoruri.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {
