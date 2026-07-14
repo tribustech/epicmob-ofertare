@@ -1,8 +1,12 @@
-import { expandCarcass } from './carcass';
+import { expandCarcass, findMaterial } from './carcass';
 import { expandDrawerBoxes } from './drawers';
 import { expandFronts } from './fronts';
 import { suggestHardware } from './hardware';
-import type { CabinetInput, Catalogs, ConstructionConstants, ExpandedCabinet } from './types';
+import type { CabinetInput, Catalogs, ConstructionConstants, ExpandedCabinet, MaterialKind } from './types';
+
+// mânerele frezate în front (profil J, îngropat) cer un material care se poate freza — nu PAL/PFL
+const MILLED_HANDLE_TYPES = new Set(['PROFIL_J', 'INGROPAT']);
+const UNMILLABLE_KINDS: MaterialKind[] = ['PAL', 'PFL'];
 
 export function expandCabinet(
   input: CabinetInput,
@@ -21,6 +25,18 @@ export function expandCabinet(
   }
   if ((input.doors > 0 || drawerCount > 0) && !input.frontMaterialId) {
     throw new Error(`Corpul ${input.label}: fronturile cer un material de front`);
+  }
+  if (
+    input.handle && MILLED_HANDLE_TYPES.has(input.handle.type)
+    && input.frontMaterialId && (input.doors > 0 || drawerCount > 0)
+  ) {
+    const frontKind = findMaterial(catalogs, input.frontMaterialId).kind;
+    if (UNMILLABLE_KINDS.includes(frontKind)) {
+      const handleName = input.handle.type === 'PROFIL_J' ? 'profilul J' : 'mânerul îngropat';
+      throw new Error(
+        `Corpul ${input.label}: ${handleName} cere front din MDF — ${frontKind}-ul nu se poate freza`,
+      );
+    }
   }
 
   const carcass = expandCarcass(input, catalogs, cc);
