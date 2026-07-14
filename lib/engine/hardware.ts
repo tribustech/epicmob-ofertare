@@ -56,6 +56,7 @@ export function suggestHardware(
         qty: drawerFronts.length,
         nominalLengthMm: nominalMm,
         boxHeightMm: boxH,
+        requiresBox: true,
       });
     } else {
       suggestions.push({
@@ -100,7 +101,7 @@ export function resolveSuggestions(
     let id: string | null = null;
     if (s.preferredId) {
       id = s.preferredId;
-    } else if (s.category === 'SERTAR' && s.boxHeightMm !== undefined) {
+    } else if (s.category === 'SERTAR' && s.requiresBox) {
       // set Tandembox: aceeași înălțime de laterală + nominala cea mai apropiată
       const sets = hardware.filter(
         (h) => h.category === 'SERTAR' && h.boxHeightMm === s.boxHeightMm && h.nominalLengthMm != null,
@@ -115,7 +116,7 @@ export function resolveSuggestions(
     else if (s.category === 'MANER') id = defaults.handleId;
     else if (s.category === 'PICIOR') id = defaults.legId;
     else if (s.category === 'SINA_SUSPENDARE') id = defaults.railId;
-    else if (s.category === 'SERTAR' && s.nominalLengthMm !== undefined) {
+    else if (s.category === 'SERTAR' && !s.requiresBox && s.nominalLengthMm !== undefined) {
       const nominals = Object.keys(defaults.slideIdsByNominal).map(Number);
       if (nominals.length > 0) {
         const target = s.nominalLengthMm;

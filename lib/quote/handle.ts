@@ -30,7 +30,7 @@ export function handleExtraCost(
   if (h.type === 'PROFIL_J' && frontCount > 0) {
     lines.push({ name: `Prelucrare profil J — ${input.label}`, amount: frontCount * prices.profilJPerFront });
   }
-  if (h.type === 'GOLA') {
+  if (h.type === 'GOLA' && input.frontMaterialId != null && frontCount > 0) {
     lines.push({ name: `Profil GOLA — ${input.label}`, amount: (input.widthMm / 1000) * prices.golaPricePerMl });
   }
   return lines;

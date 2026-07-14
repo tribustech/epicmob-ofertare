@@ -137,6 +137,7 @@ export interface HardwareSuggestion {
   nominalLengthMm?: number;
   preferredId?: string;  // produs ales explicit pe corp — are prioritate la rezolvare
   boxHeightMm?: number;  // set Tandembox: potrivire pe înălțimea lateralei
+  requiresBox?: boolean; // set Tandembox: nu se rezolvă pe glisiere simple
 }
 
 export interface Warning {

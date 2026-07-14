@@ -4,14 +4,14 @@ import { prisma } from '@/lib/db';
 import { buildHardwareDefaults, parseConstruction, toCostCatalogs } from '@/lib/catalog/convert';
 import {
   expandCabinet, resolveSuggestions,
-  type CabinetInput, type ExpandedCabinet, type HardwareCategory, type HardwareItem, type HardwareLine,
+  type CabinetInput, type ExpandedCabinet, type HandleType, type HardwareCategory, type HardwareItem, type HardwareLine,
 } from '@/lib/engine';
 import { addExtraPart, removeExtraPart, resetCabinetHardware, saveCabinetHardware, updateCabinetData } from '@/lib/quote/actions';
 import { buildSnapshot } from '@/lib/quote/snapshot';
 import { pickLegId } from '@/lib/quote/legs';
 import { normalizeCabinetInput } from '@/lib/quote/normalize-input';
 import type { ExtraPart } from '@/lib/quote/cabinet-form';
-import { HANDLE_TYPE_OPTIONS } from '@/lib/quote/handle';
+import { HANDLE_TYPE_OPTIONS, withResolvedHandle } from '@/lib/quote/handle';
 import { CabinetEditorForm, type FieldOption } from '@/components/CabinetEditorForm';
 import { ActionForm } from '@/components/ActionForm';
 import { DeleteButton } from '@/components/DeleteButton';
@@ -137,7 +137,8 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
       [],
     );
     const cc = parseConstruction(settings?.constructionJson ?? '{}');
-    expanded = expandCabinet(input, catalogs, cc);
+    const expandInput = withResolvedHandle(input, { type: project.handleType as HandleType, itemId: project.handleItemId });
+    expanded = expandCabinet(expandInput, catalogs, cc);
   } catch (e) {
     expandError = e instanceof Error ? e.message : 'Eroare la generarea pieselor';
   }
