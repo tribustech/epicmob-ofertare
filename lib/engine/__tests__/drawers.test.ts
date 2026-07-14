@@ -8,7 +8,7 @@ const cc = DEFAULT_CONSTRUCTION;
 
 function sertareInput(system: DrawerSystem): CabinetInput {
   return bazaInput({
-    label: 'S1', type: 'SERTARE', doors: 0,
+    label: 'S1', type: 'BAZA', doors: 0,
     drawers: { count: 3, system, bottomMaterialId: 'pfl-alb' },
     frontMaterialId: 'pal-alb',
     edgeBands: { carcassFrontEdgeId: 'abs-04', frontPerimeterId: 'abs-1' },

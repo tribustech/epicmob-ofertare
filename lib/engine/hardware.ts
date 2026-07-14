@@ -6,7 +6,7 @@ import type {
   HardwareDefaults, HardwareLine, HardwareSuggestion, Warning,
 } from './types';
 
-const LEGGED_TYPES = new Set(['BAZA', 'INALT', 'SERTARE', 'COLT']);
+const LEGGED_TYPES = new Set(['BAZA', 'INALT', 'COLT']);
 
 export function suggestHardware(
   input: CabinetInput,

@@ -28,7 +28,7 @@ export interface CostResult {
   needs: { boards: BoardNeed[]; edging: EdgingNeed[] };
 }
 
-const BASE_RUN_TYPES = new Set<CabinetType>(['BAZA', 'SERTARE', 'COLT']);
+const BASE_RUN_TYPES = new Set<CabinetType>(['BAZA', 'COLT']);
 
 export function computeCosts(args: {
   parts: Part[];

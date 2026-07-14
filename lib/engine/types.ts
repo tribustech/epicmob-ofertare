@@ -59,7 +59,7 @@ export interface ConstructionConstants {
   blindPanelDefaultWidthMm: number; // lățime implicită panou orb la corpurile de colț
 }
 
-export type CabinetType = 'BAZA' | 'SUSPENDAT' | 'INALT' | 'SERTARE' | 'COLT';
+export type CabinetType = 'BAZA' | 'SUSPENDAT' | 'INALT' | 'COLT';
 
 export type DrawerSystem = 'PAL_BOX' | 'METAL_BOX';
 
@@ -77,8 +77,8 @@ export interface CabinetInput {
   heightMm: number;
   depthMm: number;
   shelves: number;
-  doors: number;                   // pentru BAZA/SUSPENDAT/INALT/COLT
-  drawers?: DrawerOptions;         // pentru SERTARE
+  doors: number;                   // 0 = fără uși; exclusiv cu drawers
+  drawers?: DrawerOptions;         // sertare pe orice tip de corp; exclusiv cu doors
   carcassMaterialId: string;
   frontMaterialId: string | null;  // null = corp fără fronturi
   back: { enabled: boolean; materialId?: string; mount: 'FALT' | 'APLICAT' };

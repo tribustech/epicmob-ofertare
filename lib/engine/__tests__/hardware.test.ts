@@ -41,7 +41,7 @@ describe('suggestHardware — corp suspendat', () => {
 describe('suggestHardware — corp cu sertare', () => {
   it('un set glisiere per sertar, cu nominala corectă', () => {
     const input = bazaInput({
-      type: 'SERTARE', doors: 0,
+      type: 'BAZA', doors: 0,
       drawers: { count: 3, system: 'METAL_BOX', bottomMaterialId: 'pfl-alb' },
     });
     const fronts: FrontInfo[] = [

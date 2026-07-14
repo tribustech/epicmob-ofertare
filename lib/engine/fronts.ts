@@ -55,7 +55,7 @@ export function expandFronts(
     });
   }
 
-  if (input.type === 'SERTARE') {
+  if ((input.drawers?.count ?? 0) > 0) {
     const heights = drawerFrontHeights(input, cc);
     // grupează înălțimile identice într-o singură linie de piesă
     const groups = new Map<number, number>();

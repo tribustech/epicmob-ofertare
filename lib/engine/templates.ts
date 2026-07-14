@@ -9,22 +9,23 @@ export function expandCabinet(
   catalogs: Catalogs,
   cc: ConstructionConstants,
 ): ExpandedCabinet {
-  if (input.type === 'SERTARE' && (!input.drawers || input.drawers.count <= 0)) {
-    throw new Error(`Corpul ${input.label}: tipul SERTARE cere sertare definite`);
+  const drawerCount = input.drawers?.count ?? 0;
+  if (input.drawers && drawerCount <= 0) {
+    throw new Error(`Corpul ${input.label}: sertarele cer cel puțin un sertar`);
   }
-  if (input.type !== 'SERTARE' && input.drawers) {
-    throw new Error(`Corpul ${input.label}: sertarele sunt permise doar la tipul SERTARE`);
+  if (drawerCount > 0 && input.doors > 0) {
+    throw new Error(`Corpul ${input.label}: alege fie uși, fie sertare, nu ambele`);
   }
-  if (input.type === 'SERTARE' && input.doors > 0) {
-    throw new Error(`Corpul ${input.label}: tipul SERTARE nu poate avea uși`);
+  if (drawerCount > 0 && input.shelves > 0) {
+    throw new Error(`Corpul ${input.label}: corpul cu sertare nu poate avea polițe`);
   }
-  if (input.doors > 0 && !input.frontMaterialId) {
-    throw new Error(`Corpul ${input.label}: ușile cer un material de front`);
+  if ((input.doors > 0 || drawerCount > 0) && !input.frontMaterialId) {
+    throw new Error(`Corpul ${input.label}: fronturile cer un material de front`);
   }
 
   const carcass = expandCarcass(input, catalogs, cc);
   const fronts = expandFronts(input, catalogs, cc);
-  const boxes = input.type === 'SERTARE'
+  const boxes = drawerCount > 0
     ? expandDrawerBoxes(input, catalogs, cc)
     : { parts: [], warnings: [] };
   const hardware = suggestHardware(input, fronts.fronts, catalogs, cc);
