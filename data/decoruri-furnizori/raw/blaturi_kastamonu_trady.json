@@ -1,0 +1,806 @@
+{
+ "nr_total": 89,
+ "produse": [
+  {
+   "cod_decor": "F106 TS04",
+   "denumire": "Fusion Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 654.61,
+   "template_id": 25208,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F105 TS04",
+   "denumire": "Marmura Riviera Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 654.61,
+   "template_id": 25207,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F370 TS01",
+   "denumire": "Stellar Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 703.5,
+   "template_id": 25206,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F369 PS50",
+   "denumire": "Dover Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 559.13,
+   "template_id": 25205,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F109 PS64",
+   "denumire": "Mohave Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 660.45,
+   "template_id": 25204,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F108 TS02",
+   "denumire": "Amedeo Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 654.31,
+   "template_id": 25203,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F104 TS07",
+   "denumire": "Gri Siriu Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 654.61,
+   "template_id": 25202,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F103 TS07",
+   "denumire": "Sirius Cafeniu Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 654.61,
+   "template_id": 25201,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F101 TS07",
+   "denumire": "Marmara Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 654.61,
+   "template_id": 25200,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F102 TS04",
+   "denumire": "Marmura Kavala Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 654.61,
+   "template_id": 25199,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F099 PS69",
+   "denumire": "Taj Mahal Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 703.5,
+   "template_id": 25198,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F098 TS02",
+   "denumire": "Marmura Firenze Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 654.61,
+   "template_id": 25197,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F097 TS02",
+   "denumire": "Omega Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 654.61,
+   "template_id": 25196,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F096 TS02",
+   "denumire": "Mirage Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 654.61,
+   "template_id": 25195,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "D268 TS02",
+   "denumire": "Oslo Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 654.61,
+   "template_id": 25194,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "D267 TS02",
+   "denumire": "Mantova Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 654.61,
+   "template_id": 25193,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "A670 TS05",
+   "denumire": "Stejar Obsidian Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 654.61,
+   "template_id": 25192,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "A667 TS03",
+   "denumire": "Castan Montello Technotop",
+   "dimensiuni": "4100x635x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 660.45,
+   "template_id": 25191,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F049 PS54",
+   "denumire": "Sierra Brun",
+   "dimensiuni": "4100x640x10 mm",
+   "grosime_mm": 10,
+   "pret_ron": 546.0,
+   "template_id": 25021,
+   "tip": "panou_spate"
+  },
+  {
+   "cod_decor": "F032 PS50",
+   "denumire": "Pluto",
+   "dimensiuni": "4100x640x10 mm",
+   "grosime_mm": 10,
+   "pret_ron": 456.75,
+   "template_id": 25020,
+   "tip": "panou_spate"
+  },
+  {
+   "cod_decor": "F028 PS80",
+   "denumire": "Apollon Negru",
+   "dimensiuni": "4100x640x10 mm",
+   "grosime_mm": 10,
+   "pret_ron": 520.8,
+   "template_id": 25019,
+   "tip": "panou_spate"
+  },
+  {
+   "cod_decor": "F047 PS80",
+   "denumire": "Marmura Gri",
+   "dimensiuni": "4100x640x10 mm",
+   "grosime_mm": 10,
+   "pret_ron": 520.3,
+   "template_id": 25018,
+   "tip": "panou_spate"
+  },
+  {
+   "cod_decor": "A905 PS81",
+   "denumire": "Stejar Celtic",
+   "dimensiuni": "4100x640x10 mm",
+   "grosime_mm": 10,
+   "pret_ron": 634.2,
+   "template_id": 25017,
+   "tip": "panou_spate"
+  },
+  {
+   "cod_decor": "F064 PS56",
+   "denumire": "Amasya",
+   "dimensiuni": "4100x640x10 mm",
+   "grosime_mm": 10,
+   "pret_ron": 514.5,
+   "template_id": 25016,
+   "tip": "panou_spate"
+  },
+  {
+   "cod_decor": "A907 PS81",
+   "denumire": "Stejar Belfast",
+   "dimensiuni": "4100x640x10 mm",
+   "grosime_mm": 10,
+   "pret_ron": 546.92,
+   "template_id": 25015,
+   "tip": "panou_spate"
+  },
+  {
+   "cod_decor": "F030 PS54",
+   "denumire": "Bazalt Deschis",
+   "dimensiuni": "4100x640x10 mm",
+   "grosime_mm": 10,
+   "pret_ron": 546.0,
+   "template_id": 25014,
+   "tip": "panou_spate"
+  },
+  {
+   "cod_decor": "F039 PS52",
+   "denumire": "Vmozaic",
+   "dimensiuni": "4100x640x10 mm",
+   "grosime_mm": 10,
+   "pret_ron": 514.5,
+   "template_id": 25013,
+   "tip": "panou_spate"
+  },
+  {
+   "cod_decor": "F044 PS52",
+   "denumire": "Sahara Inchis",
+   "dimensiuni": "4100x640x10 mm",
+   "grosime_mm": 10,
+   "pret_ron": 514.5,
+   "template_id": 25012,
+   "tip": "panou_spate"
+  },
+  {
+   "cod_decor": "D107 PS80",
+   "denumire": "Negru Lucios",
+   "dimensiuni": "4100x640x10 mm",
+   "grosime_mm": 10,
+   "pret_ron": 520.8,
+   "template_id": 25011,
+   "tip": "panou_spate"
+  },
+  {
+   "cod_decor": "A458 PS59",
+   "denumire": "Stej.Charl. Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 638.0,
+   "template_id": 21919,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "D226 PS65",
+   "denumire": "Beige Lotus Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 834.39,
+   "template_id": 21918,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "D225 PS65",
+   "denumire": "Grey Lotus Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 834.39,
+   "template_id": 21917,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "A423 PS51",
+   "denumire": "San Remo Neotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 514.5,
+   "template_id": 21916,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F082 PS56",
+   "denumire": "Enkara Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 660.45,
+   "template_id": 21911,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "A584 PS66",
+   "denumire": "Hunter Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 660.45,
+   "template_id": 21899,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "023 PS53",
+   "denumire": "New York Technotop",
+   "dimensiuni": "4100x600x28 mm",
+   "grosime_mm": 28,
+   "pret_ron": 436.96,
+   "template_id": 21485,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "024 PS80",
+   "denumire": "Apollon Alb Technotop",
+   "dimensiuni": "4100x600x28 mm",
+   "grosime_mm": 28,
+   "pret_ron": 474.12,
+   "template_id": 21475,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "D301 PS52",
+   "denumire": "Argintiu Techonotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 461.64,
+   "template_id": 21467,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F041 PS52",
+   "denumire": "Marmura Salonic Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 559.13,
+   "template_id": 21464,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "A856 PS59",
+   "denumire": "Samara Deschis Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 559.65,
+   "template_id": 21463,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "D610 PS52",
+   "denumire": "Platina Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 559.13,
+   "template_id": 21462,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "316 PS51",
+   "denumire": "Nairobi Technotop",
+   "dimensiuni": "4100x600x28 mm",
+   "grosime_mm": 28,
+   "pret_ron": 436.96,
+   "template_id": 21460,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F050 PS54",
+   "denumire": "Sierra Negru Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 638.36,
+   "template_id": 21459,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "D107 PS53",
+   "denumire": "Negru Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 660.45,
+   "template_id": 21458,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F033 PS54",
+   "denumire": "Madura Bej Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 638.33,
+   "template_id": 21453,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F065 PS57",
+   "denumire": "Malkara Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 686.63,
+   "template_id": 21452,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F064 PS56",
+   "denumire": "Amasya Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 660.45,
+   "template_id": 21451,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F063 PS56",
+   "denumire": "Marmura Manisa Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 660.45,
+   "template_id": 21450,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F047 PS80",
+   "denumire": "Marmura Gri Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 544.24,
+   "template_id": 21445,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F057 PS50",
+   "denumire": "Travertin Roma Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 514.5,
+   "template_id": 21443,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F031 PS54",
+   "denumire": "Bazalt Inchis Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 638.33,
+   "template_id": 21439,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F030 PS54",
+   "denumire": "Bazalt Deschis Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 638.33,
+   "template_id": 21438,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "A842 PS51",
+   "denumire": "Stejar Sonoma Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 514.5,
+   "template_id": 21437,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "A858 PS59",
+   "denumire": "Samara Brun Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 559.65,
+   "template_id": 21436,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F020 PS52",
+   "denumire": "Mersin Neotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 514.5,
+   "template_id": 21434,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "A855 PS51",
+   "denumire": "Artar Lamelar Neotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 461.43,
+   "template_id": 21432,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F039 PS52",
+   "denumire": "Mozaic Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 559.13,
+   "template_id": 21430,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F038 PS52",
+   "denumire": "Venus Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 507.55,
+   "template_id": 21429,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "A811 PS51",
+   "denumire": "Nuc Aida Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 514.5,
+   "template_id": 21424,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "D129 PS52",
+   "denumire": "Alb Neotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 514.5,
+   "template_id": 21423,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "020 PS52",
+   "denumire": "Mersin Technotop",
+   "dimensiuni": "4100x600x28 mm",
+   "grosime_mm": 28,
+   "pret_ron": 436.96,
+   "template_id": 21421,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F028 PS80",
+   "denumire": "Apollon Negru Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 543.23,
+   "template_id": 21417,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F024 PS80",
+   "denumire": "Apollon Alb Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 543.23,
+   "template_id": 21416,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F022 PS53",
+   "denumire": "Van Gogh Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 660.45,
+   "template_id": 21415,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F015 PS52",
+   "denumire": "Ossido Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 559.13,
+   "template_id": 21414,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F013 PS80",
+   "denumire": "Negru Metalic Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 772.84,
+   "template_id": 21413,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F010 PS80",
+   "denumire": "Alb Metalic Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 772.84,
+   "template_id": 21412,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F017 PS80",
+   "denumire": "Marmura Siberia Neotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 500.85,
+   "template_id": 21410,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F014 PS80",
+   "denumire": "Marmura Onix Neotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 500.85,
+   "template_id": 21409,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "027 PS80",
+   "denumire": "Travertin Neotop",
+   "dimensiuni": "4100x600x28 mm",
+   "grosime_mm": 28,
+   "pret_ron": 436.8,
+   "template_id": 21405,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "017 PS80",
+   "denumire": "Marmura Siberia Neotop",
+   "dimensiuni": "4100x600x28 mm",
+   "grosime_mm": 28,
+   "pret_ron": 393.83,
+   "template_id": 21404,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F040 PS80",
+   "denumire": "Marmura Castilla Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 543.23,
+   "template_id": 21403,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F027 PS80",
+   "denumire": "Travertin Neotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 500.85,
+   "template_id": 21401,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F044 PS52",
+   "denumire": "Sahara Inchis Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 559.13,
+   "template_id": 21399,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F042 PS52",
+   "denumire": "Sahara Bej Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 559.13,
+   "template_id": 21397,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "610 PS52",
+   "denumire": "Platina Technotop",
+   "dimensiuni": "4100x600x28 mm",
+   "grosime_mm": 28,
+   "pret_ron": 436.96,
+   "template_id": 21394,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "025 PS80",
+   "denumire": "Olympus Cafe Techonotop",
+   "dimensiuni": "4100x600x28 mm",
+   "grosime_mm": 28,
+   "pret_ron": 474.12,
+   "template_id": 21393,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "021 PS80",
+   "denumire": "Olympus Bej Techontop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 543.23,
+   "template_id": 21392,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "021 PS80",
+   "denumire": "Olympus Bej Technotop",
+   "dimensiuni": "4100x600x28 mm",
+   "grosime_mm": 28,
+   "pret_ron": 474.12,
+   "template_id": 21391,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "014 PS80",
+   "denumire": "Marmura Onix Neotop",
+   "dimensiuni": "4100x600x28 mm",
+   "grosime_mm": 28,
+   "pret_ron": 436.8,
+   "template_id": 21390,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "019 PS80",
+   "denumire": "Marmura Carrara Neotop",
+   "dimensiuni": "4100x600x28 mm",
+   "grosime_mm": 28,
+   "pret_ron": 436.8,
+   "template_id": 21389,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F019 PS80",
+   "denumire": "Marmura Carrara Neotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 500.85,
+   "template_id": 21388,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "018 PS80",
+   "denumire": "Marmura Carolina Neotop",
+   "dimensiuni": "4100x600x28 mm",
+   "grosime_mm": 28,
+   "pret_ron": 436.8,
+   "template_id": 21387,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F018 PS80",
+   "denumire": "Marmura Carolina Neotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 543.29,
+   "template_id": 21386,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "016 PS80",
+   "denumire": "Marmura Antalya Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 543.23,
+   "template_id": 21385,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "F029 PS54",
+   "denumire": "Bazalt Mocca Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 638.33,
+   "template_id": 21384,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "D170 PS80",
+   "denumire": "Alb Polar Technotop",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 543.23,
+   "template_id": 21383,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "170 PS80",
+   "denumire": "Alb Polar Technotop",
+   "dimensiuni": "4100x600x28 mm",
+   "grosime_mm": 28,
+   "pret_ron": 474.12,
+   "template_id": 21382,
+   "tip": "blat"
+  },
+  {
+   "cod_decor": "129 PS52",
+   "denumire": "Alb Neotop",
+   "dimensiuni": "4100x600x28 mm",
+   "grosime_mm": 28,
+   "pret_ron": 436.8,
+   "template_id": 21381,
+   "tip": "blat"
+  }
+ ]
+}

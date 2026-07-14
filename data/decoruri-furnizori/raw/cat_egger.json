@@ -1,0 +1,942 @@
+{
+ "sursa": "palhause.ro",
+ "nr_total": 156,
+ "decoruri": [
+  {
+   "cod_decor": "U220 ST9",
+   "denumire": "Soft Bej",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/36675U220-ST9-.jpg"
+  },
+  {
+   "cod_decor": "F186 ST9",
+   "denumire": "Beton Chicago Gri Deschis",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/35231f186-st9.jpg"
+  },
+  {
+   "cod_decor": "H1708 ST17",
+   "denumire": "Castan Brighton",
+   "structura": "ST17",
+   "image_url": "https://www.palhause.ro/imagini-w/500/27544H1708-ST17.png"
+  },
+  {
+   "cod_decor": "U755 ST9",
+   "denumire": "Gri Havanna",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/18837U755-ST9.png"
+  },
+  {
+   "cod_decor": "H7586 ST17",
+   "denumire": "Nuc Alba Tabac",
+   "structura": "ST17",
+   "image_url": "https://www.palhause.ro/imagini-w/500/27907H7586-ST17.png"
+  },
+  {
+   "cod_decor": "H1316 ST17",
+   "denumire": "Stejar Bookmatch",
+   "structura": "ST17",
+   "image_url": "https://www.palhause.ro/imagini-w/500/43659H1316-ST17.png"
+  },
+  {
+   "cod_decor": "H3322 ST17",
+   "denumire": "Stejar Rovato Natur Deschis",
+   "structura": "ST17",
+   "image_url": "https://www.palhause.ro/imagini-w/500/10089H3322-ST17.png"
+  },
+  {
+   "cod_decor": "F187 ST9",
+   "denumire": "Beton Chicago Gri Închis",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/66231f187-st9.png"
+  },
+  {
+   "cod_decor": "F206 ST9",
+   "denumire": "Pietra Grigia Negru",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/15368f206-st9.jpg"
+  },
+  {
+   "cod_decor": "F235 ST76",
+   "denumire": "Ardezie Scivaro",
+   "structura": "ST76",
+   "image_url": "https://www.palhause.ro/imagini-w/500/3789f235-st76.jpg"
+  },
+  {
+   "cod_decor": "F243 ST76",
+   "denumire": "Marmură Candela Gri Deschis",
+   "structura": "ST76",
+   "image_url": "https://www.palhause.ro/imagini-w/500/42526f243-st76.jpg"
+  },
+  {
+   "cod_decor": "F323 ST20",
+   "denumire": "Cobra Bronz",
+   "structura": "ST20",
+   "image_url": "https://www.palhause.ro/imagini-w/500/93778f323-st20.jpg"
+  },
+  {
+   "cod_decor": "F416 ST10",
+   "denumire": "Textil Bej",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/61738f416-st10.jpg"
+  },
+  {
+   "cod_decor": "F433 ST10",
+   "denumire": "In Antracit",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/62083f433-st10.jpg"
+  },
+  {
+   "cod_decor": "F528 ST20",
+   "denumire": "Metal Periat Bronz",
+   "structura": "ST20",
+   "image_url": "https://www.palhause.ro/imagini-w/500/91537f528-st20.png"
+  },
+  {
+   "cod_decor": "F685 ST10",
+   "denumire": "Acapulco",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/10238f685-st10.jpg"
+  },
+  {
+   "cod_decor": "F765 ST20",
+   "denumire": "Gri Argintiu Periat",
+   "structura": "ST20",
+   "image_url": "https://www.palhause.ro/imagini-w/500/26992f765-st20.png"
+  },
+  {
+   "cod_decor": "F800 ST9",
+   "denumire": "Marmură Crystal",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/75405f800-st9.jpg"
+  },
+  {
+   "cod_decor": "H305 ST12",
+   "denumire": "Stejar Tonsberg Natur",
+   "structura": "ST12",
+   "image_url": "https://www.palhause.ro/imagini-w/500/85629h305-st12.png"
+  },
+  {
+   "cod_decor": "H309 ST12",
+   "denumire": "Stejar Tonsberg Maro",
+   "structura": "ST12",
+   "image_url": "https://www.palhause.ro/imagini-w/500/51224h309-st12.png"
+  },
+  {
+   "cod_decor": "H1113 ST10",
+   "denumire": "Stejar Kansas Brun",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/30219h1113-st10.jpg"
+  },
+  {
+   "cod_decor": "H1142 ST36",
+   "denumire": "Feelwood Stejar Sacramento Maro",
+   "structura": "ST36",
+   "image_url": "https://www.palhause.ro/imagini-w/500/9072h1142-st36.jpg"
+  },
+  {
+   "cod_decor": "H1145 ST10",
+   "denumire": "Stejar Bardolino Natur",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/76062h1145-st10.jpg"
+  },
+  {
+   "cod_decor": "H1176 ST37",
+   "denumire": "Stejar Halifax Alb",
+   "structura": "ST37",
+   "image_url": "https://www.palhause.ro/imagini-w/500/44738h1176-st37.jpg"
+  },
+  {
+   "cod_decor": "H1180 ST37",
+   "denumire": "Stejar Halifax Natur",
+   "structura": "ST37",
+   "image_url": "https://www.palhause.ro/imagini-w/500/6730h1180-st37.jpg"
+  },
+  {
+   "cod_decor": "H1181 ST37",
+   "denumire": "Stejar Halifax Tabac",
+   "structura": "ST37",
+   "image_url": "https://www.palhause.ro/imagini-w/500/77441h1181-st37.jpg"
+  },
+  {
+   "cod_decor": "H1199 ST12",
+   "denumire": "Stejar Thermo Negru-Brun",
+   "structura": "ST12",
+   "image_url": "https://www.palhause.ro/imagini-w/500/50639h1199-st12.jpeg"
+  },
+  {
+   "cod_decor": "H1223 ST19",
+   "denumire": "Frasin Sevilla",
+   "structura": "ST19",
+   "image_url": "https://www.palhause.ro/imagini-w/500/9391223-st19.jpg"
+  },
+  {
+   "cod_decor": "H1225 ST12",
+   "denumire": "Frasin Trondheim",
+   "structura": "ST12",
+   "image_url": "https://www.palhause.ro/imagini-w/500/12071h1225-st12.jpg"
+  },
+  {
+   "cod_decor": "H1242 ST10",
+   "denumire": "Salcam Sheffield Natur",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/82047h1242-st10.jpg"
+  },
+  {
+   "cod_decor": "H1250 ST36",
+   "denumire": "Frasin Navarra",
+   "structura": "ST36",
+   "image_url": "https://www.palhause.ro/imagini-w/500/19436h1250-st36.jpeg"
+  },
+  {
+   "cod_decor": "H1277 ST9",
+   "denumire": "Salcam Lakeland Deschis",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/76834h1277-st9.jpg"
+  },
+  {
+   "cod_decor": "H1303 ST12",
+   "denumire": "Stejar Belmont Maro",
+   "structura": "ST12",
+   "image_url": "https://www.palhause.ro/imagini-w/500/54796h1303-st12.jpg"
+  },
+  {
+   "cod_decor": "H1307 ST19",
+   "denumire": "Nuc Warmia Maro",
+   "structura": "ST19",
+   "image_url": "https://www.palhause.ro/imagini-w/500/74454h1307-st19.jpg"
+  },
+  {
+   "cod_decor": "H1312 ST10",
+   "denumire": "Stejar Whiteriver Nisip",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/51831h1312-st10.jpg"
+  },
+  {
+   "cod_decor": "H1313 ST10",
+   "denumire": "Stejar Whiteriver Gri Maro",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/93533h1313-st10.jpg"
+  },
+  {
+   "cod_decor": "H1318 ST10",
+   "denumire": "Stejar Salbatic Natur",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/66290h1318-st10.jpg"
+  },
+  {
+   "cod_decor": "H1330 ST10",
+   "denumire": "Stejar Santa Fe Vintage",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/2935h1330-st10.jpg"
+  },
+  {
+   "cod_decor": "H1344 ST32",
+   "denumire": "Stejar Sherman Maro Cognac",
+   "structura": "ST32",
+   "image_url": "https://www.palhause.ro/imagini-w/500/92163h1344-st32.jpg"
+  },
+  {
+   "cod_decor": "H1346 ST32",
+   "denumire": "Stejar Sherman Antracit",
+   "structura": "ST32",
+   "image_url": "https://www.palhause.ro/imagini-w/500/89634h1346-st32.jpg"
+  },
+  {
+   "cod_decor": "H1362 ST12",
+   "denumire": "Stejar Baronia Deschis",
+   "structura": "ST12",
+   "image_url": "https://www.palhause.ro/imagini-w/500/22247h1362-st12.png"
+  },
+  {
+   "cod_decor": "H1367 ST40",
+   "denumire": "Stejar Casella Natur Deschis",
+   "structura": "ST40",
+   "image_url": "https://www.palhause.ro/imagini-w/500/42607h1367-st40.jpg"
+  },
+  {
+   "cod_decor": "H1385 ST40",
+   "denumire": "Stejar Casella Natur",
+   "structura": "ST40",
+   "image_url": "https://www.palhause.ro/imagini-w/500/63518h1385-st40.jpg"
+  },
+  {
+   "cod_decor": "H1386 ST40",
+   "denumire": "Stejar Casella Maro",
+   "structura": "ST40",
+   "image_url": "https://www.palhause.ro/imagini-w/500/24152h1386-st40.png"
+  },
+  {
+   "cod_decor": "H1399 ST10",
+   "denumire": "Stejar Denver Maro Trufa",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/48377h1399-st10.jpg"
+  },
+  {
+   "cod_decor": "H1401 ST22",
+   "denumire": "Pin Cascina",
+   "structura": "ST22",
+   "image_url": "https://www.palhause.ro/imagini-w/500/16799h1401-st22.png"
+  },
+  {
+   "cod_decor": "H1487 ST22",
+   "denumire": "Pin Bramberg",
+   "structura": "ST22",
+   "image_url": "https://www.palhause.ro/imagini-w/500/47415h1487-st22.jpeg"
+  },
+  {
+   "cod_decor": "H1636 ST12",
+   "denumire": "Cires Locarno",
+   "structura": "ST12",
+   "image_url": "https://www.palhause.ro/imagini-w/500/48507h1636-st12.png"
+  },
+  {
+   "cod_decor": "H1710 ST10",
+   "denumire": "Castan Kentucky Nisip",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/43009h1710-st10.jpg"
+  },
+  {
+   "cod_decor": "H1714 ST19",
+   "denumire": "Nuc Lincoln",
+   "structura": "ST19",
+   "image_url": "https://www.palhause.ro/imagini-w/500/59721h1714-st19.jpg"
+  },
+  {
+   "cod_decor": "H1715 ST12",
+   "denumire": "Nuc Parona",
+   "structura": "ST12",
+   "image_url": "https://www.palhause.ro/imagini-w/500/30329h1715-st12.jpg"
+  },
+  {
+   "cod_decor": "H1732 ST9",
+   "denumire": "Mesteacan Nisip",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/19756h1732-st9.jpg"
+  },
+  {
+   "cod_decor": "H1910 ST9",
+   "denumire": "Fag Willow",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/49439h1910-st9.jpg"
+  },
+  {
+   "cod_decor": "H2033 ST10",
+   "denumire": "Stejar Huston Inchis",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/72156h2033st10.jpg"
+  },
+  {
+   "cod_decor": "H3003 ST19",
+   "denumire": "Stejar Norwich",
+   "structura": "ST19",
+   "image_url": "https://www.palhause.ro/imagini-w/500/19099h3003-st19.jpg"
+  },
+  {
+   "cod_decor": "H3012 ST22",
+   "denumire": "Coco Bolo Natur",
+   "structura": "ST22",
+   "image_url": "https://www.palhause.ro/imagini-w/500/97500h3012-st22.png"
+  },
+  {
+   "cod_decor": "H3043 ST12",
+   "denumire": "Eucalipt Maro Inchis",
+   "structura": "ST12",
+   "image_url": "https://www.palhause.ro/imagini-w/500/82299h3043-st12.jpg"
+  },
+  {
+   "cod_decor": "H3131 ST12",
+   "denumire": "Stejar Davos Natur",
+   "structura": "ST12",
+   "image_url": "https://www.palhause.ro/imagini-w/500/77890h3131-st12.jpg"
+  },
+  {
+   "cod_decor": "H3133 ST12",
+   "denumire": "Stejar Davos Maro Trufa",
+   "structura": "ST12",
+   "image_url": "https://www.palhause.ro/imagini-w/500/28182h3133-st12.jpg"
+  },
+  {
+   "cod_decor": "H3146 ST19",
+   "denumire": "Stejar Lorenzo Gri Bej",
+   "structura": "ST19",
+   "image_url": "https://www.palhause.ro/imagini-w/500/7491h3146-st19.jpg"
+  },
+  {
+   "cod_decor": "H3152 ST19",
+   "denumire": "Stejar Vicenza Decolorat",
+   "structura": "ST19",
+   "image_url": "https://www.palhause.ro/imagini-w/500/87284h3152-st19.jpeg"
+  },
+  {
+   "cod_decor": "H3154 ST36",
+   "denumire": "Stejar Charleston Maro Inchis",
+   "structura": "ST36",
+   "image_url": "https://www.palhause.ro/imagini-w/500/96553h3154-st36.jpg"
+  },
+  {
+   "cod_decor": "H3156 ST12",
+   "denumire": "Stejar Corbridge Gri",
+   "structura": "ST12",
+   "image_url": "https://www.palhause.ro/imagini-w/500/68234h3156-st12.jpg"
+  },
+  {
+   "cod_decor": "H3157 ST12",
+   "denumire": "Stejar Vicenza",
+   "structura": "ST12",
+   "image_url": "https://www.palhause.ro/imagini-w/500/53114h3157-st12.png"
+  },
+  {
+   "cod_decor": "H3170 ST12",
+   "denumire": "Stejar Kendal Natur",
+   "structura": "ST12",
+   "image_url": "https://www.palhause.ro/imagini-w/500/87192h3170-st12.jpg"
+  },
+  {
+   "cod_decor": "H3176 ST37",
+   "denumire": "Stejar Halifax Cositor",
+   "structura": "ST37",
+   "image_url": "https://www.palhause.ro/imagini-w/500/65469h3176-st37.jpg"
+  },
+  {
+   "cod_decor": "H3190 ST19",
+   "denumire": "Fineline Metalic Antracit",
+   "structura": "ST19",
+   "image_url": "https://www.palhause.ro/imagini-w/500/78387h3190-st19.jpg"
+  },
+  {
+   "cod_decor": "H3195 ST19",
+   "denumire": "Fineline Alb",
+   "structura": "ST19",
+   "image_url": "https://www.palhause.ro/imagini-w/500/52898h3195-st19.jpg"
+  },
+  {
+   "cod_decor": "H3197 ST19",
+   "denumire": "Fineline Gri Mediu",
+   "structura": "ST19",
+   "image_url": "https://www.palhause.ro/imagini-w/500/53565h3197-st19.jpeg"
+  },
+  {
+   "cod_decor": "H3198 ST19",
+   "denumire": "Fineline Gri Inchis",
+   "structura": "ST19",
+   "image_url": "https://www.palhause.ro/imagini-w/500/6009h3198-st19.jpg"
+  },
+  {
+   "cod_decor": "H3303 ST10",
+   "denumire": "Stejar Hamilton Natur",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/48614h3303-st10.jpg"
+  },
+  {
+   "cod_decor": "H3786 ST19",
+   "denumire": "Bolivar Wood Natur",
+   "structura": "ST19",
+   "image_url": "https://www.palhause.ro/imagini-w/500/98085H3786-ST19.jpg"
+  },
+  {
+   "cod_decor": "H3787 ST19",
+   "denumire": "Bolivar Wood Maro",
+   "structura": "ST19",
+   "image_url": "https://www.palhause.ro/imagini-w/500/66555H3787-ST19.jpg"
+  },
+  {
+   "cod_decor": "H3309 ST28",
+   "denumire": "Stejar Gladstone Nisip",
+   "structura": "ST28",
+   "image_url": "https://www.palhause.ro/imagini-w/500/246048803454156830.jpg"
+  },
+  {
+   "cod_decor": "H3311 TM28",
+   "denumire": "Stejar Cuneo Decolorat",
+   "structura": "TM28",
+   "image_url": "https://www.palhause.ro/imagini-w/500/378h3311-tm28.jpg"
+  },
+  {
+   "cod_decor": "H3317 ST28",
+   "denumire": "Stejar Cuneo Maro",
+   "structura": "ST28",
+   "image_url": "https://www.palhause.ro/imagini-w/500/96846h3317-st28.jpg"
+  },
+  {
+   "cod_decor": "H3325 ST28",
+   "denumire": "Stejar Gladstone Tabac",
+   "structura": "ST28",
+   "image_url": "https://www.palhause.ro/imagini-w/500/98043h3325-st28.jpg"
+  },
+  {
+   "cod_decor": "H3331 ST10",
+   "denumire": "Stejar Nebraska Natur",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/53142h3331-st10.jpg"
+  },
+  {
+   "cod_decor": "H3359 ST32",
+   "denumire": "Stejar Davenport Natur Deschis",
+   "structura": "ST32",
+   "image_url": "https://www.palhause.ro/imagini-w/500/3968h3359-st32.jpg"
+  },
+  {
+   "cod_decor": "H3395 ST12",
+   "denumire": "Stejar Corbridge Natur",
+   "structura": "ST12",
+   "image_url": "https://www.palhause.ro/imagini-w/500/72135h3395-st12.jpg"
+  },
+  {
+   "cod_decor": "H3398 ST12",
+   "denumire": "Stejar Kendal Cognac",
+   "structura": "ST12",
+   "image_url": "https://www.palhause.ro/imagini-w/500/21788h3398-st12.png"
+  },
+  {
+   "cod_decor": "H3430 ST22",
+   "denumire": "Pin Aland Alb",
+   "structura": "ST22",
+   "image_url": "https://www.palhause.ro/imagini-w/500/93943h3430-st22.png"
+  },
+  {
+   "cod_decor": "H3433 ST22",
+   "denumire": "Pin Aland Polar",
+   "structura": "ST22",
+   "image_url": "https://www.palhause.ro/imagini-w/500/5070h3433-st22.jpg"
+  },
+  {
+   "cod_decor": "H3450 ST22",
+   "denumire": "Fleetwood Alb",
+   "structura": "ST22",
+   "image_url": "https://www.palhause.ro/imagini-w/500/54989h3450-st22.jpg"
+  },
+  {
+   "cod_decor": "H3700 ST10",
+   "denumire": "Nuc Pacific Natur",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/46195h3700-st10.png"
+  },
+  {
+   "cod_decor": "H3702 ST10",
+   "denumire": "Nuc Pacific Tabac",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/79757h3702-st10.jpg"
+  },
+  {
+   "cod_decor": "H3710 ST12",
+   "denumire": "Nuc Carini Natur",
+   "structura": "ST12",
+   "image_url": "https://www.palhause.ro/imagini-w/500/10470h3710-st12.jpg"
+  },
+  {
+   "cod_decor": "H3730 ST10",
+   "denumire": "Hicori Natur",
+   "structura": "ST10",
+   "image_url": "https://www.palhause.ro/imagini-w/500/69355h3730-st10.jpg"
+  },
+  {
+   "cod_decor": "H3734 ST9",
+   "denumire": "Nuc Dijon Natur",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/64882h3734-st9.png"
+  },
+  {
+   "cod_decor": "H3840 ST9",
+   "denumire": "Arțar Mandal Natur",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/36446h3840-st9.jpg"
+  },
+  {
+   "cod_decor": "H3860 ST9",
+   "denumire": "Arțar Dur Champagne",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/60678h3860-st9.jpg"
+  },
+  {
+   "cod_decor": "U104 ST9",
+   "denumire": "Alb Alabastru",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/78594u104-st9.jpeg"
+  },
+  {
+   "cod_decor": "U113 ST9",
+   "denumire": "Bej Bumbac",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/66935u113-st9.png"
+  },
+  {
+   "cod_decor": "U115 ST9",
+   "denumire": "Bej Carat",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/21272u115-st9.png"
+  },
+  {
+   "cod_decor": "U125 ST9",
+   "denumire": "Galben Nisip",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/3455u125-st9.png"
+  },
+  {
+   "cod_decor": "U156 ST9",
+   "denumire": "Bej Nisip",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/74481u156-st9.png"
+  },
+  {
+   "cod_decor": "U163 ST9",
+   "denumire": "Galben Curry",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/16292u163-st9.png"
+  },
+  {
+   "cod_decor": "U201 ST9",
+   "denumire": "Gri Pietriș",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/89321u201-st9.png"
+  },
+  {
+   "cod_decor": "U211 ST9",
+   "denumire": "Bej Migdala",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/6834u211-st9.png"
+  },
+  {
+   "cod_decor": "U216 ST9",
+   "denumire": "Camel Bej",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/51515u216-st9.png"
+  },
+  {
+   "cod_decor": "U222 ST9",
+   "denumire": "Bej Crem",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/61675u222-st9.png"
+  },
+  {
+   "cod_decor": "U311 ST9",
+   "denumire": "Roșu Burgund",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/10908u311-st9.jpg"
+  },
+  {
+   "cod_decor": "U321 ST9",
+   "denumire": "Roșu China",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/40734u321-st9.png"
+  },
+  {
+   "cod_decor": "U325 ST9",
+   "denumire": "Rose Antic",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/53056u325-st9.png"
+  },
+  {
+   "cod_decor": "U335 ST9",
+   "denumire": "Roșu Ruginiu",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/80080u335-st9.png"
+  },
+  {
+   "cod_decor": "U350 ST9",
+   "denumire": "Portocaliu Siena",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/26505u350-st9.png"
+  },
+  {
+   "cod_decor": "U502 ST9",
+   "denumire": "Albastru Gri",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/21917u502-st9.png"
+  },
+  {
+   "cod_decor": "U504 ST9",
+   "denumire": "Albastru Tirolez",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/55797u504-st9.png"
+  },
+  {
+   "cod_decor": "U525 ST9",
+   "denumire": "Albastru Delft",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/29690u525-st9.png"
+  },
+  {
+   "cod_decor": "U540 ST9",
+   "denumire": "Albastru Denim",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/42717u540-st9.png"
+  },
+  {
+   "cod_decor": "U599 ST9",
+   "denumire": "Albastru Indigo",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/25564u599-st9.png"
+  },
+  {
+   "cod_decor": "U604 ST9",
+   "denumire": "Verde Eucalipt",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/9807u604-st9.png"
+  },
+  {
+   "cod_decor": "U665 ST9",
+   "denumire": "Verde Piatra",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/52185u665-st9.png"
+  },
+  {
+   "cod_decor": "U630 ST9",
+   "denumire": "Verde Lămâie",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/70636u630-st9.png"
+  },
+  {
+   "cod_decor": "U636 ST9",
+   "denumire": "Verde Fjord",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/97981u636-st9.jpg"
+  },
+  {
+   "cod_decor": "U638 ST9",
+   "denumire": "Verde Salvie",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/46504U638.jpg"
+  },
+  {
+   "cod_decor": "U699 ST9",
+   "denumire": "Verde Brad",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/7500u699-st9.png"
+  },
+  {
+   "cod_decor": "U702 ST9",
+   "denumire": "Gri Cașmir",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/71734u702-st9.png"
+  },
+  {
+   "cod_decor": "U705 ST9",
+   "denumire": "Gri Angora",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/41909u705-st9.jpg"
+  },
+  {
+   "cod_decor": "U707 ST9",
+   "denumire": "Gri Mătase",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/914u707-st9.png"
+  },
+  {
+   "cod_decor": "U708 ST9",
+   "denumire": "Gri Deschis",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/44497u708-st9.jpeg"
+  },
+  {
+   "cod_decor": "U727 ST9",
+   "denumire": "Gri Piatra",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/3965u727-st9.png"
+  },
+  {
+   "cod_decor": "U732 ST9",
+   "denumire": "Gri Praf",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/27776u732-st9.png"
+  },
+  {
+   "cod_decor": "U727 TM9/ST2",
+   "denumire": "Gri Piatra Top Mat",
+   "structura": "TM9/ST2",
+   "image_url": "https://www.palhause.ro/imagini-w/500/9224u727-st9.png"
+  },
+  {
+   "cod_decor": "U740 ST9",
+   "denumire": "Taupe Inchis",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/17511u740-st9.png"
+  },
+  {
+   "cod_decor": "U741 ST9",
+   "denumire": "Gri Lava",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/45095u741-st9.png"
+  },
+  {
+   "cod_decor": "U748 ST9",
+   "denumire": "Maro Trufă",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/54477u748-st9.png"
+  },
+  {
+   "cod_decor": "U750 ST9",
+   "denumire": "Gri Taupe",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/85036u750-st9.png"
+  },
+  {
+   "cod_decor": "U763 ST9",
+   "denumire": "Gri Sidefat",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/38245u763-st9.png"
+  },
+  {
+   "cod_decor": "U767 ST9",
+   "denumire": "Gri Cubanit",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/45307u767-st9.png"
+  },
+  {
+   "cod_decor": "U775 ST9",
+   "denumire": "Gri Alb",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/23621u775-st9.png"
+  },
+  {
+   "cod_decor": "U780 ST9",
+   "denumire": "Gri Monument",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/55513u780-st9.png"
+  },
+  {
+   "cod_decor": "U788 ST9",
+   "denumire": "Gri Arctic",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/95434u788-st9.png"
+  },
+  {
+   "cod_decor": "U818 ST9",
+   "denumire": "Maro Închis",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/10639u818-st9.png"
+  },
+  {
+   "cod_decor": "U830 ST9",
+   "denumire": "Caramel Nude",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/94897u830-st9.png"
+  },
+  {
+   "cod_decor": "U899 ST9",
+   "denumire": "Negru Fin",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/29404u899-st9.jpg"
+  },
+  {
+   "cod_decor": "U960 ST9",
+   "denumire": "Gri Onix",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/24702u960-st9.jpg"
+  },
+  {
+   "cod_decor": "U961 ST7",
+   "denumire": "Gri Grafit",
+   "structura": "ST7",
+   "image_url": "https://www.palhause.ro/imagini-w/500/95993u961-st7.jpg"
+  },
+  {
+   "cod_decor": "U963 ST9",
+   "denumire": "Gri Diamant",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/72422u963-st9.png"
+  },
+  {
+   "cod_decor": "U968 ST9",
+   "denumire": "Gri Cărbune",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/89043u968-st9.jpg"
+  },
+  {
+   "cod_decor": "U998 ST38",
+   "denumire": "Negru Fumuriu",
+   "structura": "ST38",
+   "image_url": "https://www.palhause.ro/imagini-w/500/80701u998-st38.png"
+  },
+  {
+   "cod_decor": "U999 TM28",
+   "denumire": "Negru Top Mat",
+   "structura": "TM28",
+   "image_url": "https://www.palhause.ro/imagini-w/500/44744u999-tm9.png"
+  },
+  {
+   "cod_decor": "U999 ST19",
+   "denumire": "Negru",
+   "structura": "ST19",
+   "image_url": "https://www.palhause.ro/imagini-w/500/61755u999-tm9.png"
+  },
+  {
+   "cod_decor": "U999 ST7",
+   "denumire": "Negru",
+   "structura": "ST7",
+   "image_url": "https://www.palhause.ro/imagini-w/500/2914u999-tm9.png"
+  },
+  {
+   "cod_decor": "U250 ST9",
+   "denumire": "Bej Caramel",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/18840u250.jpg"
+  },
+  {
+   "cod_decor": "U669 ST9",
+   "denumire": "Verde Cedru",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/8218u669.jpg"
+  },
+  {
+   "cod_decor": "W960 SM",
+   "denumire": "Alb Clasic",
+   "structura": "SM",
+   "image_url": "https://www.palhause.ro/imagini-w/500/43879w960-sm.jpg"
+  },
+  {
+   "cod_decor": "W960 ST9",
+   "denumire": "Alb Clasic",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/18223w960-st7.png"
+  },
+  {
+   "cod_decor": "W960 ST7",
+   "denumire": "Alb Clasic",
+   "structura": "ST7",
+   "image_url": "https://www.palhause.ro/imagini-w/500/18223w960-st7.png"
+  },
+  {
+   "cod_decor": "W980 ST2",
+   "denumire": "Alb Platină Perlat",
+   "structura": "ST2",
+   "image_url": "https://www.palhause.ro/imagini-w/500/29175w980-st2.png"
+  },
+  {
+   "cod_decor": "W980 SM",
+   "denumire": "Alb Platină Neted",
+   "structura": "SM",
+   "image_url": "https://www.palhause.ro/imagini-w/500/27659w980-sm.png"
+  },
+  {
+   "cod_decor": "W1000 ST9",
+   "denumire": "Alb Premium",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/6987w1000-st9.png"
+  },
+  {
+   "cod_decor": "W1000 ST19",
+   "denumire": "Alb Premium",
+   "structura": "ST19",
+   "image_url": "https://www.palhause.ro/imagini-w/500/80173w1000-st19.png"
+  },
+  {
+   "cod_decor": "W1000 ST38",
+   "denumire": "Alb Premium",
+   "structura": "ST38",
+   "image_url": "https://www.palhause.ro/imagini-w/500/45107w1000-st38.jpeg"
+  },
+  {
+   "cod_decor": "W1100 ST9",
+   "denumire": "Alb Alpin",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/7040w1100-st9.png"
+  },
+  {
+   "cod_decor": "W1200 ST9",
+   "denumire": "Alb Portelan",
+   "structura": "ST9",
+   "image_url": "https://www.palhause.ro/imagini-w/500/18822w1200-st9.png"
+  }
+ ]
+}

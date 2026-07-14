@@ -1,0 +1,905 @@
+{
+ "nr_total": 100,
+ "blaturi": [
+  {
+   "cod_decor": "F112 ST9",
+   "denumire": "Marmura Florence Gri",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 574.75,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/1/f112-st9----blat-de-lucru-marmura-florence-gri-f112-st9-4100x920x38_1/F112-ST9-Blat-de-lucru-MARMURA-FLORENCE-GRI-F112-ST9-4100X600X38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "W980 ST7",
+   "denumire": "Alb Platina",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 586.85,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/w/1/w1000-st76---blat-de-lucru-alb-premium-w1000-st76-4100x600x38-mm_1/W980-ST7---Blat-de-lucru-ALB-PLATINA-W980-ST7-4100x600x38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H1357 ST10",
+   "denumire": "Stejar Spree Gri Bej",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.04,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/1/_/1_3/H1357-ST10----Blat-de-lucru-STEJAR-SPREE-GRI-BEJ-H1357-ST10-4100x600x38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H3730 ST10",
+   "denumire": "Hicori Natur",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/b/b/bbb/H3730-ST10---Blat-de-lucru-HICORI-NATUR-H3730-ST10-4100X600X38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H1145 ST10",
+   "denumire": "Stejar Bardolino Natur",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1145_st10_rapport_560x410_2_1/H1145-ST10---Blat-de-lucru-STEJAR-BARDOLINO-NATUR-H1145-ST10-4100x600x38-.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F108 ST9",
+   "denumire": "Marmura San Luca",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/n/o/nou_1_/F108-ST9-Blat-de-lucru-MARMURA-SAN-LUCA-F108-ST9-4100x600x38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H1401 ST22",
+   "denumire": "Pin Cascina",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796965404702_1/H1401-ST22---Blat-de-lucru-PIN-CASCINA-H1401-ST22-4100x600x38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H2409 G8",
+   "denumire": "Stejar Cardiff Maro",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/2/h2409_a3_10de_fur/H2409-G8----Blat-de-lucru-STEJAR-CARDIFF-MARO-H2409-G8-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F502 ST7",
+   "denumire": "Aluminiu Periat Fin",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796574384158/F502-ST7---Blat-lucru-ALUMINIU-PERIAT-FIN-F502-ST7--4100x600x38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F052 ST75",
+   "denumire": "Travertin Calais",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/0/f052_a3_10de_fur_1/F052-ST75----Blat-de-lucru-TRAVERTIN-CALAIS--F052-ST75-4100x600x38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F229 ST75",
+   "denumire": "Marmura Cremona",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f229_a3_10de_fur_1/F229-ST75-Blat-de-lucru-MARMURA-CREMONA-F229-ST75-4100X600x38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H197 ST10",
+   "denumire": "Lemn Vintage Natur",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h197_5/H197-ST10----Blat-de-lucru-LEMN-VINTAGE-NATUR-H197-ST10-4100X600X38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F243 ST76",
+   "denumire": "Marmura Candela Gri Deschis",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f243_a3_10de_fur_dekor_1_1/F243-ST76-Blat-de-lucru-Marmură-Candela-gri-deschis-F243-ST76-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F275 ST9",
+   "denumire": "Beton Gri Inchis",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796480143390_2/F275-ST9----Blat-de-lucru-BETON-GRI-INCHIS-F275-ST9-4100x600x38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F186 ST9",
+   "denumire": "Beton Chicago Gri Deschis",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/1/f186_2/F186-ST9----Blat-de-lucru-BETON-CHICAGO-GRI-DESCHIS-F186-ST9-4100x600x38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H3133 ST12",
+   "denumire": "Stejar Davos Maro Trufa",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796988964894_1/H3133-ST12---Blat-de-lucru-STEJAR-DAVOS-MARO-TRUFA-H3133-ST12-4100x600x38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F676 ST75",
+   "denumire": "Piatra Calvia Gri Nisip",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/1/_/1_6/F676-ST75---Blat-de-lucru-PIATRA-CALVIA-GRI-NISIP--F676-ST75-4100x600x38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "U763 ST76",
+   "denumire": "Gri Sidefat",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796967174174_1/U763-ST76---Blat-de-lucru-GRI-SIDEFAT-U763-ST76-4100x600x38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F031 ST78",
+   "denumire": "Granit Cascia Gri Deschis",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/0/f031_a3_10de_fur_1/F031-ST78----Blat-de-lucru-GRANIT-CASCIA-GRI-DESCHIS-F031-ST78-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F021 ST75",
+   "denumire": "Terrazzo Triestino Gri",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/_/f_021_st75_-_2_2/F021-ST75-Blat-de-lucru-TERRAZZO-TRIESTINO-GRI-F021-ST75-4100X600X38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F227 ST78",
+   "denumire": "Titanit Gri",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f227_a3_10de_fur/F227-ST78-Blat-de-lucru-TITANIT-GRI-F227-ST78-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F206 ST9",
+   "denumire": "Pietra Grigia Negru",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/_/f_206_st9/F206-ST9----Blat-de-lucru-PIETRA-GRIGIA-NEGRU-F206-ST9-4100X600X38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F235 ST76",
+   "denumire": "Ardezie Scivaro",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f235_a3_10de_fur_4_1/F235-ST76-Blat-de-lucru-Ardezie-Scivaro-F235-ST76-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H2032 ST10",
+   "denumire": "Stejar Hunton Deschis",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/_/h_2032_st10_-_2/H2032--ST10----Blat-de-lucru-STEJAR-HUNTON-DESCHIS-H2032-ST10-4100X600X38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F620 ST87",
+   "denumire": "Otel Gri Antracit",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/6/f620_a3_10de_fur/F620-ST87-Blat-de-lucru-Oțel-Gri-Antracit-F620-ST87-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H3303 ST10",
+   "denumire": "Stejar Hamilton Natur",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796480012318_1/H3303-ST10---Blat-de-lucru-STEJAR-HAMILTON-NATUR-H3303-ST10-4100x600x38-.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F251 ST9",
+   "denumire": "Piatra Gavi Taupe",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/1/_/1_4/F251-ST9-Blat-de-lucru-PIATRA-GAVI-TAUPE-F251ST9-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F638 ST10",
+   "denumire": "Chromix Argintiu",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796986605598_1/F638-ST10---Blat-de-lucru-CHROMIX-ARGINTIU-F638-ST10-4100x600x38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H305 ST12",
+   "denumire": "Stejar Tonsberg",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h305_a3_10de_fur_4/H305-ST12----Blat-de-lucru-STEJAR-TONSBERG-H305-ST12-4100x600x38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "W1000 ST76",
+   "denumire": "Alb Premium",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/w/1/w1000-st76---blat-de-lucru-alb-premium-w1000-st76-4100x600x38-mm/W1000-ST76---Blat-de-lucru-ALB-PREMIUM-W1000-ST76-4100x600x38-mm.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F208 ST75",
+   "denumire": "Pietra Fanano Gri",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f208_a3_10de_fur/F208-ST75-Blat-de-lucru-PIETRA-FANANO-GRI-F208-ST75-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F121 ST87",
+   "denumire": "Metal Rock Antracit",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/_/f_121_st87/F121-ST87-Blat-de-lucru-METAL-ROCK-ANTRACIT-F121-ST87-4100X600X38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F230 ST75",
+   "denumire": "Pietra Fanano Gri Deschis",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f230_a3_10de_fur/F230-ST75-Blat-de-lucru-Pietra-Fanano-gri-deschis-F230-ST75-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H1313 ST10",
+   "denumire": "Stejar Whiteriver Gri Maro",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1313_st10_-_2/H1313-ST10----Blat-de-lucru-STEJAR-WHITERIVER-GRI-MARO-H1313-ST10-4100X600X38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F352 ST76",
+   "denumire": "Basaltino Terra",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/3/f352_a3_10de_fur_dekor_1/F352-ST76-Blat-de-lucru-Basaltino-Terra-F352-ST76-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F187 ST9",
+   "denumire": "Beton Chicago Gri Inchis",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/4/_/4_3/F187-ST9----Blat-de-lucru-BETON-CHICAGO-GRI-INCHIS-F187-ST9-4100x600x38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H3157 ST12",
+   "denumire": "Stejar Vincenza",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/n/o/nou-2/H3157-ST12----Blat-de-lucru-STEJAR-VINCENZA--H3157-ST12-4100x600x38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F302 ST87",
+   "denumire": "Ferro Bronz",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796983951390/F302-ST87---Blat-de-lucru-Ferro-Bronz-F302-ST87-4100x600x38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H011 G8",
+   "denumire": "Brad Nebrodi Rustic",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/1/_/1_7/H011-G8---Blat-de-lucru-BRAD-NEBRODI-RUSTIC--H011-G8-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H3331 ST10",
+   "denumire": "Stejar Nebraska Natur",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796507176990_1/H3331-ST10---Blat-de-lucru-STEJAR-NEBRASKA-NATUR-H3331-ST10-4100x600x38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F032 ST78",
+   "denumire": "Granit Cascia Gri",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/0/f032_a3_10de_fur/F032-ST78----Blat-de-lucru-GRANIT-CASCIA-GRI--F032-ST78-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F095 ST87",
+   "denumire": "Marmura Siena Gri",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/_/f_095_st87/F095-ST87-Blat-de-lucru-MARMURA-SIENA-GRI-F095-ST87-4100X600X38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F228 ST78",
+   "denumire": "Titanit Antracit",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f228_a3_10de_fur/F228-ST78-Blat-de-lucru-TITANIT-ANTRACIT-F228-ST78-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H193 ST12",
+   "denumire": "Stejar Lamelar",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/_/h_193_st12_-_2_2/H193-ST12----Blat-de-lucru-STEJAR-LAMELAR-H193-ST12-4100X600X38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F237 ST76",
+   "denumire": "Ardezie Cupira",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f237_a3_10de_fur_dekor/F237-ST76-Blat-de-lucru-Ardezie-Cupira-F237-ST76-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H2033 ST10",
+   "denumire": "Stejar Hunton Inchis",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/_/h_2033_st10_-_2/H2033--ST10----Blat-de-lucru-STEJAR-HUNTON-INCHIS-H2033-ST10-4100X600X38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F800 ST9",
+   "denumire": "Marmura Crystal",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/8/f800_a3_10de_fur_2_1/F800-ST9-Blat-de-lucru-Marmura-Crystal-F800-ST9-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H1303 ST12",
+   "denumire": "Stejar Belmont Maro",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/n/o/nou/H1303-ST12---Blat-de-lucru-Stejar-Belmont-maro-H1303-ST12-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F675 ST75",
+   "denumire": "Piatra Calvia Gri Deschis",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/1/_/1_5/F675-ST75---Blat-de-lucru-PIATRA-CALVIA-GRI-DESCHIS-F675-ST75-4100x600x38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "U999 ST78",
+   "denumire": "Negru",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/9/u999_pg_560x410px_1/U999-ST78---Blat-de-lucru-NEGRU--U999-ST78-4100x600x38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F030 ST75",
+   "denumire": "Travertin Margalida",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/0/f030_a3_10de_fur/F030-ST75----Blat-de-lucru-TRAVERTIN-MARGALIDA-F030-ST75-4100x600x38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F093 ST7",
+   "denumire": "Marmura Cipollino Gri",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796978053150_1/F093-ST7---Blat-de-lucru-MARMURA-CIPOLLINO-GRI-F093-ST7-4100x600x38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "U702 ST78",
+   "denumire": "Gri Casmir",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/7/u702-st78---blat-de-lucru-gri-casmir-u702-st78-4100x920x38_1/U702-ST78---Blat-de-lucru-GRI-CASMIR-U702-ST78-4100X600X38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F226 ST78",
+   "denumire": "Titanit Bej Nisip",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f226_a3_10de_fur/F226-ST78-Blat-de-lucru-TITANIT-BEJ-NISIP-F226-ST76-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F205 ST9",
+   "denumire": "Pietra Grigia Antracit",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/_/f_205_st9/F205-ST9-Blat-de-lucru-PIETRA-GRIGIA--ANTRACIT-F205-ST9-4100X600X38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F234 ST76",
+   "denumire": "Ardezie Scivaro Gri Deschis",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f234_a3_10de_fur_1/F234-ST76-Blat-de-lucru-Ardezie-Scivaro-gri-deschis--F234-ST76-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "H1318 ST10",
+   "denumire": "Stejar Salbatic Natur",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1318_st10_-_2/H1318-ST10----Blat-de-lucru-STEJAR-SALBATIC-NATUR-H1318-ST10-4100X600X38.jpg",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F486 ST76",
+   "denumire": "Sparkle Alb",
+   "dimensiuni": "4100x600x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 604.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/4/f486_1300x2800_10de_fur_1/F486-ST76-Blat-de-lucru-Sparkle-Alb-F486-ST76-4100X600X38.png",
+   "categorie": "blat-egger-600"
+  },
+  {
+   "cod_decor": "F661 ST76",
+   "denumire": "Piatra Calcit Bej Nisip",
+   "dimensiuni": "4100x650x20 mm",
+   "grosime_mm": 20,
+   "pret_ron": 1024.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/6/f661/F661-ST76---Blat-de-lucru-Piatra-calcit-bej-nisip--F661-ST76-4100X650X20.png",
+   "categorie": "blat-egger-650"
+  },
+  {
+   "cod_decor": "F836 ST75",
+   "denumire": "Marmura Formelo Alb",
+   "dimensiuni": "4100x650x20 mm",
+   "grosime_mm": 20,
+   "pret_ron": 1024.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/8/f836/F836-ST75---Blat-de-lucru-Marmura-Formelo-ALB-F836-ST75--4100x650x20.png",
+   "categorie": "blat-egger-650"
+  },
+  {
+   "cod_decor": "F662 ST76",
+   "denumire": "Piatra Calcit Gri Pietris",
+   "dimensiuni": "4100x650x20 mm",
+   "grosime_mm": 20,
+   "pret_ron": 1024.46,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/6/f662_st76/F662-ST76---Blat-de-lucru-Piatra-calcit-gri-pietris-F662-ST76--4100X650X20.png",
+   "categorie": "blat-egger-650"
+  },
+  {
+   "cod_decor": "U999 PM",
+   "denumire": "Negru PerfectSense Premium Matt",
+   "dimensiuni": "4100x650x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 1218.88,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/9/u999-pt-detaliat-600x345/U999-PM---Blat-de-lucru-NEGRU-PerfectSense-Premium-Matt-U999-PM-4100x650x38.jpeg",
+   "categorie": "blat-egger-650"
+  },
+  {
+   "cod_decor": "F206 PM",
+   "denumire": "Pietra Grigia PerfectSense Premium Matt",
+   "dimensiuni": "4100x650x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 1218.88,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f206-st9-detaliat-600x345/F206-PM-Pietra-Grigia--Blat-de-lucru--PerfectSense-Premium-Matt-F206-PM-4100x650x38.jpeg",
+   "categorie": "blat-egger-650"
+  },
+  {
+   "cod_decor": "W1100 PM",
+   "denumire": "Alb Alpin PerfectSense Premium Mat",
+   "dimensiuni": "4100x650x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 1218.88,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/a/l/alb_3/W1100-PM-Alb---Blat-de-lucru-Alb-Alpin-PerfectSense-Premium-Mat-w1100-PM-4100x650x38.png",
+   "categorie": "blat-egger-650"
+  },
+  {
+   "cod_decor": "H1181 ST37",
+   "denumire": "Stejar Halifax Tabac",
+   "dimensiuni": "4100x650x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 1308.62,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1181_st37_rapport_560x410px/H1181-ST37---Blat-de-lucru-STEJAR-HALIFAX-TABAC-H1181-ST37-4100x650x38.jpg",
+   "categorie": "blat-egger-650"
+  },
+  {
+   "cod_decor": "H1386 ST40",
+   "denumire": "Stejar Casella Maro",
+   "dimensiuni": "4100x650x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 1308.62,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/1/3/1386/H1386-ST40--Blat-de-lucur-Stejar-Casella-maro-H1386-ST40-4100x650x38.png",
+   "categorie": "blat-egger-650"
+  },
+  {
+   "cod_decor": "F128 PA",
+   "denumire": "Granit Ambience Negru",
+   "dimensiuni": "4100x650x20 mm",
+   "grosime_mm": 20,
+   "pret_ron": 1308.62,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/n/untitled_8/F128-PA---Blat-de-lucru-Granit-Ambience-negru-F128-PA-4100X650X20.png",
+   "categorie": "blat-egger-650"
+  },
+  {
+   "cod_decor": "H3176 ST37",
+   "denumire": "Stejar Halifax Cositor",
+   "dimensiuni": "4100x650x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 1308.62,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/_/h_3176_st37_-_2_1/H3176--ST37----Blat-de-lucru-STEJAR-HALIFAX-COSITOR-H3176-ST37-4100X650X38.jpg",
+   "categorie": "blat-egger-650"
+  },
+  {
+   "cod_decor": "H1180 ST37",
+   "denumire": "Stejar Halifax Natural",
+   "dimensiuni": "4100x650x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 1308.62,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1180_st37_rapport_560x410px/H1180-ST37---Blat-de-lucru-STEJAR-HALIFAX-NATURAL-H1180-ST37-4100x650x38.jpg",
+   "categorie": "blat-egger-650"
+  },
+  {
+   "cod_decor": "H1385 ST40",
+   "denumire": "Stejar Casella Natur",
+   "dimensiuni": "4100x650x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 1308.62,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3730/H1385-ST40---Blat-de-lucru-Stejar-Casella-natur-H1385-ST40-4100x650x38.png",
+   "categorie": "blat-egger-650"
+  },
+  {
+   "cod_decor": "F129 PA",
+   "denumire": "Granit Ambience Bej",
+   "dimensiuni": "4100x650x20 mm",
+   "grosime_mm": 20,
+   "pret_ron": 1308.62,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/1/f129pa/F129-PA---Blat-de-lucru-Granit-Ambience-Bej-F129-PA-4100X650X20.jpg",
+   "categorie": "blat-egger-650"
+  },
+  {
+   "cod_decor": "H3359 ST32",
+   "denumire": "Stejar Davenport",
+   "dimensiuni": "4100x650x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 1308.62,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3359_a3_10de_fur_1/H3359-ST32----Blat-de-lucru-Stejar-Davenport--H3359-ST32-4100X650X38.png",
+   "categorie": "blat-egger-650"
+  },
+  {
+   "cod_decor": "F199 PA",
+   "denumire": "Marmura Ambiance Negru",
+   "dimensiuni": "4100x650x20 mm",
+   "grosime_mm": 20,
+   "pret_ron": 1308.62,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/1/f199pa/F199-PA---Blat-de-lucru-Marmura-Ambiance-negru-F199-PA-4100X650X20.png",
+   "categorie": "blat-egger-650"
+  },
+  {
+   "cod_decor": "H1344 ST32",
+   "denumire": "Stejar Sherman Maro Cognac",
+   "dimensiuni": "4100x650x38 mm",
+   "grosime_mm": 38,
+   "pret_ron": 1308.62,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1344_st32_-_2/H1344--ST32----Blat-de-lucru-STEJAR-SHERMAN-MARO-COGNAC-H1344-ST32-4100X650X38.jpg",
+   "categorie": "blat-egger-650"
+  },
+  {
+   "cod_decor": "F267 ST76",
+   "denumire": "Piatra Belisara Gri Lava (Miez Negru)",
+   "dimensiuni": "4100x650x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 1867.03,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f267/F267-ST76-(MIEZ-NEGRU)---Blat-de-lucru-laminat-compact-Piatra-Belisara-gri-lava-F267-ST76-41000x650x12.png",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "U999 ST76",
+   "denumire": "Negru (Miez Negru)",
+   "dimensiuni": "4100x650x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 1867.03,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/9/u999_1/U999-ST76-(Miez-Negru)---Blat-de-lucru-laminat-compact-NEGRU-U999-ST76-4100x650x12.png",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "F244 ST76",
+   "denumire": "Marmura Candela Antracit (Miez Negru)",
+   "dimensiuni": "4100x650x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 1867.03,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f244_a3_10de_fur/F244-ST76-(Miez-Negru)---Blat-de-lucru-laminat-compact-Marmură-Candela-antracit--F244-ST76-4100X650X12.png",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "F221 ST87",
+   "denumire": "Ceramica Tessina Crem (Miez Negru)",
+   "dimensiuni": "4100x650x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 1867.03,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f221_1_3/F221-ST87-(Miez-Negru)---Blat-de-lucru-laminat-compact-Ceramica-Tessina-Crem-F221-ST87-4100X650X12.jpg",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "H3730 ST10",
+   "denumire": null,
+   "dimensiuni": "4100x650x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 1867.03,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/d/s/dsfsssf/H3730-ST10-(MIEZ-NEGRU)---Blat-de-lucru-laminat-compact-H3730-ST10-H3730-ST10-4100X650X12.jpg",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "F206 ST9",
+   "denumire": "Pietra Grigia Negru (Miez Negru)",
+   "dimensiuni": "4100x650x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 1867.03,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f206-st9----blat-de-lucru-pietra-grigia-negru-f206-st9-4100x600x38/F206-ST9-(Miez-Negru)---Blat-de-lucru-laminat-compact-Pietra-Grigia-Negru-F206-ST9-4100X650X12.jpg",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "H1330 ST10",
+   "denumire": null,
+   "dimensiuni": "4100x650x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 1867.03,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1330/H1330-ST10-(Miez-Negru)---Blat-de-lucru-laminat-compact-H1330-ST10-H1330-ST10-4100X650X12.png",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "H1318 ST10",
+   "denumire": null,
+   "dimensiuni": "4100x650x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 1867.03,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1318_3/H1318-ST10-(Miez-Negru)---Blat-de-lucru-laminat-compact-H1318-ST10-H1318-ST10-4100X650X12.jpg",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "F311 ST87",
+   "denumire": "Ceramic Antracit (Miez Negru)",
+   "dimensiuni": "4100x650x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 1867.03,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/3/f311-st87---blat-de-lucru-ceramic-antracit-f311-st87-4100x600x38/F311-ST87-(Miez-Negru)---Blat-de-lucru-laminat-Ceramic-Antracit-F311-ST87-4100X650X12.jpg",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "H1330 ST10",
+   "denumire": null,
+   "dimensiuni": "4100x920x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 2710.4,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1330_1/H1330-ST10-(Miez-Negru)---Blat-de-lucru-laminat-compact-H1330-ST10-H1330-ST10-4100X920X12.png",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "F1861 ST9",
+   "denumire": "Beton Chicago Gri Deschis (Miez Gri Deschis)",
+   "dimensiuni": "4100x650x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 2710.4,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/1/f186-st9----blat-de-lucru-beton-chicago-gri-deschis-f186-st9-4100x920x38_1/F1861-ST9-(Miez-Gri-Deschis)----Blat-de-lucru-laminat-compact-Beton-Chicago-gri-deschis-colorat-în-masă-F1861-ST9-4100X650X12.jpg",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "F8001 ST9",
+   "denumire": "Alb Colorat in Masa (Miez Alb)",
+   "dimensiuni": "4100x650x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 2710.4,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/8/f8001/F8001-ST9-(MIEZ-ALB)----Blat-de-lucru-laminat-compact-ALB-COLORAT-IN-MASA-F8001-ST9-4100X650X12.png",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "H1318 ST10",
+   "denumire": null,
+   "dimensiuni": "4100x920x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 2710.4,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1318_3_1/H1318-ST10-(Miez-Negru)---Blat-de-lucru-laminat-compact-H1318-ST10-H1318-ST10-4100X920X12.jpg",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "F311 ST87",
+   "denumire": "Ceramic Antracit (Miez Negru)",
+   "dimensiuni": "4100x920x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 2710.4,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/3/f311-st87---blat-de-lucru-ceramic-antracit-f311-st87-4100x600x38_1/F311-ST87-(Miez-Negru)---Blat-de-lucru-laminat-Ceramic-Antracit-F311-ST87-4100X920X12.jpg",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "F267 ST76",
+   "denumire": "Piatra Belisara Gri Lava (Miez Negru)",
+   "dimensiuni": "4100x920x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 2710.4,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f267_1/F267-ST76-(MIEZ-NEGRU)---Blat-de-lucru-laminat-compact-Piatra-Belisara-gri-lava-F267-ST76-4100x920x12-.png",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "U999 ST76",
+   "denumire": "Negru (Miez Negru)",
+   "dimensiuni": "4100x920x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 2710.4,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/9/u999/U999-ST76-(Miez-Negru)---Blat-de-lucru-laminat-compact-NEGRU-U999-ST76-4100x920x12.png",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "F244 ST76",
+   "denumire": "Marmura Candela Antracit (Miez Negru)",
+   "dimensiuni": "4100x920x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 2710.4,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f244_a3_10de_fur_1/F244-ST76-(Miez-Negru)---Blat-de-lucru-laminat-compact-Marmură-Candela-antracit--F244-4100X920X12.png",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "U7081 ST76",
+   "denumire": "Gri Deschis Colorat in Masa (Miez Gri Deschis)",
+   "dimensiuni": "4100x650x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 2710.4,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/7/u7081_st76_2/U7081-ST76-(Miez-Gri-Deschis)----Blat-de-lucru-laminat-compact-GRI-DESCHIS-COLORAT-IN-MASA-U7081-ST76-4100x650x12.jpg",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "F221 ST87",
+   "denumire": "Ceramica Tessina Crem (Miez Negru)",
+   "dimensiuni": "4100x920x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 2710.4,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f221_1_3_1/F221-ST87-(Miez-Negru)---Blat-de-lucru-laminat-compact-Ceramica-Tessina-Crem-F221-ST87-4100X920X12.jpg",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "H3730 ST10",
+   "denumire": null,
+   "dimensiuni": "4100x920x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 2710.4,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/d/s/dsfsssf_1/H3730-ST10-(MIEZ-NEGRU)---Blat-de-lucru-laminat-compact-H3730-ST10-H3730-ST10-4100x920x12-.jpg",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "W1101 ST76",
+   "denumire": "Alb Alpin Colorat in Masa (Miez Alb)",
+   "dimensiuni": "4100x650x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 2710.4,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/w/1/w1101_st76/W1101-ST76-(Miez-Alb)----Blat-de-lucru-laminat-compact-ALB-ALPIN-COLORAT-IN-MASA-W1101-ST76-4100x650x12.jpg",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "F206 ST9",
+   "denumire": "Pietra Grigia Negru (Miez Negru)",
+   "dimensiuni": "4100x920x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 2710.4,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f206-st9----blat-de-lucru-pietra-grigia-negru-f206-st9-4100x600x38_1/F206-ST9-(Miez-Negru)---Blat-de-lucru-laminat-compact-Pietra-Grigia-Negru-F206-ST9-4100X920X12.jpg",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "U7081 ST76",
+   "denumire": "Gri Deschis Colorat in Masa (Miez Gri Deschis)",
+   "dimensiuni": "4100x920x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 3991.79,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/7/u7081_st76_3/U7081-ST76-(Miez-Gri-Deschis)----Blat-de-lucru-laminat-compact-GRI-DESCHIS-COLORAT-IN-MASA-U7081-ST76-4100x920x12-.jpg",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "W1101 ST76",
+   "denumire": "Alb Alpin Colorat in Masa (Miez Alb)",
+   "dimensiuni": "4100x920x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 3991.79,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/w/1/w1101_st76_1/W1101-ST76--(Miez-Alb)---Blat-de-lucru-laminat-compact-ALB-ALPIN-COLORAT-IN-MASA-W1101-ST76-4100x920x12-.jpg",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "F8001 ST9",
+   "denumire": "Alb Colorat in Masa (Miez Alb)",
+   "dimensiuni": "4100x920x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 3991.79,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/8/f8001_1/F8001-ST9-(MIEZ-ALB)----Blat-de-lucru-laminat-compact-ALB-COLORAT-IN-MASA-F8001-ST9-4100x920x12-mm.png",
+   "categorie": "blat-laminat-compact"
+  },
+  {
+   "cod_decor": "F1861 ST9",
+   "denumire": "Beton Chicago Gri Deschis (Miez Gri Deschis)",
+   "dimensiuni": "4100x920x12 mm",
+   "grosime_mm": 12,
+   "pret_ron": 3991.79,
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/1/f186-st9----blat-de-lucru-beton-chicago-gri-deschis-f186-st9-4100x920x38/F1861-ST9-(Miez-Gri-Deschis)----Blat-de-lucru-laminat-compact-Beton-Chicago-gri-deschis-colorat-în-masă-F1861-ST9-4100X920X12.jpg",
+   "categorie": "blat-laminat-compact"
+  }
+ ]
+}

@@ -1,0 +1,588 @@
+{
+ "sursa": "woodcadesign.com (retailer AGT, imagini directe) + agtwood.com (serie MDF-Lam L)",
+ "nr_total": 95,
+ "serii": {
+  "supramat": 18,
+  "high_gloss": 16,
+  "soft_touch": 9,
+  "super_mat": 5,
+  "mat": 2,
+  "metallic": 5,
+  "textured": 17,
+  "3p": 12,
+  "acrylic": 2,
+  "mdf_lam_wood": 9
+ },
+ "decoruri": [
+  {
+   "cod_decor": "3114",
+   "denumire": "Sakura Pink",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/4bb45899-2c3a-4ffe-93ed-15d719e067be/3114+SAKURA+PINK.jpg"
+  },
+  {
+   "cod_decor": "3094",
+   "denumire": "Sonara",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/6b591a3c-b18a-48fc-a2fb-256418a5d9a3/3094+supramat+sonara.jpg"
+  },
+  {
+   "cod_decor": "3096",
+   "denumire": "Havana Coffee",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/bb2b2cc4-98df-41ed-af12-5cd13899c52d/3096+supramat+havana+coffee.jpg"
+  },
+  {
+   "cod_decor": "3020",
+   "denumire": "Safari Grey",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/20668c03-91dd-4eb5-8422-e87724570c4e/3020+supramat+safari+grey.jpg"
+  },
+  {
+   "cod_decor": "3022",
+   "denumire": "Royal Grey",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/edcf44e6-8779-4e7a-a1c3-e6fcb9b55b98/3022+supramat+royal+grey.jpg"
+  },
+  {
+   "cod_decor": "3011",
+   "denumire": "London Blues",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1660392742070-71MX2XG7TRY2HCO7BIZA/3011+London+Blues.png"
+  },
+  {
+   "cod_decor": "3015",
+   "denumire": "Macaron Green",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/8785b583-2f35-45dd-93c6-1112946ea0f2/3015+-+macaron+green.jpg"
+  },
+  {
+   "cod_decor": "3016",
+   "denumire": "Pinky Daisy",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/c16c17e9-be32-4be3-bb94-336cbdc0da6e/3016+Supramat+Pink+Daisy.jpg"
+  },
+  {
+   "cod_decor": "3017",
+   "denumire": "Timeless Grey",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/500bf148-7d67-46b7-be87-2fb128305e0b/3017+Supramat+Timeless+Grey.jpg"
+  },
+  {
+   "cod_decor": "3018",
+   "denumire": "Moonlight",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1673215791319-BHBQJ9J2ZUWG7MHR4B5F/MOONLIGHT+-+AYIS%CC%A7IG%CC%86I.jpg"
+  },
+  {
+   "cod_decor": "3019",
+   "denumire": "Sahara Cream",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/925b2629-5a93-4838-87ae-6632d78225b1/3019+Supramat+Sahara+Cream.jpg"
+  },
+  {
+   "cod_decor": "3021",
+   "denumire": "Ice Grey",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/95303d93-792c-46a3-9ec2-d5d3556af7e8/3021+Supramat+Ice+Grey.jpg"
+  },
+  {
+   "cod_decor": "3023",
+   "denumire": "Dolphin Grey",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1673215791303-DCKTO6Y9JCCEEH7637Z5/DOLPHIN+GREY+-+YUNUS+GRI%CC%87.jpg"
+  },
+  {
+   "cod_decor": "3024",
+   "denumire": "Pebble Grey",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1673215791610-J1UHGORWA149KMI4A9R8/PEBBLE+GREY+-+C%CC%A7AKIL+GRI%CC%87.jpg"
+  },
+  {
+   "cod_decor": "3025",
+   "denumire": "Bitter",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/9ea2e464-08ae-48e2-ad64-a99dd28b3905/3025+-+Supramat+Bitter.jpg"
+  },
+  {
+   "cod_decor": "3026",
+   "denumire": "Rustic Red",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/006e4844-88d4-45e6-b11d-8d6794b86c9d/3026+Supramat+Rustic+Red.jpg"
+  },
+  {
+   "cod_decor": "3027",
+   "denumire": "Forest Green",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/5c509d32-5241-45ce-ac75-5024bb4c18f7/3027+Supramat+Forest+Green.jpg"
+  },
+  {
+   "cod_decor": "3029",
+   "denumire": "Glamorous Pacific",
+   "structura": "supramat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/d6fadb00-da24-445d-a406-a6d19bfa2bd6/3029+Supramat+Glamorous+pasific.jpg"
+  },
+  {
+   "cod_decor": "601",
+   "denumire": "HG White",
+   "structura": "high gloss",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/31265489-45cc-40f8-be76-fb42a2daf1b6/601+-+HIGH+GLOSS+WHITE.png"
+  },
+  {
+   "cod_decor": "662",
+   "denumire": "HG White Sahara",
+   "structura": "high gloss",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/abf3ce10-789f-4d27-a61e-d05680462135/602+-+HIGH+GLOSS+WHITE+SAHARA.png"
+  },
+  {
+   "cod_decor": "603",
+   "denumire": "HG Metallic Elm",
+   "structura": "high gloss",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/77d7a8fc-53f7-409a-9c7c-1d0f9d64546c/603+HIGH+GLOSS+METALLIC+ELM.png"
+  },
+  {
+   "cod_decor": "608",
+   "denumire": "HG Metallic Anthracite",
+   "structura": "high gloss",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/60c2ecda-c1da-4964-9443-5a4e273db388/608+HIGH+GLOSS+METALLIC+ANTRACITE.png"
+  },
+  {
+   "cod_decor": "627",
+   "denumire": "HG Milano Walnut",
+   "structura": "high gloss",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/ba33675c-0088-4a4b-a867-9e4ccdab5372/627+HIGH+GLOSS+MILANO+WALNUT.png"
+  },
+  {
+   "cod_decor": "670",
+   "denumire": "HG Galaxy White",
+   "structura": "high gloss",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/f3c242cc-e749-4ecf-8a76-c1fa6387b8eb/670+HIGH+GLOSS+GALAXY+WHITE.png"
+  },
+  {
+   "cod_decor": "675",
+   "denumire": "HG Line Pearl",
+   "structura": "high gloss",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/ab54589f-3a00-4037-a639-884afcdb8fa6/Screenshot+2025-04-03+at+10.35.34+AM.png"
+  },
+  {
+   "cod_decor": "4003",
+   "denumire": "HG Night Blue",
+   "structura": "high gloss",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/83380c7e-a98d-44c0-bc2c-9281fdfa2a74/hg+night+blue+agt.jpg"
+  },
+  {
+   "cod_decor": "6002",
+   "denumire": "HG Black",
+   "structura": "high gloss",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/684e5ec4-3de9-4b47-8e5c-32cb7a4e0701/6002+HIGH+GLOSS+BLACK.png"
+  },
+  {
+   "cod_decor": "6004",
+   "denumire": "HG Porte Pearl White",
+   "structura": "high gloss",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/8d5b380d-425d-4c49-b815-a9d118217cde/6004+HIGH+GLOSS+PORTE+PEARL+WHITE.png"
+  },
+  {
+   "cod_decor": "6011",
+   "denumire": "HG Light Cream",
+   "structura": "high gloss",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/07fd92c1-dced-4191-9ade-3b0a2f9820fa/6011+HIGH+GLOSS+LIGHT+CREAM.png"
+  },
+  {
+   "cod_decor": "6012",
+   "denumire": "HG Pebble Grey",
+   "structura": "high gloss",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/4994371f-e740-4385-88c6-46d6a062ab9c/6012+HIGH+GLOSS+PEBBLE+GREY.png"
+  },
+  {
+   "cod_decor": "6013",
+   "denumire": "HG Light Grey",
+   "structura": "high gloss",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/733a71de-97d5-43e2-9aa8-e3cd045ef4c9/6013+HIGH+GLOSS+LIGHT+GREY.png"
+  },
+  {
+   "cod_decor": "6014",
+   "denumire": "HG Grey",
+   "structura": "high gloss",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/d09f5b0b-346d-4ec4-94b8-efd1bb7da59d/6014+HIGH+GLOSS+GREY.png"
+  },
+  {
+   "cod_decor": "6015",
+   "denumire": "HG Shark Tail",
+   "structura": "high gloss",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/9988233e-6801-49e7-94a3-10c458b379b8/6015+HIGH+GLOSS+SHARK+TAIL.png"
+  },
+  {
+   "cod_decor": "6016",
+   "denumire": "HG Gentle Grey",
+   "structura": "high gloss",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/f05b1fda-03ec-484e-9b27-55fcfce7fc38/6016+HIGH+GLOSS+GENTLE+GREY.png"
+  },
+  {
+   "cod_decor": "723",
+   "denumire": "Soft Touch Black",
+   "structura": "soft touch",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1617233894781-ONRH464RESBOVAF7CVUA/723+Soft+Touch+Siyah+%281%29.jpg"
+  },
+  {
+   "cod_decor": "734",
+   "denumire": "Soft Touch White",
+   "structura": "soft touch",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1617654119734-EXXW8EJY8VNWUW4TZB74/734+Soft+Touch+White.png"
+  },
+  {
+   "cod_decor": "726",
+   "denumire": "Soft Touch Storm Grey",
+   "structura": "soft touch",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/22d5720d-8fd8-4bb5-be66-37cbd2e2c5b4/storm+grey+new.jpg"
+  },
+  {
+   "cod_decor": "728",
+   "denumire": "Soft Touch Stone Grey",
+   "structura": "soft touch",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/ce827612-e011-49ff-a2db-964a8ab219a4/728+Soft+Touch+Stone+Grey.jpg"
+  },
+  {
+   "cod_decor": "729",
+   "denumire": "Soft Touch New Grey",
+   "structura": "soft touch",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/4d51ebc4-d6e7-49e9-87c2-72753ad79035/729+Soft+Touch+New+Grey.jpg"
+  },
+  {
+   "cod_decor": "735",
+   "denumire": "Soft Touch Relax Green",
+   "structura": "soft touch",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/e3a10f86-1c4d-417c-b3a7-e74da7182fa1/735+Soft+Touch+Relax+Green.jpg"
+  },
+  {
+   "cod_decor": "736",
+   "denumire": "Soft Touch Ocean Blue",
+   "structura": "soft touch",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/2efc407a-8082-4196-9eed-f1d8f712f452/736-Soft+Touch+Ocean+Blue.jpg"
+  },
+  {
+   "cod_decor": "737",
+   "denumire": "Soft Touch Sienna Wood",
+   "structura": "soft touch",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/66352aca-5de2-44f3-8df1-061cb75179b1/737+SOFT+TOUCH+SIENA+WOOD+2.jpg"
+  },
+  {
+   "cod_decor": "738",
+   "denumire": "Soft Touch Clay",
+   "structura": "soft touch",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/a307c065-b49b-4047-b8e1-76a6b459c682/738+Soft+Touch+Clay.jpg"
+  },
+  {
+   "cod_decor": "399",
+   "denumire": "Super Matt Pebble Grey",
+   "structura": "super mat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/28f5fe79-4a11-45a2-83c4-fdf0ea2a6d1f/399+Super+Matt+Pebble+Grey.jpg"
+  },
+  {
+   "cod_decor": "398",
+   "denumire": "Super Matt Light Cream",
+   "structura": "super mat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/34c64f18-b0ea-40e3-a898-52737ff84507/398+Super+Matt+Light+Cream.jpg"
+  },
+  {
+   "cod_decor": "3001",
+   "denumire": "Super Matt Light Grey",
+   "structura": "super mat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/2e31cb24-bf8c-413c-b8b8-8421bd8260e6/3001+Super+Matt+Light+Grey+-+313+.jpg"
+  },
+  {
+   "cod_decor": "3002",
+   "denumire": "Super Matt Dark Grey",
+   "structura": "super mat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/092d6923-f14e-4547-a563-f2b905fc4064/3002+Super+Matt+Dark+Grey+-+425.jpg"
+  },
+  {
+   "cod_decor": "3003",
+   "denumire": "Super Matt Night Blue",
+   "structura": "super mat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/22358a0d-3583-44f5-93f1-9b752e6d1244/3033+-+Super+Matt+Night+Blue.jpg"
+  },
+  {
+   "cod_decor": "3006",
+   "denumire": "Matt Galaxy White",
+   "structura": "mat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1617654964581-Z4CCH11L13QRY1EI7LUE/3006+Matt+Galaxy+White.png"
+  },
+  {
+   "cod_decor": "3009",
+   "denumire": "Matt Galaxy Black",
+   "structura": "mat",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1617655003116-DA4HJRABG8TB5A4UP4EZ/3009+Mat+Galaksi+Siyah.png"
+  },
+  {
+   "cod_decor": "300",
+   "denumire": "Metallic Inox",
+   "structura": "metallic",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/05ed875d-ac1e-473d-a22c-e492d6f9bfa3/300%2BMetallic%2BInox.jpg"
+  },
+  {
+   "cod_decor": "394",
+   "denumire": "Matt Picasso Inox",
+   "structura": "metallic",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/4fe06924-6764-4428-a337-9f86c89e46bf/picasso%2Binox%2Bnew.jpg"
+  },
+  {
+   "cod_decor": "395",
+   "denumire": "Matt Picasso Gold",
+   "structura": "metallic",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/d1f0b792-4fb5-4c21-9cb4-f868c151437d/Picasso%2BGold%2BNew.jpg"
+  },
+  {
+   "cod_decor": "6023",
+   "denumire": "Spectrum Light",
+   "structura": "metallic",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/53eeade4-813c-4e64-b6db-c5db30c2f3b0/spectrum+light.jpg"
+  },
+  {
+   "cod_decor": "6026",
+   "denumire": "Spectrum Rose",
+   "structura": "metallic",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/d28bb6f1-9794-4846-ae68-ff746528a2b5/spectrum+rose.jpg"
+  },
+  {
+   "cod_decor": "369",
+   "denumire": "German Oak",
+   "structura": "textured",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/b809e440-2978-46d9-b05b-96a8b8d2b005/369+German+Oak.png"
+  },
+  {
+   "cod_decor": "3076",
+   "denumire": "Classic Oak",
+   "structura": "textured",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/6c10a03c-accc-49ea-b791-a1d67e2c7574/classic+oak.jpg"
+  },
+  {
+   "cod_decor": "239",
+   "denumire": "Matt Light Walnut",
+   "structura": "textured",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/c2804146-5594-41a8-89e8-4f1edfd050c8/Textured+Wall+Profile+Light+Walnut+239.jpg"
+  },
+  {
+   "cod_decor": "248",
+   "denumire": "Matt Teak",
+   "structura": "textured",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1617649645130-8MGS25FX2EHTUTTYO6M0/248+Matt+Teak.png"
+  },
+  {
+   "cod_decor": "388",
+   "denumire": "Toledo Light Wood",
+   "structura": "textured",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/de5ff19e-bdc3-4874-915d-b693fdd22794/388%2BToledo%2BLight%2BWood.jpg"
+  },
+  {
+   "cod_decor": "389",
+   "denumire": "Toledo Dark Wood",
+   "structura": "textured",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/5a53396f-0265-47d7-98c8-a6370c8c7f82/389%2BToledo%2BDark%2BWood.jpg"
+  },
+  {
+   "cod_decor": "397",
+   "denumire": "Matt Natural Touch Oak",
+   "structura": "textured",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1617650399510-9Q6YNF9FVSVKER7N6ZY3/397+Matt+Natural+Touch+Oak.png"
+  },
+  {
+   "cod_decor": "3037",
+   "denumire": "Matt Texas Oak",
+   "structura": "textured",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/c66395f7-5d31-4da7-b099-b3166ee69a3a/Textured+Wall+Profile+Texas+Oak+3037.png"
+  },
+  {
+   "cod_decor": "3038",
+   "denumire": "Matt Vermont Oak",
+   "structura": "textured",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/5b86d9ea-3e8c-45ca-914a-83c805f2e5de/Textured+Wall+Profile+Vermont+Oak+3038.png"
+  },
+  {
+   "cod_decor": "3039",
+   "denumire": "Matt Delphi Oak",
+   "structura": "textured",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/ada6c80c-204e-4826-ac16-b9d7d3d34227/3039+Matt+Delphie+Oak+New.jpg"
+  },
+  {
+   "cod_decor": "3041",
+   "denumire": "Matt Peru Oak",
+   "structura": "textured",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/e818d2a5-15f1-4370-bee7-0ae5d28ac719/Textured+Wall+Profile+Peru+Oak+3041.png"
+  },
+  {
+   "cod_decor": "3042",
+   "denumire": "Matt Akra Oak",
+   "structura": "textured",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/0189f9ec-b1dd-4419-bf72-67cbee767b5d/Textured+Wall+Profile+Akra+Oak+3042.png"
+  },
+  {
+   "cod_decor": "383",
+   "denumire": "Matt Cashmere White",
+   "structura": "textured",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/6d513858-06d1-4517-a6be-001b4d571c56/383+Matt+Cashmere+White.jpg"
+  },
+  {
+   "cod_decor": "387",
+   "denumire": "Matt Cashmere Grey",
+   "structura": "textured",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/7af8abf7-ab79-4cde-a1f2-1de00b872483/387+Matt+Cashmere+Grey+cNew.jpg"
+  },
+  {
+   "cod_decor": "384",
+   "denumire": "Matt Cashmere Gold",
+   "structura": "textured",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/abd40c61-9569-47f4-b8dd-6cd059f35f91/Matt+Cashmere+Gold+Edited.jpg"
+  },
+  {
+   "cod_decor": "3074",
+   "denumire": "Tokyo Grey",
+   "structura": "textured",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/eb501dc9-9593-447f-8b23-9c87b221bbee/tokyo+grey+%281%29.jpg"
+  },
+  {
+   "cod_decor": "3075",
+   "denumire": "Tokyo White",
+   "structura": "textured",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/2dac8b0d-dee3-43ab-945e-a253597e8a1d/3075.jpg"
+  },
+  {
+   "cod_decor": "3051",
+   "denumire": "Caretta Green",
+   "structura": "3p",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/d8e5aba2-8b3d-4d9a-ac40-0f014b64ddec/3051+Caretta+Green.jpg"
+  },
+  {
+   "cod_decor": "3071",
+   "denumire": "Timber Grey",
+   "structura": "3p",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/af322010-1de2-4457-8ec3-0235e527acf9/3071+Timber+Grey.jpg"
+  },
+  {
+   "cod_decor": "3064",
+   "denumire": "Croco Cream",
+   "structura": "3p",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1699502029060-LIJ0XW5TOCJFS36A3QDP/3064+Croco+Cream+-+3P+Panel.jpg"
+  },
+  {
+   "cod_decor": "3063",
+   "denumire": "Croco Grey",
+   "structura": "3p",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1699501914993-FEUIIKL397BUMCM4Z978/3063+Croco+Grey+-+3P+Panel+.jpg"
+  },
+  {
+   "cod_decor": "3062",
+   "denumire": "Croco Blue",
+   "structura": "3p",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1699501741797-6SOLE2ZRZG8PK3VFEYB5/3062+Croco+Blue+.jpg"
+  },
+  {
+   "cod_decor": "3061",
+   "denumire": "Timber Light",
+   "structura": "3p",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1699501578927-XYNK2CF1RTUZNA2DEW7T/3061+Timber+Light.jpg"
+  },
+  {
+   "cod_decor": "3060",
+   "denumire": "Textile Vison",
+   "structura": "3p",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1699501396175-B2VAIDES7PHCBVFCNWWN/3060-Textile-Vison.JPG"
+  },
+  {
+   "cod_decor": "3059",
+   "denumire": "Textile Light",
+   "structura": "3p",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1699501165292-STQMUL9XQIVQ4CQBKN7T/3059-Textile-Light.jpg"
+  },
+  {
+   "cod_decor": "3069",
+   "denumire": "Slate Beige",
+   "structura": "3p",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1699500930274-LXIJ80UNW8TFR3AETVKU/3069-Slate-Beige.jpg"
+  },
+  {
+   "cod_decor": "3058",
+   "denumire": "Slate Coffee",
+   "structura": "3p",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1699500446268-NVAK0SODJ4D89ADF4HMM/3058-Slate-Coffee.jpg"
+  },
+  {
+   "cod_decor": "3056",
+   "denumire": "Slate Cream",
+   "structura": "3p",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1699500118326-Z97BK2BAMTJPKNMQ6LQM/3056-Slate-Cream.jpg"
+  },
+  {
+   "cod_decor": "3057",
+   "denumire": "Slate Grey",
+   "structura": "3p",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/1699371899109-Y41B3BV73888FJCLBPT7/3057-Slate-Grey-3P-Panel.jpg"
+  },
+  {
+   "cod_decor": "8011",
+   "denumire": "Bright White Acrylic",
+   "structura": "acrylic",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/047e3738-fe1c-4fa8-980b-5d460344076c/8011+BRIGHT+WHITE+ACRYLIC.png"
+  },
+  {
+   "cod_decor": "8015",
+   "denumire": "Acrylic White",
+   "structura": "acrylic",
+   "image_url": "https://images.squarespace-cdn.com/content/v1/605e0c3843e6fc757f92eb03/71f10932-1403-4b07-ac5b-91f3c40efe2b/8015+ACRYLIC+WHITE.png"
+  },
+  {
+   "cod_decor": "L172",
+   "denumire": "Crossbrushed Metal",
+   "structura": "mdf lam",
+   "image_url": "https://www.agtwood.com/medium/Product/Image/f49f28de-f98f-4be9-97f5-3a6db02b2f89"
+  },
+  {
+   "cod_decor": "L171",
+   "denumire": "Travertine Ivory",
+   "structura": "mdf lam",
+   "image_url": "https://www.agtwood.com/medium/Product/Image/ed616897-2b02-4200-a628-83ce090d8e27"
+  },
+  {
+   "cod_decor": "L170",
+   "denumire": "Mist White",
+   "structura": "mdf lam",
+   "image_url": "https://www.agtwood.com/medium/Product/Image/b132f00c-2482-4c55-9bbc-3352f2ef6c38"
+  },
+  {
+   "cod_decor": "L169",
+   "denumire": "Smoky Blue",
+   "structura": "mdf lam",
+   "image_url": "https://www.agtwood.com/medium/Product/Image/669059c1-ae09-49fa-9330-f5bdd889cfc6"
+  },
+  {
+   "cod_decor": "L168",
+   "denumire": "Olive Stone",
+   "structura": "mdf lam",
+   "image_url": "https://www.agtwood.com/medium/Product/Image/0cf67ecb-8189-443a-a8c6-d8e4343b9ba0"
+  },
+  {
+   "cod_decor": "L165",
+   "denumire": "Arden Oak",
+   "structura": "mdf lam",
+   "image_url": "https://www.agtwood.com/medium/Product/Image/c5238f24-5815-4904-af92-3433c70e1e13"
+  },
+  {
+   "cod_decor": "L164",
+   "denumire": "Terra Oak",
+   "structura": "mdf lam",
+   "image_url": "https://www.agtwood.com/medium/Product/Image/e195a7e1-3336-4365-b1c4-ccb268c65753"
+  },
+  {
+   "cod_decor": "L163",
+   "denumire": "Arkansas Oak",
+   "structura": "mdf lam",
+   "image_url": "https://www.agtwood.com/medium/Product/Image/beb5d7fd-f353-45d4-a510-0335932f49e6"
+  },
+  {
+   "cod_decor": "L161",
+   "denumire": "Toronto Oak",
+   "structura": "mdf lam",
+   "image_url": "https://www.agtwood.com/medium/Product/Image/3fdfc7f1-2338-418f-a3f6-2ed675285f71"
+  }
+ ]
+}

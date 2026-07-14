@@ -1,0 +1,661 @@
+{
+ "nr_total": 164,
+ "decoruri": [
+  {
+   "cod_decor": "W908 SM",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/w/9/w908_a3_300dpi_1_2/W908-SM-16-MM-Pal-melaminat--Alb-Creta-Semimat-W908-SM--16MM.jpg"
+  },
+  {
+   "cod_decor": "W960 SM 16mm",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/w/9/w960-sm--pal-melaminat-alb-clasic-neted--w960-sm/W960-SM--Pal-melaminat-Alb-Clasic-Neted-16mm--W960-SM-16mm.jpg"
+  },
+  {
+   "cod_decor": "W960 ST7",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/w/9/w908_a3_300dpi_1_1_1_1/W960-ST7-Pal-melaminat-Alb-Clasic-W960-ST7.jpg"
+  },
+  {
+   "cod_decor": "W960 ST7 10MM",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/w/9/w908_a3_300dpi_1_1_1_1_1/W960-ST7-10MM-Pal-melaminat-Alb-Clasic-W960-ST7---10MM.jpg"
+  },
+  {
+   "cod_decor": "W960 SM",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/w/9/w908_a3_300dpi_1_3/W960-SM--Pal-melaminat-Alb-Clasic-Neted--W960-SM.jpg"
+  },
+  {
+   "cod_decor": "U963 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796982706206/U963-ST9-Pal-melaminat-Gri-Diamant--U963-ST9.jpg"
+  },
+  {
+   "cod_decor": "U702 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/7/u702bun/U702-ST9-Pal-melaminat-Gri-Casmir-U702-ST9.jpg"
+  },
+  {
+   "cod_decor": "U222 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796966125598/U222-ST9--Pal-melaminat-Bej-Crem-U222-ST9.jpg"
+  },
+  {
+   "cod_decor": "W1000 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/w/1/w1000_a3_300dpi_1/W1000-ST9--Pal-melaminat--Alb-Premium--W1000-ST9.jpg"
+  },
+  {
+   "cod_decor": "U999 ST7",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796416606238/U999-ST7-Pal-melaminat--Negru--U999-ST7.jpg"
+  },
+  {
+   "cod_decor": "U515 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/5/u515-st9-pal-melaminat--albastru-frantuzesc-u515-st9/U515-ST9-Pal-melaminat--Albastru-Frantuzesc-U515-ST9.jpg"
+  },
+  {
+   "cod_decor": "U961 ST7",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/9/u961_st19/U961-ST7-Pal-melaminat-Gri-Grafit--U961-ST7.jpg"
+  },
+  {
+   "cod_decor": "U104 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796976971806/U104-ST9-Pal-melaminat-Alabastru-Alb-U104-ST9.jpg"
+  },
+  {
+   "cod_decor": "U708 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796971827230/U708-ST9--Pal-melaminat-Gri-Deschis--U708-ST9.jpg"
+  },
+  {
+   "cod_decor": "U600 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/6/u600-st9---pal-melaminat-verde-mai--u600-st9/U600-ST9---Pal-melaminat-Verde-Mai--U600-ST9.jpg"
+  },
+  {
+   "cod_decor": "U732 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796987129886/U732-ST9--Pal-melaminat-Gri-Praf-U732-ST9.jpg"
+  },
+  {
+   "cod_decor": "U775 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796971696158/U775-ST9-Pal-melaminat-Gri-Alb--U775-ST9.jpg"
+  },
+  {
+   "cod_decor": "U156 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796354314270/U156-ST9-Pal-melaminat-Bej-Nisip--U156-ST9.jpg"
+  },
+  {
+   "cod_decor": "U216 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796986703902/U216-ST9--Pal-melaminat-Camel-Bej-U216-ST9.jpg"
+  },
+  {
+   "cod_decor": "U763 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796390588446/U763-ST9-Pal-melaminat-Gri-Sidef--U763-ST9.jpg"
+  },
+  {
+   "cod_decor": "U113 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796977987614/U113-ST9-Pal-melaminat-Bej-Bumbac-U113-ST9.jpg"
+  },
+  {
+   "cod_decor": "U899 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/8/u899/U899-ST9-Pal-melaminat-Negru-Fin-U899-ST9.jpg"
+  },
+  {
+   "cod_decor": "U220 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/d/f/dfsfsd/U220-ST9-Pal-melaminat-Bej-Fin-U220-ST9.png"
+  },
+  {
+   "cod_decor": "U748 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796373057566/U748-ST9-Pal-melaminat-Maro-Trufa--U748-ST9.jpg"
+  },
+  {
+   "cod_decor": "U740 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/7/u740/U740-ST9-Pal-melaminat-Gri-Închis-U740-ST9.png"
+  },
+  {
+   "cod_decor": "U707 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796977365022/U707-ST9-Pal-melaminat-Gri-Matase--U707-ST9.jpg"
+  },
+  {
+   "cod_decor": "U727 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796423716894/U727-ST9--Pal-melaminat-Gri-Piatra-U727-ST9.jpg"
+  },
+  {
+   "cod_decor": "U115 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/1/u115/U115-ST9-Pal-melaminat-Bej-Carat-U115-ST9.png"
+  },
+  {
+   "cod_decor": "U750 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796329476126/U750-ST9-Pal-melaminat-Gri-Taupe-U750-ST9.jpg"
+  },
+  {
+   "cod_decor": "U960 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796974907422_2/U960-ST9-Pal-melaminat-Gri-Onix--U960-ST9.jpg"
+  },
+  {
+   "cod_decor": "U755 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/7/u755555/U755-ST9-Pal-melaminat-Gri-Havana--U755-ST9.png"
+  },
+  {
+   "cod_decor": "U968 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/9/u968_st9/U968-ST9-Pal-Melaminat-Gri-Carbune-U968-ST9.jpg"
+  },
+  {
+   "cod_decor": "U788 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796981100574/U788-ST9-Pal-melaminat-Gri-Artic-U788-ST9.jpg"
+  },
+  {
+   "cod_decor": "U741 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796491939870/U741-ST9-Pal-melaminat-Gri-Lava--U741-ST9.jpg"
+  },
+  {
+   "cod_decor": "U780 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/7/u780_st9/U780-ST9---Pal-melaminat-Gri-Monument-U780-ST9.jpg"
+  },
+  {
+   "cod_decor": "U705 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/7/u705/U705-ST9-Pal-melaminat-Gri-Angora-U705-ST9.png"
+  },
+  {
+   "cod_decor": "W1100 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796323774494/W1100-ST9-Pal-melaminat-Alb-Alpin-W1100-ST9.jpg"
+  },
+  {
+   "cod_decor": "U767 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796988768286/U767-ST9-Pal-melaminat-Gri-Cubanit--U767-ST9.jpg"
+  },
+  {
+   "cod_decor": "W1200 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/w/1/w1200/W1200-ST9-Pal-melaminat-Alb-Portelan-W1200-ST9.png"
+  },
+  {
+   "cod_decor": "U201 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796970483742/U201-ST9--Pal-melaminat-Gri-Pietris-U201-ST9.jpg"
+  },
+  {
+   "cod_decor": "U311 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796979691550/U311-ST9-Pal-melaminat-Rosu-Burgund--U311-ST9.jpg"
+  },
+  {
+   "cod_decor": "U669 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/6/u669/U669-ST9-Pal-melaminat-Verde-cedru-U669-ST9.png"
+  },
+  {
+   "cod_decor": "U321 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796966289438/U321-ST9-Pal-melaminat-Rosu-China-U321-ST-9.jpg"
+  },
+  {
+   "cod_decor": "U504 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796977332254/U504-ST9-Pal-melaminat--Albastru-Tirolez--U504-ST9.jpg"
+  },
+  {
+   "cod_decor": "U525 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796979494942/U525-ST9--Pal-melaminat-Albastru-Delft-U525-ST9.jpg"
+  },
+  {
+   "cod_decor": "U211 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/2/u211_a3_10de_fur_detail/U211-ST9-Pal-melaminat-Bej-Migdală-U211-ST9.png"
+  },
+  {
+   "cod_decor": "U325 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/3/u325_st9_1/U325-ST9---Pal-melaminat-Rose-Antic-U325-ST9.jpg"
+  },
+  {
+   "cod_decor": "U250 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/2/u250/U250-ST9-Pal-melaminat-Bej-caramel-U250-ST9-.png"
+  },
+  {
+   "cod_decor": "U630 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796982444062/U630-ST9--Pal-melaminat--Verde-lamaie--U630-ST9.jpg"
+  },
+  {
+   "cod_decor": "U540 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/5/u540/U540-ST9-Pal-melaminat-Albastru-Denim-U540-ST9.png"
+  },
+  {
+   "cod_decor": "U323 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/3/u323-st9-pal-melaminat-rosu-aprins-u323-st9/U323-ST9-Pal-melaminat-Rosu-Aprins-U323-ST9.jpg"
+  },
+  {
+   "cod_decor": "U665 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/6/u665_a3_10de_fur_detail/U665-ST9-Pal-melaminat-Verde-Piatră-U665-ST9.png"
+  },
+  {
+   "cod_decor": "U830 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/8/u830_st9/U830-ST9-Pal-melaminat-Caramel-Nude-U830-ST9.jpg"
+  },
+  {
+   "cod_decor": "U335 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/3/u335_a3_10de_fur_detail/U335-ST9-Pal-melaminat-Roșu-Ruginiu-U335-ST9.png"
+  },
+  {
+   "cod_decor": "U636 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/6/u636/U636-ST9-Pal-melaminat-Verde-Fjord-U636-ST9.png"
+  },
+  {
+   "cod_decor": "U999 ST19",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/9/u999_st19_1/U999-ST19-Pal-melaminat-Negru-U999-ST19.jpg"
+  },
+  {
+   "cod_decor": "U125 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/1/u125_a3_10de_fur_detail/U125-ST9-Pal-melaminat-Galben-Nisip-U125-ST9.png"
+  },
+  {
+   "cod_decor": "U599 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/5/u599/U599-ST9-Pal-melaminat-Albastru-Indigo-U599-ST9.png"
+  },
+  {
+   "cod_decor": "U699 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/6/u699_a3_10de_fur/U699-ST9-Pal-melaminat-Verde-Brad-U699-ST9.png"
+  },
+  {
+   "cod_decor": "U818 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796987818014/U818-ST9-Pal-melaminat-Maro-Inchis-U818-ST9.jpg"
+  },
+  {
+   "cod_decor": "U350 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/3/u350/U350-ST9-Pal-melaminat-Portocaliu-Siena-U350-ST9.png"
+  },
+  {
+   "cod_decor": "U638 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/6/u638/U638-ST9-Pal-melaminat-Verde-Salvie-U638-ST9.jpg"
+  },
+  {
+   "cod_decor": "U163 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/1/u163/U163-ST9-Pal-melaminat-Galben-Curry-U163-ST9.png"
+  },
+  {
+   "cod_decor": "U604 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/6/u604_a3_10de_fur_detail/U604-ST9-Pal-melaminat-Verde-Eucalipt-U604-ST9.png"
+  },
+  {
+   "cod_decor": "U502 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/5/u504/U502-ST9-Pal-melaminat-Albastru-Gri-U502-ST9.png"
+  },
+  {
+   "cod_decor": "U998 ST38",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/9/u998_st38/U998-ST38--Pal-melaminat-Negru-Fumuriu-U998-ST38.jpg"
+  },
+  {
+   "cod_decor": "W1000 ST19",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/w/1/w1000_st19_3/W1000-ST19-Pal-melaminat-Alb-Premium-W1000-ST19.jpg"
+  },
+  {
+   "cod_decor": "W1000 ST38",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/u/n/untitled2/W1000-ST38-Pal-melaminat-Alb-Premium--W1000-ST38.jpg"
+  },
+  {
+   "cod_decor": "W980 ST2",
+   "image_url": null
+  },
+  {
+   "cod_decor": "W980 SM",
+   "image_url": null
+  },
+  {
+   "cod_decor": "H1123 ST22",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1123-st22-pal-melaminat-graphitwood-h1123-st22/H1123-ST22-Pal-melaminat-Graphitwood-H1123-ST22.jpg"
+  },
+  {
+   "cod_decor": "H3131 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796979658782/H3131-ST12-Pal-melaminat-Stejar-Davos-Natur--H3131-ST12.jpg"
+  },
+  {
+   "cod_decor": "H1401 ST22",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796965404702/H1401-ST22--Pal-melaminat-Pin-Cascina-H1401-ST22.jpg"
+  },
+  {
+   "cod_decor": "H1318 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1318_st10_4/H1318-ST10-Pal-melaminat-Stejar-Salbatic-Natur-H1318-ST10.jpg"
+  },
+  {
+   "cod_decor": "H1145 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1145-pfl---mdf-lacuit---stejar-bardolino-natur-h1145-pfl/H1145-ST10-Pal-melaminat-Stejar-Bardolino-Natur-H1145-ST10.jpg"
+  },
+  {
+   "cod_decor": "H1732 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1732/H1732-ST9--Pal-melaminat-Mesteacan-Nisip-H1732-ST9.jpg"
+  },
+  {
+   "cod_decor": "H3734 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796466118686/H3734-ST9-Pal-melaminat-Nuc-Dijon-Natur--H3734-ST9.jpg"
+  },
+  {
+   "cod_decor": "H1910 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1910/H1910-ST9--Pal-melaminat-Fag-Willow-H1910-ST9.jpg"
+  },
+  {
+   "cod_decor": "H3043 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3043_a3_10de_fur/H3043-ST9-Pal-melaminat-Eucalipt-Maro-Inchis-H3043-ST12.png"
+  },
+  {
+   "cod_decor": "H1151 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1151-st10-pal-melaminat-stejar-arizona-maro-h1151-st-10/H1151-ST10-Pal-melaminat-Stejar-Arizona-Maro-H1151-ST-10.jpg"
+  },
+  {
+   "cod_decor": "H1277 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1277/H1277-ST9--Pal-melaminat-Salcam-Lakeland-deschis-H1277-ST9.jpg"
+  },
+  {
+   "cod_decor": "H3395 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796967960606/Stejar-Corbridge-Natur-H3395-ST12-H3395-ST12.jpg"
+  },
+  {
+   "cod_decor": "H3840 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796363751454/H3840-ST9-Pal-melaminat-Artar-Mandal-Natur--H3840-ST-9.jpg"
+  },
+  {
+   "cod_decor": "H1253 ST19",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1253-st19--pal-melaminat-branson-robinia-maro-trufa-h1253-st19/H1253-ST19--Pal-melaminat-Branson-Robinia-Maro-Trufa-H1253-ST19.jpg"
+  },
+  {
+   "cod_decor": "H3433 ST22",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796975038494/H3433-ST22-Pal-melaminat-Pin-Aland-Polar-H3433-ST22.jpg"
+  },
+  {
+   "cod_decor": "H3303 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796480012318_2/H3303-ST10-Pal-melaminat-Stejar-Hamilton-Natur--H3303-ST-10.jpg"
+  },
+  {
+   "cod_decor": "H1708 ST17",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/1/7/1708/H1708--ST17-Pal-melaminat-Castan-Brighton-H1708--ST17.jpg"
+  },
+  {
+   "cod_decor": "H3860 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796977430558_3/H3860-ST9-Pal-melaminat-Artar-Dur-Champagne--H3860-ST9.jpg"
+  },
+  {
+   "cod_decor": "H1225 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1225_a3_10de_fur/H1225-ST12-Pal-melaminat-Frasin-Trondheim--H1225-ST12.png"
+  },
+  {
+   "cod_decor": "H3133 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796988964894_3/H3133-ST12-Pal-melaminat-Stejar-Davos-Maro-Trufa-H3133-ST12-.jpg"
+  },
+  {
+   "cod_decor": "H3157 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3157_st12_1/H3157-ST12-Pal-melaminat-Stejar-Vicenza--H3157-ST12.jpg"
+  },
+  {
+   "cod_decor": "H3700 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796535062558/H3700-ST10--Pal-melaminat-Nuc-Pacific-Natur--H3700-ST10.jpg"
+  },
+  {
+   "cod_decor": "H3450 ST22",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796976283678/H3450-ST22-Pal-melaminat-Fleetwood-Alb--H3450-ST22.jpg"
+  },
+  {
+   "cod_decor": "H3322 ST17",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3322_1/H3322-ST17-Pal-melaminat-Stejar-Rovato-natur-deschis-H3322-ST17.png"
+  },
+  {
+   "cod_decor": "H1636 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796983558174/H1636-ST12-Pal-melaminat-Cires-Locarno-H1636-ST12.jpg"
+  },
+  {
+   "cod_decor": "H1715 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1715_a3_10de_fur/H1715-ST12-Pal-melaminat-Nuc-Panora-H1715-ST12.png"
+  },
+  {
+   "cod_decor": "H1487 ST22",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796326527006/H1487-ST22-Pal-melaminat-Pin-Bramberg-H1487-ST22.jpg"
+  },
+  {
+   "cod_decor": "H3430 ST22",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796969369630/H3430-ST22-Pal-melaminat-Pin-Aland-Alb--H3430-ST22.jpg"
+  },
+  {
+   "cod_decor": "H1199 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796986933278/H1199-ST12-Pal-melaminat-Stejar-Thermo-Negru---Brun-H1199-ST12.jpg"
+  },
+  {
+   "cod_decor": "H1316 ST17",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1316_1/H1316-ST17-Pal-melaminat-Stejar-Bookmatch-H1316-ST17.png"
+  },
+  {
+   "cod_decor": "H1113 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796972187678_1/H1113-ST10-Pal-melaminat-Stejar-Kansas-Brun-H1113-ST10.jpg"
+  },
+  {
+   "cod_decor": "H3156 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796970876958/H3156-ST12--Pal-melaminat-Stejar-Cordbridge-Gri--H3156-ST12.jpg"
+  },
+  {
+   "cod_decor": "H3702 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796342026270_3/H3702-ST10-Pal-melaminat-Nuc-Pacific-Tabac-H3702-ST10.jpg"
+  },
+  {
+   "cod_decor": "H3012 ST22",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796529721374/H3012-ST22-Pal-melaminat-Coco-Bolo-Natur--H3012-ST22.jpg"
+  },
+  {
+   "cod_decor": "H3398 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796980707358/H3398-ST12-Pal-melaminat-Stejar-Kendal-Cognac--H3398-ST12.jpg"
+  },
+  {
+   "cod_decor": "H7586 ST17",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/7/5/7586/H7586-ST17-Pal-melaminat-Nuc-Alba-Tabac-H7586-ST17.png"
+  },
+  {
+   "cod_decor": "H3003 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3003_a3_10de_fur/H3003-ST19-Pal-melaminat-Stejar-Norwich-H3003-ST12.png"
+  },
+  {
+   "cod_decor": "H1303 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1303_a3_10de_fur/H1303-ST12-Pal-melaminat-Stejar-Belmont-Maro-H1303-ST12.png"
+  },
+  {
+   "cod_decor": "H3730 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796587884574/H3730-ST10-Pal-melaminat-Hicori-Natur--H3730-ST10.jpg"
+  },
+  {
+   "cod_decor": "H1362 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1362_a3_10de_fur/H1362-ST12-Pal-melaminat-Stejar-Baronia-deschis-H1362-ST12.png"
+  },
+  {
+   "cod_decor": "H3170 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796982181918/H3170-ST12-Pal-melaminat-Stejar-Kendal-Natur-H3170-ST12.jpg"
+  },
+  {
+   "cod_decor": "H3331 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796507176990_2/H3331-ST10-Pal-melaminat-Stejar-Nebraska-Natur--H3331-ST10.jpg"
+  },
+  {
+   "cod_decor": "H3710 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3710_st12_2/H3710-ST12-Pal-melaminat-Nuc-Carini-Natur-H3710-ST12.jpg"
+  },
+  {
+   "cod_decor": "H1312 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1312_st10_3/H1312-ST10-Pal-melaminat-Stejar-Whiteriver-Nisip-H1312-ST10.jpg"
+  },
+  {
+   "cod_decor": "H305 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h305_a3_10de_fur/H305-ST12-Pal-melaminat-Stejar-Tonsberg-Natur-H305-ST12.png"
+  },
+  {
+   "cod_decor": "H1330 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1330_st10_2/H1330-ST10-Pal-melaminat-Stejar-Santa-Fe-Vintage-H1330-ST10.jpg"
+  },
+  {
+   "cod_decor": "H1313 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1313_st10_4/H1313-ST10-Pal-melaminat-Stejar-Whiteriver-Gri-Maro-H1313-ST10.jpg"
+  },
+  {
+   "cod_decor": "H2033 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/2/h2033_st10_2/H2033-ST10-Pal-melaminat-Stejar-Hunton-Inchis--H2033-ST10.jpg"
+  },
+  {
+   "cod_decor": "H309 ST12",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h309_a3_10de_fur/H309-ST12-Pal-melaminat-Stejar-Tonsberg-Maro-H309-ST12.png"
+  },
+  {
+   "cod_decor": "H1710 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1710_st10_2/H1710-ST10-Pal-melaminat-Castan-Kentucky-Nisip-H1710-ST10.jpg"
+  },
+  {
+   "cod_decor": "H1399 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796402286622/H1399-ST10-Pal-melaminat-Stejar-Denver-Maro-Trufa--H1399-ST10.jpg"
+  },
+  {
+   "cod_decor": "H1242 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1242_a3_10de_fur/H1242-ST10-Pal-melaminat-Salcâm-Sheffield-Natur-H1242-ST10.png"
+  },
+  {
+   "cod_decor": "H1223 ST19",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1223_a3_10de_fur/H1223-ST19-Pal-melaminat-Frasin-Sevilla-H1223-ST19.png"
+  },
+  {
+   "cod_decor": "H3197 ST19",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3197_a3_10de_fur/H3197-ST19-Pal-melaminat-Fineline-Gri-Mediu-H3197-ST19.png"
+  },
+  {
+   "cod_decor": "H1714 ST19",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1714_st19_2/H1714-ST19-Pal-melaminat-Nuc-Lincoln--H1714-ST19.jpg"
+  },
+  {
+   "cod_decor": "H3152 ST19",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3152_a3_10de_fur/H3152-ST19-Pal-melaminat-Sejar-Vicenza-decolorat-H3152-ST19.png"
+  },
+  {
+   "cod_decor": "H3190 ST19",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3190_st19_3/H3190-ST19-Pal-melaminat-Fineline-Metalic-Antracit-H3190-ST19-.jpg"
+  },
+  {
+   "cod_decor": "H3787 ST19",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3787/H3787-ST19-Pal-melaminat-Bolivar-Wood-maro-H3787-ST-19.png"
+  },
+  {
+   "cod_decor": "H1307 ST19",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1307_a3_10de_fur/H1307-ST19-Pal-melaminat-Nuc-Warmia-Maro-H1307-ST19.png"
+  },
+  {
+   "cod_decor": "H3146 ST19",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3146_detail/H3146-ST19-Pal-melaminat-Stejar-Lorenzo-Gri-Bej-H3146-ST19.jpg"
+  },
+  {
+   "cod_decor": "H3198 ST19",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3198_a3_10de_fur/H3198-ST19-Pal-melaminat-Fineline-Gri-Închis-H3198-ST19.png"
+  },
+  {
+   "cod_decor": "H3195 ST19",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3195_a3_10de_fur/H3195-ST19-Pal-melaminat-Fineline-Alb-H3195-ST19.png"
+  },
+  {
+   "cod_decor": "H3178 ST37",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3178-st37-pal-melaminat-stejar-halifax-negru-satinat-h3178-st37/H3178-ST37-Pal-melaminat-Stejar-Halifax-Negru-Satinat-H3178-ST37.jpg"
+  },
+  {
+   "cod_decor": "H1345 ST32",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1345-st32-pal-melaminat-stejar-sherman-gri-h1345-st32/H1345-ST32-Pal-melaminat-Stejar-Sherman-Gri-H1345-ST32.jpg"
+  },
+  {
+   "cod_decor": "H3326 ST28",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796530311198/H3326-ST28-Pal-melaminat-Stejar-Gladstone-Gri-Bej-H3326-ST28.jpg"
+  },
+  {
+   "cod_decor": "H1250 ST36",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1250/H1250-ST36-Pal-melaminat-Frasin-Navarra--H1250-ST36.jpg"
+  },
+  {
+   "cod_decor": "H3154 ST36",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796984770590/H3154-ST36-Pal-melaminat-Stejar-Charlestone-Maro-Inchis-H3154-ST36.jpg"
+  },
+  {
+   "cod_decor": "H1142 ST36",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1142_a3_10de_fur/H1142-ST36-Stejar-Sacramento-Maro-H1142-ST36.png"
+  },
+  {
+   "cod_decor": "H1181 ST37",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796441542686_1/H1181-ST37-Pal-melaminat-Stejar-Halifax-Tabac--H1181-ST37.jpg"
+  },
+  {
+   "cod_decor": "H1344 ST32",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1344_st32/H1344-ST32---Pal-melaminat-Stejar-Sherman-Maro-Cognac--H1344-ST32.jpg"
+  },
+  {
+   "cod_decor": "H1386 ST40",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1386_a3_10de_fur_dekor/H1386-ST40-Stejar-Casella-Maro-H1386-ST40.png"
+  },
+  {
+   "cod_decor": "H1346 ST32",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1346_st32_1_1/H1346-ST32-Pal-melaminat-Stejar-Sherman-Antracit-H1346-ST32.jpg"
+  },
+  {
+   "cod_decor": "H1367 ST40",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1367_a3_10de_fur_dekor/H1367-ST40-Stejar-Casella-Natur-deschis-H1367-ST40.png"
+  },
+  {
+   "cod_decor": "H1176 ST37",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796978020382/H1176-ST37-Pal-melaminat-Stejar-Halifax-Alb-H1176-ST37.jpg"
+  },
+  {
+   "cod_decor": "H3317 ST28",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3317_a3_10de_fur_dekor/H3317-ST28-Stejar-Cuneo-Maro-H3317-ST28.png"
+  },
+  {
+   "cod_decor": "H3309 ST28",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796504096798_2/H3309-ST28-Pal-melaminat-Stejar-Gladstone-Nisip--H3309-ST28.jpg"
+  },
+  {
+   "cod_decor": "H1180 ST37",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796580216862_1_1/H1180-ST37--Pal-melaminat-Stejar-Halifax-Natur-H1180-ST37.jpg"
+  },
+  {
+   "cod_decor": "H1385 ST40",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/1/h1385_a3_10de_fur_dekor/H1385-ST40-Stejar-Casella-Natur-H1385-ST40.png"
+  },
+  {
+   "cod_decor": "H3176 ST37",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3176_st37_2/H3176-ST37-Pal-melaminat-Stejar-Halifax-Cositor-H3176-ST37.jpg"
+  },
+  {
+   "cod_decor": "H3359 ST32",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/h/3/h3359_a3_10de_fur/H3359-ST32-Pal-melaminat-Stejar-Davenport-natur-deschis-H3359-ST32.png"
+  },
+  {
+   "cod_decor": "H3325 ST28",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796353134622_1/H3325-ST28-Pal-melaminat-Stejar-Gladstone-Tabac--H3325-ST28.jpg"
+  },
+  {
+   "cod_decor": "F416 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/4/f416_st10_2/F416-ST10-Pal-melaminat-Textil-Bej-F416-ST10-.jpg"
+  },
+  {
+   "cod_decor": "F501 ST2",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/5/f501-st2-pal-melaminat--aluminiu-periat--f501-st2/F501-ST2-Pal-melaminat--Aluminiu-Periat--F501-ST2.jpg"
+  },
+  {
+   "cod_decor": "F765 ST20",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/7/f765_a3_10de_fur_detail/F765-ST20-Pal-melaminat-Gri-Arginitiu-Periat-F765-ST20.png"
+  },
+  {
+   "cod_decor": "F433 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8797018914846/F433-ST10-Pal-melaminat-In-Antracit--F433-ST10.jpg"
+  },
+  {
+   "cod_decor": "F685 ST10",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/6/f685_a3_10de_fur/F685-ST10-Pal-melaminat-Acapulco-F685-ST10.png"
+  },
+  {
+   "cod_decor": "F187 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796975988766/F187-ST9-Pal-melaminat-Beton-Chicago-Gri-Inchis-F187-ST9.jpg"
+  },
+  {
+   "cod_decor": "F206 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f206_st9_2/F206-ST9-Pal-melaminat-Pietra-Grigia-Negru-F206-ST9.jpg"
+  },
+  {
+   "cod_decor": "F800 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/8/f800_a3_10de_fur/F800-ST9-Pal-melaminat-Marmură-Crystal-F800-ST9.png"
+  },
+  {
+   "cod_decor": "F186 ST9",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/8/7/8796973858846/F186-ST9-Pal-melaminat-Beton-Chicago-Gri-Deschis-F186-ST9-.jpg"
+  },
+  {
+   "cod_decor": "F235 ST76",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f235_a3_10de_fur/F235-ST76-Pal-melaminat-Ardezie-Scivaro-F235-ST76.png"
+  },
+  {
+   "cod_decor": "F528 ST20",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/5/f528_a3_10de_fur/F528-ST20-Pal-melaminat-Metal-Periat-Bronz-F528-ST20.png"
+  },
+  {
+   "cod_decor": "F243 ST76",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/2/f243_a3_10de_fur_dekor/F243-ST76-Pal-melaminat-Marmură-Candela-gri-deschis-F243-ST76.png"
+  },
+  {
+   "cod_decor": "F323 ST76",
+   "image_url": "https://www.darel.ro/media/catalog/product/cache/1/small_image/170x/5e06319eda06f020e43594a9c230972d/f/3/f323_a3_10de_fur/F323-ST76-Pal-melaminat-Cobra-Bronz-F323-ST76.png"
+  }
+ ]
+}
