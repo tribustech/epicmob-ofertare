@@ -78,7 +78,7 @@ export function computeQuote(q: QuoteInput, snap: SnapshotData): QuoteResult {
       const cabinetDefaults = legHeightMm != null
         ? { ...defaults, legId: pickLegId(snap.hardware, legHeightMm, defaults.legId) }
         : defaults;
-      const r = resolveSuggestions(e.hardware, cabinetDefaults);
+      const r = resolveSuggestions(e.hardware, cabinetDefaults, catalogs.hardware);
       unresolvedHardware.push(...r.unresolved);
       lines = r.lines;
     }

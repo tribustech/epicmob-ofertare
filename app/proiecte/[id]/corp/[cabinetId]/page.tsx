@@ -2,7 +2,10 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { buildHardwareDefaults, parseConstruction, toCostCatalogs } from '@/lib/catalog/convert';
-import { expandCabinet, resolveSuggestions, type CabinetInput, type ExpandedCabinet, type HardwareLine } from '@/lib/engine';
+import {
+  expandCabinet, resolveSuggestions,
+  type CabinetInput, type ExpandedCabinet, type HardwareCategory, type HardwareItem, type HardwareLine,
+} from '@/lib/engine';
 import { addExtraPart, removeExtraPart, resetCabinetHardware, saveCabinetHardware, updateCabinetData } from '@/lib/quote/actions';
 import { buildSnapshot } from '@/lib/quote/snapshot';
 import { pickLegId } from '@/lib/quote/legs';
@@ -126,7 +129,16 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
     if (legHeightMm != null) {
       defaults.legId = pickLegId(hardwareItems, legHeightMm, defaults.legId);
     }
-    const resolved = resolveSuggestions(expanded.hardware, defaults);
+    const hardwareItemsLike: HardwareItem[] = hardwareItems.map((h) => ({
+      id: h.id,
+      name: h.name,
+      category: h.category as HardwareCategory,
+      pricePerUnit: h.pricePerUnit,
+      nominalLengthMm: h.nominalLengthMm ?? undefined,
+      // câmpul devine real în Task 5; cast temporar ca să compileze în ambele stări
+      boxHeightMm: (h as { boxHeightMm?: number | null }).boxHeightMm ?? undefined,
+    }));
+    const resolved = resolveSuggestions(expanded.hardware, defaults, hardwareItemsLike);
     suggestedLines = resolved.lines;
     unresolvedSuggestions = resolved.unresolved;
   }

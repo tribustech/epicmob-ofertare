@@ -38,6 +38,7 @@ export interface HardwareItem {
   pricePerUnit: number;
   nominalLengthMm?: number;
   loadClassKg?: number;
+  boxHeightMm?: number;
 }
 
 export interface ConstructionConstants {
@@ -134,6 +135,8 @@ export interface HardwareSuggestion {
   name: string;
   qty: number;
   nominalLengthMm?: number;
+  preferredId?: string;  // produs ales explicit pe corp — are prioritate la rezolvare
+  boxHeightMm?: number;  // set Tandembox: potrivire pe înălțimea lateralei
 }
 
 export interface Warning {

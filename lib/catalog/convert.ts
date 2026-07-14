@@ -83,7 +83,12 @@ export function buildHardwareDefaults(hardware: HardwareRow[], settings: Setting
   const slideIdsByNominal: Record<number, string> = {};
   const cheapest: Record<number, number> = {};
   for (const h of hardware) {
-    if (h.category !== 'SERTAR' || h.nominalLengthMm == null) continue;
+    // seturile Tandembox se rezolvă pe boxHeightMm, nu pe nominala implicită (cast temporar
+    // până la Task 5, unde HardwareRow primește câmpul real — atunci scoate cast-ul)
+    if (
+      h.category !== 'SERTAR' || h.nominalLengthMm == null
+      || (h as { boxHeightMm?: number | null }).boxHeightMm != null
+    ) continue;
     const nominal = h.nominalLengthMm;
     if (slideIdsByNominal[nominal] === undefined || h.pricePerUnit < cheapest[nominal]) {
       slideIdsByNominal[nominal] = h.id;

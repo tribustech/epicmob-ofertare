@@ -13,6 +13,7 @@ export interface ProjectInput {
   freeLines: FreeLine[];
   laborPct: number;
   nesting: NestParams;
+  extraHardware?: FreeLine[];
 }
 
 export interface ProjectCatalogs extends CostCatalogs {
@@ -36,7 +37,7 @@ export function computeProject(
   const cabinets = project.cabinets.map((c) => expandCabinet(c, catalogs, cc));
   const parts = cabinets.flatMap((c) => c.parts);
   const suggestions = cabinets.flatMap((c) => c.hardware);
-  const { lines, unresolved } = resolveSuggestions(suggestions, catalogs.hardwareDefaults);
+  const { lines, unresolved } = resolveSuggestions(suggestions, catalogs.hardwareDefaults, catalogs.hardware);
 
   const costs = computeCosts({
     parts,
@@ -46,6 +47,7 @@ export function computeProject(
     laborPct: project.laborPct,
     nesting: project.nesting,
     catalogs,
+    extraHardware: project.extraHardware,
   });
 
   return {
