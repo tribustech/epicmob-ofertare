@@ -6,8 +6,9 @@ import { cabinetFormSchema, toCabinetInput } from '@/lib/quote/cabinet-form';
 import type { ExtraPart } from '@/lib/quote/cabinet-form';
 import { estimateCabinetCost } from '@/lib/quote/estimate';
 import type { SnapshotData } from '@/lib/quote/compute';
+import { HANDLE_TYPE_OPTIONS, withResolvedHandle } from '@/lib/quote/handle';
 import { expandCabinet } from '@/lib/engine';
-import type { HardwareLine, Part, Warning } from '@/lib/engine';
+import type { HandleType, HardwareLine, Part, Warning } from '@/lib/engine';
 import { parseConstruction, toCostCatalogs } from '@/lib/catalog/convert';
 import type { FormState } from '@/lib/forms/form-action';
 import { fmtLei, fmtNum } from '@/lib/format';
@@ -40,9 +41,14 @@ const FRONT_TYPE_OPTIONS: FieldOption[] = [
 
 const DOOR_SPLIT_WIDTH_MM = 600; // convenția atelierului: peste 600mm → 2 uși
 
+const MOUNT_OPTIONS: FieldOption[] = [
+  { value: 'INCADRAT', label: 'Încadrat (între laterale)' },
+  { value: 'APLICAT', label: 'Aplicat (peste laterale)' },
+];
+
 const DRAWER_SYSTEM_OPTIONS: FieldOption[] = [
-  { value: 'METAL_BOX', label: 'Blum (laterale metalice)' },
-  { value: 'PAL_BOX', label: 'Cutie din PAL' },
+  { value: 'TANDEMBOX', label: 'Tandembox (sertar metalic complet)' },
+  { value: 'PAL_BOX', label: 'Cutie PAL + glisiere Tandem' },
 ];
 
 const BACK_MOUNT_OPTIONS: FieldOption[] = [
@@ -69,13 +75,23 @@ export interface CabinetEditorFormProps {
   };
   hardwareOverrides: HardwareLine[] | null;
   extraParts: ExtraPart[];
+  projectHandle: { type: string; itemId: string | null; label: string };
+  hardwareSelOptions: {
+    hinges: FieldOption[];
+    slides: FieldOption[];
+    tandemboxHeights: number[];
+    handleItems: FieldOption[];
+    pushItems: FieldOption[];
+    defaultHingeName: string | null;
+  };
   save: (data: Record<string, string>) => Promise<FormState>;
 }
 
 export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const {
     initial, snapshot, laborPct, yieldFactor, legHeightMm,
-    materialOptions, bandOptions, hardwareOverrides, extraParts, save,
+    materialOptions, bandOptions, hardwareOverrides, extraParts,
+    projectHandle, hardwareSelOptions, save,
   } = props;
   const router = useRouter();
   const [values, setValues] = useState<Record<string, string>>(initial);
@@ -130,10 +146,18 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const drawerSum = drawerHeights.reduce((a, b) => a + b, 0);
   const drawerSumMismatch = drawersCount > 0 && drawerHeights.length === drawersCount
     && Math.abs(drawerSum - usableDrawerH) > 1;
+  const minDrawerFrontH = drawersCount > 0 && drawerHeights.length === drawersCount
+    ? Math.min(...drawerHeights) : null;
+  const noTandemboxFits = values.drawersSystem === 'TANDEMBOX' && minDrawerFrontH !== null
+    && hardwareSelOptions.tandemboxHeights.length > 0
+    && hardwareSelOptions.tandemboxHeights.every((h) => h > minDrawerFrontH - cc.tandemboxFrontClearanceMm);
 
   const live = useMemo(() => {
     if (!parsed.success) return null;
-    const input = toCabinetInput(parsed.data);
+    const input = withResolvedHandle(
+      toCabinetInput(parsed.data),
+      { type: projectHandle.type as HandleType, itemId: projectHandle.itemId },
+    );
     let parts: Part[] = [];
     let warnings: Warning[] = [];
     let expandError: string | null = null;
@@ -144,9 +168,12 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     } catch (e) {
       expandError = e instanceof Error ? e.message : 'Eroare la generarea pieselor';
     }
-    const estimate = estimateCabinetCost({ input, hardwareOverrides, extraParts }, snapshot, { laborPct, yieldFactor, legHeightMm });
+    const estimate = estimateCabinetCost({ input, hardwareOverrides, extraParts }, snapshot, {
+      laborPct, yieldFactor, legHeightMm,
+      projectHandle: { type: projectHandle.type as HandleType, itemId: projectHandle.itemId },
+    });
     return { input, parts, warnings, expandError, estimate };
-  }, [parsed, catalogs, cc, hardwareOverrides, extraParts, snapshot, laborPct, yieldFactor, legHeightMm]);
+  }, [parsed, catalogs, cc, hardwareOverrides, extraParts, snapshot, laborPct, yieldFactor, legHeightMm, projectHandle]);
 
   const [lastPrice, setLastPrice] = useState<{ cost: number; sell: number } | null>(() =>
     live && !live.expandError && !live.estimate.error ? { cost: live.estimate.cost, sell: live.estimate.sell } : null,
@@ -210,6 +237,11 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                 <NumField label="Panou orb (mm)" value={values.blindPanelWidthMm} onChange={(v) => set('blindPanelWidthMm', v)} />
               )}
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <SelectField label="Blat corp (sus)" value={values.mountTop} onChange={(v) => set('mountTop', v)} options={MOUNT_OPTIONS} />
+              <SelectField label="Fund corp (jos)" value={values.mountBottom} onChange={(v) => set('mountBottom', v)} options={MOUNT_OPTIONS} />
+            </div>
           </CardContent>
         </Card>
 
@@ -266,6 +298,14 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                 <p className="text-xs text-muted-foreground">
                   Convenție atelier: până în 600mm lățime → 1 ușă; peste → 2 uși.
                 </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <SelectField label="Model balamale" value={values.hingeId} onChange={(v) => set('hingeId', v)} options={hardwareSelOptions.hinges} allowEmpty />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {values.hingeId
+                    ? 'Balamale alese pe corp; numărul rămâne calculat automat.'
+                    : `Balamale: ${hardwareSelOptions.defaultHingeName ?? 'default global nesetat'} — default din Setări; numărul se calculează automat.`}
+                </p>
               </div>
             )}
 
@@ -274,8 +314,43 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <NumField label="Nr. sertare" value={values.drawersCount} onChange={onDrawersCountChange} />
                   <SelectField label="Sistem sertare" value={values.drawersSystem} onChange={(v) => set('drawersSystem', v)} options={DRAWER_SYSTEM_OPTIONS} />
-                  <SelectField label="Fund sertare" value={values.drawersBottomMaterialId} onChange={(v) => set('drawersBottomMaterialId', v)} options={materialOptions.drawersBottom} allowEmpty />
+                  {values.drawersSystem === 'PAL_BOX' && (
+                    <SelectField label="Fund sertare" value={values.drawersBottomMaterialId} onChange={(v) => set('drawersBottomMaterialId', v)} options={materialOptions.drawersBottom} allowEmpty />
+                  )}
                 </div>
+                {values.drawersSystem === 'PAL_BOX' && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <SelectField label="Model glisiere" value={values.slideId} onChange={(v) => set('slideId', v)} options={hardwareSelOptions.slides} allowEmpty />
+                  </div>
+                )}
+                {values.drawersSystem === 'TANDEMBOX' && (
+                  <div className="space-y-1">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="grid gap-1">
+                        <Label>Înălțime laterală (mm)</Label>
+                        <select className={selectCls} value={values.tandemboxHeightMm ?? ''} onChange={(e) => set('tandemboxHeightMm', e.target.value)}>
+                          <option value="">— alege —</option>
+                          {hardwareSelOptions.tandemboxHeights.map((h) => {
+                            const fits = minDrawerFrontH === null || h <= minDrawerFrontH - cc.tandemboxFrontClearanceMm;
+                            return (
+                              <option key={h} value={h} disabled={!fits}>
+                                {h}mm{fits ? '' : ` — nu încape (front min. ${fmtNum(minDrawerFrontH ?? 0, 0)}mm)`}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Sertar metalic complet — nu se debitează nimic. Adâncimea nominală se alege automat; rezervă front {fmtNum(cc.tandemboxFrontClearanceMm, 0)}mm (Setări).
+                    </p>
+                    {noTandemboxFits && (
+                      <p className="rounded bg-amber-50 px-2 py-1 text-sm text-amber-800">
+                        ⚠ Nicio înălțime de laterală nu încape în fronturile configurate.
+                      </p>
+                    )}
+                  </div>
+                )}
                 {drawersCount > 0 && (
                   <div className="space-y-2">
                     {Array.from({ length: drawersCount }, (_, i) => (
@@ -298,6 +373,46 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             {frontType === 'FARA' && (
               <div className="grid grid-cols-2 gap-3">
                 <NumField label="Număr polițe" value={values.shelves} onChange={(v) => set('shelves', v)} />
+              </div>
+            )}
+
+            {frontType !== 'FARA' && (
+              <div className="space-y-2 border-t pt-3">
+                <Label>Mâner</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <SelectField
+                    label="Tip"
+                    value={values.handleMode === 'PROIECT' ? '' : values.handleType}
+                    onChange={(v) => setValues((prev) => ({
+                      ...prev,
+                      handleMode: v === '' ? 'PROIECT' : 'CUSTOM',
+                      ...(v !== '' ? { handleType: v } : {}),
+                      ...(v === 'FARA' && !prev.frontExtensionMm
+                        ? { frontExtensionMm: String(cc.frontExtensionDefaultMm) } : {}),
+                    }))}
+                    options={[{ value: '', label: `Ca proiectul (${projectHandle.label})` },
+                      ...HANDLE_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))]}
+                  />
+                  {values.handleMode === 'CUSTOM' && ['APLICAT', 'BUTON', 'INGROPAT'].includes(values.handleType) && (
+                    <SelectField label="Produs" value={values.handleItemId} onChange={(v) => set('handleItemId', v)} options={hardwareSelOptions.handleItems} allowEmpty />
+                  )}
+                  {values.handleMode === 'CUSTOM' && values.handleType === 'PUSH' && (
+                    <SelectField label="Mecanism (uși)" value={values.handleItemId} onChange={(v) => set('handleItemId', v)} options={hardwareSelOptions.pushItems} allowEmpty />
+                  )}
+                  {values.handleMode === 'CUSTOM' && values.handleType === 'FARA' && (
+                    <NumField label="Prelungire front (mm)" value={values.frontExtensionMm} onChange={(v) => set('frontExtensionMm', v)} />
+                  )}
+                </div>
+                {values.handleMode === 'CUSTOM' && values.handleType === 'GOLA' && (
+                  <p className="text-xs text-muted-foreground">
+                    GOLA: fronturile se scurtează cu {fmtNum(cc.golaFrontDeductMm, 0)}mm, profil {'≈'}{fmtNum(Number(values.widthMm) / 1000, 2)}ml — valori din Setări.
+                  </p>
+                )}
+                {values.handleMode === 'CUSTOM' && values.handleType === 'FARA' && (
+                  <p className="text-xs text-muted-foreground">
+                    Front prelungit în jos (default {fmtNum(cc.frontExtensionDefaultMm, 0)}mm din Setări) — util la corpurile suspendate.
+                  </p>
+                )}
               </div>
             )}
           </CardContent>
