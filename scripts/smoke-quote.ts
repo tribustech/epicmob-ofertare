@@ -21,7 +21,7 @@ async function main() {
 
   const project = await prisma.project.create({
     data: {
-      name: 'SMOKE TEST', markupPct: 30, yieldFactor: 0.8,
+      name: 'SMOKE TEST', laborPct: 120, yieldFactor: 0.8,
       cabinets: { create: [{ sortOrder: 0, inputJson: JSON.stringify(input) }] },
     },
   });
@@ -29,7 +29,7 @@ async function main() {
   try {
     const snapshot = await buildSnapshot();
     const quote = computeQuote(
-      { markupPct: 30, freeLines: [], cabinets: [{ input, hardwareOverrides: null, extraParts: [] }] },
+      { laborPct: 120, freeLines: [], cabinets: [{ input, hardwareOverrides: null, extraParts: [] }] },
       snapshot,
     );
     if (!(quote.costs.totalCost > 0)) throw new Error('Cost total zero');

@@ -4,7 +4,7 @@ import { makeSnapshot, refCabinet } from './fixtures';
 
 function baseQuote(overrides: Partial<QuoteInput> = {}): QuoteInput {
   return {
-    markupPct: 30, freeLines: [],
+    laborPct: 30, freeLines: [],
     cabinets: [{ input: refCabinet(), hardwareOverrides: null, extraParts: [] }],
     ...overrides,
   };
@@ -14,9 +14,9 @@ describe('computeQuote — corpul de referință (aceleași cifre ca motorul)', 
   const r = computeQuote(baseQuote(), makeSnapshot());
 
   it('totaluri identice cu calculul de mână', () => {
-    expect(r.costs.totalCost).toBeCloseTo(836.16, 1);
-    expect(r.costs.sellPrice).toBeCloseTo(1087.01, 1);
-    expect(r.costs.leiPerMl).toBeCloseTo(1811.69, 0);
+    expect(r.costs.totalCost).toBeCloseTo(686.16, 1);
+    expect(r.costs.sellPrice).toBeCloseTo(892.01, 1);
+    expect(r.costs.leiPerMl).toBeCloseTo(1486.69, 0);
   });
 
   it('feronerie auto: 2 balamale, 1 mâner, 4 picioare; cutList per material', () => {
@@ -32,7 +32,7 @@ describe('computeQuote — override-uri și piese suplimentare', () => {
     q.cabinets[0].hardwareOverrides = [{ hardwareId: 'maner-std', qty: 10 }];
     const r = computeQuote(q, makeSnapshot());
     expect(r.costs.breakdown.hardware).toBeCloseTo(100, 5);   // 10 × 10, nu 48
-    expect(r.costs.totalCost).toBeCloseTo(888.16, 1);          // 836.16 − 48 + 100
+    expect(r.costs.totalCost).toBeCloseTo(738.16, 1);          // 686.16 − 48 + 100
     expect(r.unresolvedHardware).toEqual([]);                  // sugestiile corpului nu mai contează
   });
 
@@ -41,7 +41,7 @@ describe('computeQuote — override-uri și piese suplimentare', () => {
     q.cabinets[0].extraParts = [{ name: 'Mască soclu', lengthMm: 500, widthMm: 500, qty: 1, materialId: 'pal-alb' }];
     const r = computeQuote(q, makeSnapshot());
     expect(r.parts).toHaveLength(6);
-    expect(r.costs.totalCost).toBeCloseTo(836.16, 1);          // tot 1 foaie PAL
+    expect(r.costs.totalCost).toBeCloseTo(686.16, 1);          // tot 1 foaie PAL
   });
 
   it('feronerie dezactivată dar referențiată de override → tot se calculează (nu aruncă)', () => {

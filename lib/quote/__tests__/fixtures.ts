@@ -23,13 +23,8 @@ export function makeSnapshot(overrides: Partial<SnapshotData> = {}): SnapshotDat
       { maxThicknessMm: 32, pricePerSheet: 50 },
       { maxThicknessMm: 10, pricePerSheet: 33 },
     ],
-    laborRates: [
-      { cabinetType: 'BAZA', price: 150 }, { cabinetType: 'SUSPENDAT', price: 130 },
-      { cabinetType: 'INALT', price: 200 }, { cabinetType: 'SERTARE', price: 220 },
-      { cabinetType: 'COLT', price: 180 },
-    ],
     settings: {
-      markupPct: 30, sheetYieldFactor: 0.8, constructionJson: '{}',
+      sheetYieldFactor: 0.8, constructionJson: '{}',
       cutKerfMm: 4, cutTrimMm: 10,
       defaultHingeId: 'blum-cliptop', defaultHandleId: 'maner-std',
       defaultLegId: 'picior-std', defaultRailId: null,

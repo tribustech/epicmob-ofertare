@@ -12,12 +12,6 @@ const palRow: MaterialRow = {
 };
 const mdfRow: MaterialRow = { ...palRow, id: 'mdf-v', kind: 'MDF_VOPSIT', pricingMode: 'PER_SQM', pricePerSheet: null, pricePerSqm: 450 };
 
-const LABOR = [
-  { cabinetType: 'BAZA', price: 150 }, { cabinetType: 'SUSPENDAT', price: 130 },
-  { cabinetType: 'INALT', price: 200 }, { cabinetType: 'SERTARE', price: 220 },
-  { cabinetType: 'COLT', price: 180 },
-];
-
 describe('toBoardMaterial', () => {
   it('PER_SHEET → union cu pricePerSheet', () => {
     expect(toBoardMaterial(palRow).pricing).toEqual({ mode: 'PER_SHEET', pricePerSheet: 260 });
@@ -34,22 +28,18 @@ describe('toBoardMaterial', () => {
 });
 
 describe('toCostCatalogs', () => {
-  it('sortează cuttingRates crescător și construiește laborPerType', () => {
+  it('sortează cuttingRates crescător', () => {
     const c = toCostCatalogs([palRow], [], [], [
       { maxThicknessMm: 32, pricePerSheet: 50 },
       { maxThicknessMm: 10, pricePerSheet: 33 },
-    ], LABOR);
+    ]);
     expect(c.cuttingRates[0].maxThicknessMm).toBe(10);
-    expect(c.laborPerType.SERTARE).toBe(220);
-  });
-  it('tip de corp lipsă din manoperă → eroare', () => {
-    expect(() => toCostCatalogs([], [], [], [], LABOR.slice(0, 4))).toThrow(/manoper/i);
   });
 });
 
 describe('buildHardwareDefaults', () => {
   const settings: SettingsRow = {
-    markupPct: 30, sheetYieldFactor: 0.8, constructionJson: '{}',
+    sheetYieldFactor: 0.8, constructionJson: '{}',
     defaultHingeId: 'h1', defaultHandleId: null, defaultLegId: 'l1', defaultRailId: null,
   };
   const slides: HardwareRow[] = [

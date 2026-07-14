@@ -48,14 +48,10 @@ export const cuttingRateSchema = z.object({
   pricePerSheet: posNum,
 });
 
-export const laborRateSchema = z.object({
-  price: num.nonnegative(),
-});
-
 const optId = z.preprocess(emptyToUndefined, z.string().optional());
 
 export const settingsSchema = z.object({
-  markupPct: num.nonnegative(),
+  laborPct: num.nonnegative(),
   sheetYieldFactor: num.gt(0).lte(1),
   cutKerfMm: num.nonnegative().lte(50),
   cutTrimMm: num.nonnegative().lte(200),

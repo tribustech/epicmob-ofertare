@@ -6,7 +6,7 @@ import { DEFAULT_CONSTRUCTION } from '@/lib/engine';
 import { formAction } from '@/lib/forms/form-action';
 import {
   cuttingRateSchema, edgeBandSchema, formDataToObject, hardwareSchema,
-  laborRateSchema, materialSchema, settingsSchema,
+  materialSchema, settingsSchema,
 } from './schemas';
 
 function materialData(fd: FormData) {
@@ -93,18 +93,12 @@ export const deleteCuttingRate = formAction(async (id: string) => {
   revalidatePath('/cataloage/debitare');
 });
 
-export const updateLaborRate = formAction(async (cabinetType: string, fd: FormData) => {
-  const d = laborRateSchema.parse(formDataToObject(fd));
-  await prisma.laborRate.update({ where: { cabinetType }, data: { price: d.price } });
-  revalidatePath('/cataloage/manopera');
-});
-
 export const updateSettings = formAction(async (fd: FormData) => {
   const d = settingsSchema.parse(formDataToObject(fd));
   await prisma.appSettings.update({
     where: { id: 1 },
     data: {
-      markupPct: d.markupPct, sheetYieldFactor: d.sheetYieldFactor,
+      laborPct: d.laborPct, sheetYieldFactor: d.sheetYieldFactor,
       cutKerfMm: d.cutKerfMm, cutTrimMm: d.cutTrimMm,
       defaultHingeId: d.defaultHingeId ?? null, defaultHandleId: d.defaultHandleId ?? null,
       defaultLegId: d.defaultLegId ?? null, defaultRailId: d.defaultRailId ?? null,

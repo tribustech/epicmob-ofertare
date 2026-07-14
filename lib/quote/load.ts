@@ -50,12 +50,12 @@ export function legHeightByCabinet(assemblies: Assembly[], cabinets: LoadedCabin
 }
 
 export function toQuoteInput(
-  project: { markupPct: number; freeLinesJson: string },
+  project: { laborPct: number; freeLinesJson: string },
   cabinets: LoadedCabinet[],
   legHeightMap: Map<string, number> = new Map(),
 ): QuoteInput {
   return {
-    markupPct: project.markupPct,
+    laborPct: project.laborPct,
     freeLines: JSON.parse(project.freeLinesJson),
     cabinets: cabinets.map((c) => ({
       input: c.input,

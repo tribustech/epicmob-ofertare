@@ -1,6 +1,6 @@
 import { DEFAULT_CONSTRUCTION } from '@/lib/engine';
 import type {
-  BoardMaterial, CabinetType, ConstructionConstants, CostCatalogs,
+  BoardMaterial, ConstructionConstants, CostCatalogs,
   EdgeBand, HardwareCategory, HardwareDefaults, HardwareItem, MaterialKind,
 } from '@/lib/engine';
 
@@ -15,9 +15,8 @@ export interface HardwareRow {
   nominalLengthMm: number | null; loadClassKg: number | null;
 }
 export interface CuttingRateRow { maxThicknessMm: number; pricePerSheet: number }
-export interface LaborRateRow { cabinetType: string; price: number }
 export interface SettingsRow {
-  markupPct: number; sheetYieldFactor: number; constructionJson: string;
+  laborPct?: number | null; sheetYieldFactor: number; constructionJson: string;
   // opționale: snapshot-urile înghețate dinainte de nesting nu le au
   cutKerfMm?: number | null; cutTrimMm?: number | null;
   defaultHingeId: string | null; defaultHandleId: string | null;
@@ -26,7 +25,6 @@ export interface SettingsRow {
 
 const MATERIAL_KINDS: MaterialKind[] = ['PAL', 'MDF_VOPSIT', 'MDF_MELAMINAT', 'MDF_INFOLIAT', 'PFL'];
 const HARDWARE_CATEGORIES: HardwareCategory[] = ['BALAMA', 'SERTAR', 'MANER', 'PICIOR', 'SINA_SUSPENDARE', 'ACCESORIU'];
-const CABINET_TYPES: CabinetType[] = ['BAZA', 'SUSPENDAT', 'INALT', 'SERTARE', 'COLT'];
 
 export function toBoardMaterial(row: MaterialRow): BoardMaterial {
   if (!MATERIAL_KINDS.includes(row.kind as MaterialKind)) {
@@ -70,14 +68,7 @@ export function toCostCatalogs(
   edgeBands: EdgeBandRow[],
   hardware: HardwareRow[],
   cuttingRates: CuttingRateRow[],
-  laborRates: LaborRateRow[],
 ): CostCatalogs {
-  const laborPerType = {} as Record<CabinetType, number>;
-  for (const type of CABINET_TYPES) {
-    const row = laborRates.find((l) => l.cabinetType === type);
-    if (!row) throw new Error(`Lipsește tariful de manoperă pentru tipul de corp ${type}`);
-    laborPerType[type] = row.price;
-  }
   return {
     materials: materials.map(toBoardMaterial),
     edgeBands: edgeBands.map(toEdgeBand),
@@ -85,7 +76,6 @@ export function toCostCatalogs(
     cuttingRates: [...cuttingRates]
       .sort((a, b) => a.maxThicknessMm - b.maxThicknessMm)
       .map((c) => ({ maxThicknessMm: c.maxThicknessMm, pricePerSheet: c.pricePerSheet })),
-    laborPerType,
   };
 }
 

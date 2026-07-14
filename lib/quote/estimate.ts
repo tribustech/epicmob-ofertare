@@ -17,10 +17,10 @@ export interface CabinetEstimate {
 export function estimateCabinetCost(
   cabinet: QuoteCabinet,
   snap: SnapshotData,
-  opts: { markupPct: number; yieldFactor: number; legHeightMm: number | null },
+  opts: { laborPct: number; yieldFactor: number; legHeightMm: number | null },
 ): CabinetEstimate {
   try {
-    const catalogs = toCostCatalogs(snap.materials, snap.edgeBands, snap.hardware, snap.cuttingRates, snap.laborRates);
+    const catalogs = toCostCatalogs(snap.materials, snap.edgeBands, snap.hardware, snap.cuttingRates);
     const defaults = buildHardwareDefaults(snap.hardware.filter((h) => h.active), snap.settings);
     if (opts.legHeightMm !== null) {
       defaults.legId = pickLegId(snap.hardware, opts.legHeightMm, defaults.legId);
@@ -77,9 +77,8 @@ export function estimateCabinetCost(
       hardware += line.qty * item.pricePerUnit;
     }
 
-    const labor = catalogs.laborPerType[cabinet.input.type];
-    const cost = boards + cutting + edging + hardware + labor;
-    return { cost, sell: cost * (1 + opts.markupPct / 100), error: null };
+    const cost = boards + cutting + edging + hardware;
+    return { cost, sell: cost * (1 + opts.laborPct / 100), error: null };
   } catch (e) {
     return { cost: 0, sell: 0, error: e instanceof Error ? e.message : 'Eroare de calcul' };
   }

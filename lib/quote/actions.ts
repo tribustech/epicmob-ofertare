@@ -21,7 +21,7 @@ const projectFormSchema = z.object({
 });
 
 const projectSettingsSchema = z.object({
-  markupPct: z.coerce.number().nonnegative(),
+  laborPct: z.coerce.number().nonnegative(),
   yieldFactor: z.coerce.number().gt(0).lte(1),
   status: z.enum(['CIORNA', 'TRIMISA', 'ACCEPTATA']),
 });
@@ -67,7 +67,7 @@ export const createProject = formAction(async (fd: FormData) => {
       name: d.name,
       clientName: d.clientName ?? null,
       clientContact: d.clientContact ?? null,
-      markupPct: settings.markupPct,
+      laborPct: settings.laborPct,
       yieldFactor: settings.sheetYieldFactor,
     },
   });
@@ -104,7 +104,7 @@ export const duplicateProject = formAction(async (id: string) => {
         name: `${project.name} (copie)`,
         clientName: project.clientName,
         clientContact: project.clientContact,
-        markupPct: project.markupPct,
+        laborPct: project.laborPct,
         yieldFactor: project.yieldFactor,
         freeLinesJson: project.freeLinesJson,
         snapshotJson: project.snapshotJson,

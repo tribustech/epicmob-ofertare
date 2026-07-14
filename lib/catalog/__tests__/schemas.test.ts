@@ -27,24 +27,24 @@ describe('materialSchema', () => {
 describe('settingsSchema', () => {
   it('validează factorul de utilizare în (0, 1]', () => {
     expect(() => settingsSchema.parse({
-      markupPct: '30', sheetYieldFactor: '1.2', cutKerfMm: '4', cutTrimMm: '10',
+      laborPct: '30', sheetYieldFactor: '1.2', cutKerfMm: '4', cutTrimMm: '10',
     })).toThrow();
     expect(settingsSchema.parse({
-      markupPct: '30', sheetYieldFactor: '0.8', cutKerfMm: '4', cutTrimMm: '10',
+      laborPct: '30', sheetYieldFactor: '0.8', cutKerfMm: '4', cutTrimMm: '10',
     }).sheetYieldFactor).toBe(0.8);
   });
 
   it('settingsSchema acceptă kerf și trim numerice și respinge negativ', () => {
     const ok = settingsSchema.parse({
-      markupPct: '30', sheetYieldFactor: '0.8', cutKerfMm: '4', cutTrimMm: '10',
+      laborPct: '30', sheetYieldFactor: '0.8', cutKerfMm: '4', cutTrimMm: '10',
     });
     expect(ok.cutKerfMm).toBe(4);
     expect(ok.cutTrimMm).toBe(10);
     expect(() => settingsSchema.parse({
-      markupPct: '30', sheetYieldFactor: '0.8', cutKerfMm: '-1', cutTrimMm: '10',
+      laborPct: '30', sheetYieldFactor: '0.8', cutKerfMm: '-1', cutTrimMm: '10',
     })).toThrow();
     expect(() => settingsSchema.parse({
-      markupPct: '30', sheetYieldFactor: '0.8', cutKerfMm: '4', cutTrimMm: '1000',
+      laborPct: '30', sheetYieldFactor: '0.8', cutKerfMm: '4', cutTrimMm: '1000',
     })).toThrow();
   });
 });

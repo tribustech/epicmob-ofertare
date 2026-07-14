@@ -1,7 +1,7 @@
 import {
   buildHardwareDefaults, parseConstruction, toCostCatalogs,
   type CuttingRateRow, type EdgeBandRow, type HardwareRow,
-  type LaborRateRow, type MaterialRow, type SettingsRow,
+  type MaterialRow, type SettingsRow,
 } from '@/lib/catalog/convert';
 import {
   aggregateHardware, computeCosts, cutListCsv, DEFAULT_NEST_PARAMS, expandCabinet, resolveSuggestions,
@@ -19,7 +19,6 @@ export interface SnapshotData {
   edgeBands: (EdgeBandRow & { active: boolean })[];
   hardware: (HardwareRow & { active: boolean })[];
   cuttingRates: CuttingRateRow[];
-  laborRates: LaborRateRow[];
   settings: SettingsRow;
 }
 
@@ -31,7 +30,7 @@ export interface QuoteCabinet {
 }
 
 export interface QuoteInput {
-  markupPct: number;
+  laborPct: number;
   freeLines: FreeLine[];
   cabinets: QuoteCabinet[];
 }
@@ -49,7 +48,7 @@ export interface QuoteResult {
 
 export function computeQuote(q: QuoteInput, snap: SnapshotData): QuoteResult {
   // catalogul de cost include TOATE rândurile — snapshot-urile vechi nu aruncă la referințe dezactivate
-  const catalogs = toCostCatalogs(snap.materials, snap.edgeBands, snap.hardware, snap.cuttingRates, snap.laborRates);
+  const catalogs = toCostCatalogs(snap.materials, snap.edgeBands, snap.hardware, snap.cuttingRates);
   // sugestiile implicite folosesc doar feroneria activă
   const defaults = buildHardwareDefaults(snap.hardware.filter((h) => h.active), snap.settings);
   const cc = parseConstruction(snap.settings.constructionJson);
@@ -98,7 +97,7 @@ export function computeQuote(q: QuoteInput, snap: SnapshotData): QuoteResult {
     hardwareLines,
     cabinets: q.cabinets.map((c) => c.input),
     freeLines: q.freeLines,
-    markupPct: q.markupPct,
+    laborPct: q.laborPct,
     nesting,
     catalogs,
   });
