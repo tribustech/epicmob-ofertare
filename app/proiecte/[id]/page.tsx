@@ -21,7 +21,7 @@ import { fmtLei, fmtNum } from '@/lib/format';
 export const dynamic = 'force-dynamic';
 
 const TYPE_LABELS: Record<string, string> = {
-  BAZA: 'Bază', SUSPENDAT: 'Suspendat', INALT: 'Înalt', SERTARE: 'Sertare', COLT: 'Colț',
+  BAZA: 'Bază', SUSPENDAT: 'Suspendat', INALT: 'Înalt', COLT: 'Colț',
 };
 const STATUS_OPTIONS = [
   { value: 'CIORNA', label: 'Ciornă' },

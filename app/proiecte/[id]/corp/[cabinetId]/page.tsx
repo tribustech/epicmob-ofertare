@@ -49,14 +49,19 @@ function sameHardwareMultiset(a: HardwareLine[], b: HardwareLine[]): boolean {
 }
 
 function cabinetInputToFormValues(input: CabinetInput): Record<string, string> {
+  const frontType = input.drawers && input.drawers.count > 0 ? 'SERTARE' : input.doors > 0 ? 'USI' : 'FARA';
   return {
     label: input.label,
     type: input.type,
+    frontType,
+    withShelves: input.shelves > 0 ? 'true' : 'false',
     widthMm: String(input.widthMm),
     heightMm: String(input.heightMm),
     depthMm: String(input.depthMm),
-    shelves: String(input.shelves),
-    doors: String(input.doors),
+    // chiuvetă (uși, 0 polițe): câmpul pornește de la 1 ca bifarea „Cu polițe" să aibă o valoare;
+    // la FARA păstrăm 0 real (etajera fără polițe rămâne fără)
+    shelves: String(input.shelves > 0 ? input.shelves : input.doors > 0 ? 1 : 0),
+    doors: String(Math.max(input.doors, 1)),
     carcassMaterialId: input.carcassMaterialId,
     frontMaterialId: input.frontMaterialId ?? '',
     backEnabled: input.back.enabled ? 'true' : 'false',

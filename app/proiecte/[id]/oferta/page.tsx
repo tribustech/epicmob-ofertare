@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 
 const TYPE_LABELS: Record<string, string> = {
   BAZA: 'Corp bază', SUSPENDAT: 'Corp suspendat', INALT: 'Corp înalt',
-  SERTARE: 'Corp cu sertare', COLT: 'Corp de colț',
+  COLT: 'Corp de colț',
 };
 
 export default async function OfertaPage({ params }: { params: Promise<{ id: string }> }) {
