@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { CabinetInput, ConstructionConstants } from '@/lib/engine';
-import { buildIsoModel } from '@/lib/iso/geometry';
+import { buildIsoModel, type IsoFrontRect } from '@/lib/iso/geometry';
 import { fmtNum } from '@/lib/format';
 
 const COS30 = Math.cos(Math.PI / 6);
@@ -13,6 +13,36 @@ function iso(x: number, y: number, z: number): [number, number] {
 
 function poly(points: [number, number, number][]): string {
   return points.map((p) => iso(...p).map((v) => v.toFixed(1)).join(',')).join(' ');
+}
+
+// indicator de mâner pe front, după tip: bară (aplicat), punct (buton),
+// scoică ovală (îngropat), cerc punctat (push — apeși frontul)
+function HandleMark({ handle, stroke }: { handle: NonNullable<IsoFrontRect['handle']>; stroke: string }) {
+  const { xMm, yMm, kind, vertical } = handle;
+  const [cx, cy] = iso(xMm, yMm, 0);
+  if (kind === 'BARA') {
+    const half = 60;
+    const a = vertical ? iso(xMm, yMm - half, 0) : iso(xMm - half, yMm, 0);
+    const b = vertical ? iso(xMm, yMm + half, 0) : iso(xMm + half, yMm, 0);
+    return <line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={stroke} strokeWidth="6" strokeLinecap="round" />;
+  }
+  if (kind === 'BUTON') {
+    return <circle cx={cx} cy={cy} r="7" fill={stroke} />;
+  }
+  if (kind === 'INGROPAT') {
+    const w = 55; const h = 16;
+    return (
+      <polygon
+        points={poly([
+          [xMm - w, yMm - h, 0], [xMm + w, yMm - h, 0],
+          [xMm + w, yMm + h, 0], [xMm - w, yMm + h, 0],
+        ])}
+        fill={stroke} fillOpacity="0.25" stroke={stroke} strokeWidth="1.5" strokeLinejoin="round"
+      />
+    );
+  }
+  // PUSH — punct de apăsare
+  return <circle cx={cx} cy={cy} r="10" fill="none" stroke={stroke} strokeWidth="2" strokeDasharray="4 3" />;
 }
 
 export function CabinetIsoSvg({ input, cc }: { input: CabinetInput; cc: ConstructionConstants }) {
@@ -66,6 +96,18 @@ export function CabinetIsoSvg({ input, cc }: { input: CabinetInput; cc: Construc
         />
       ))}
 
+      {/* profilul GOLA — bară de aluminiu în golul fronturilor scurtate */}
+      {model.golaBars.map((b, i) => (
+        <polygon
+          key={`gola-${i}`}
+          points={poly([
+            [b.xMm, b.yMm, 0], [b.xMm + b.wMm, b.yMm, 0],
+            [b.xMm + b.wMm, b.yMm + b.hMm, 0], [b.xMm, b.yMm + b.hMm, 0],
+          ])}
+          fill="#9aa0a8" stroke={stroke} strokeWidth="1.5" strokeLinejoin="round"
+        />
+      ))}
+
       {/* fronturile — semitransparente ca polițele să rămână vizibile */}
       {model.fronts.map((f, i) => (
         <g key={`front-${i}`}>
@@ -78,9 +120,16 @@ export function CabinetIsoSvg({ input, cc }: { input: CabinetInput; cc: Construc
             fillOpacity={f.kind === 'PANOU_ORB' ? 1 : 0.6}
             stroke={stroke} strokeWidth="1.5" strokeLinejoin="round"
           />
-          {f.handle && (
-            <circle cx={iso(f.handle.xMm, f.handle.yMm, 0)[0]} cy={iso(f.handle.xMm, f.handle.yMm, 0)[1]} r="5" fill={stroke} />
+          {f.jStrip && (
+            <polygon
+              points={poly([
+                [f.jStrip.xMm, f.jStrip.yMm, 0], [f.jStrip.xMm + f.jStrip.wMm, f.jStrip.yMm, 0],
+                [f.jStrip.xMm + f.jStrip.wMm, f.jStrip.yMm + f.jStrip.hMm, 0], [f.jStrip.xMm, f.jStrip.yMm + f.jStrip.hMm, 0],
+              ])}
+              fill={stroke} fillOpacity="0.35"
+            />
           )}
+          {f.handle && <HandleMark handle={f.handle} stroke={stroke} />}
         </g>
       ))}
 
