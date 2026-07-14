@@ -29,6 +29,12 @@ export function expandDrawerBoxes(
   const drawers = input.drawers;
   if (!drawers || drawers.count <= 0) return { parts: [], warnings: [] };
 
+  // TANDEMBOX = sertar metalic complet preasamblat — nimic la debitare, doar setul din feronerie
+  if (drawers.system !== 'PAL_BOX') return { parts: [], warnings: [] };
+  if (!drawers.bottomMaterialId) {
+    throw new Error(`Corpul ${input.label}: cutia de sertar din PAL cere materialul fundului`);
+  }
+
   const carcass = findMaterial(catalogs, input.carcassMaterialId);
   const bottom = findMaterial(catalogs, drawers.bottomMaterialId);
   const t = carcass.thicknessMm;
@@ -47,44 +53,28 @@ export function expandDrawerBoxes(
   };
 
   for (const frontH of heights) {
-    if (drawers.system === 'PAL_BOX') {
-      const boxW = assertPositiveDim(
-        innerW - cc.palBoxSlideAllowanceMm, 'lățime cutie sertar (PAL_BOX)', input.label,
-      );
-      const boxH = Math.max(frontH - cc.palBoxHeightDeductMm, cc.palBoxMinHeightMm);
-      const boxInnerW = assertPositiveDim(
-        boxW - 2 * t, 'lățime față/spate cutie sertar (PAL_BOX)', input.label,
-      );
-      push({
-        cabinetLabel: input.label, name: 'Laterală sertar',
-        lengthMm: nominalMm, widthMm: boxH, qty: 2,
-        materialId: carcass.id, edges: { l1: fe },
-      });
-      push({
-        cabinetLabel: input.label, name: 'Față/Spate cutie sertar',
-        lengthMm: boxInnerW, widthMm: boxH, qty: 2,
-        materialId: carcass.id, edges: { l1: fe },
-      });
-      push({
-        cabinetLabel: input.label, name: 'Fund sertar',
-        lengthMm: nominalMm, widthMm: boxW, qty: 1,
-        materialId: bottom.id, edges: {},
-      });
-    } else {
-      const bottomW = assertPositiveDim(
-        innerW - cc.metalBoxBottomDeductMm, 'lățime fund sertar (METAL_BOX)', input.label,
-      );
-      push({
-        cabinetLabel: input.label, name: 'Fund sertar',
-        lengthMm: nominalMm, widthMm: bottomW, qty: 1,
-        materialId: bottom.id, edges: {},
-      });
-      push({
-        cabinetLabel: input.label, name: 'Spate sertar',
-        lengthMm: bottomW, widthMm: cc.metalBoxBackHeightMm, qty: 1,
-        materialId: carcass.id, edges: {},
-      });
-    }
+    const boxW = assertPositiveDim(
+      innerW - cc.palBoxSlideAllowanceMm, 'lățime cutie sertar (PAL_BOX)', input.label,
+    );
+    const boxH = Math.max(frontH - cc.palBoxHeightDeductMm, cc.palBoxMinHeightMm);
+    const boxInnerW = assertPositiveDim(
+      boxW - 2 * t, 'lățime față/spate cutie sertar (PAL_BOX)', input.label,
+    );
+    push({
+      cabinetLabel: input.label, name: 'Laterală sertar',
+      lengthMm: nominalMm, widthMm: boxH, qty: 2,
+      materialId: carcass.id, edges: { l1: fe },
+    });
+    push({
+      cabinetLabel: input.label, name: 'Față/Spate cutie sertar',
+      lengthMm: boxInnerW, widthMm: boxH, qty: 2,
+      materialId: carcass.id, edges: { l1: fe },
+    });
+    push({
+      cabinetLabel: input.label, name: 'Fund sertar',
+      lengthMm: nominalMm, widthMm: boxW, qty: 1,
+      materialId: bottom.id, edges: {},
+    });
   }
 
   return { parts, warnings };

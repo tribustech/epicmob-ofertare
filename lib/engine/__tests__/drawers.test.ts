@@ -55,21 +55,9 @@ describe('expandDrawerBoxes — PAL_BOX', () => {
   });
 });
 
-describe('expandDrawerBoxes — METAL_BOX', () => {
-  it('doar fund + spate din placă (lateralele sunt metalice)', () => {
-    const { parts } = expandDrawerBoxes(sertareInput('METAL_BOX'), TEST_CATALOGS, cc);
-    expect(parts.find((p) => p.name === 'Fund sertar')).toMatchObject({
-      lengthMm: 500, widthMm: 477, qty: 3, materialId: 'pfl-alb', // 600−36−87 = 477
-    });
-    expect(parts.find((p) => p.name === 'Spate sertar')).toMatchObject({
-      lengthMm: 477, widthMm: 70, qty: 3, materialId: 'pal-alb',
-    });
-    expect(parts.some((p) => p.name === 'Laterală sertar')).toBe(false);
-  });
-
-  it('corp foarte îngust → eroare dimensiune imposibilă pentru fundul sertarului', () => {
-    const input = sertareInput('METAL_BOX');
-    input.widthMm = 120;
-    expect(() => expandDrawerBoxes(input, TEST_CATALOGS, cc)).toThrow(/imposibilă/i);
+describe('expandDrawerBoxes — TANDEMBOX', () => {
+  it('sertar metalic complet preasamblat → nicio piesă la debitare', () => {
+    const { parts } = expandDrawerBoxes(sertareInput('TANDEMBOX'), TEST_CATALOGS, cc);
+    expect(parts).toEqual([]);
   });
 });

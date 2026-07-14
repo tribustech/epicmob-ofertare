@@ -42,7 +42,7 @@ describe('suggestHardware — corp cu sertare', () => {
   it('un set glisiere per sertar, cu nominala corectă', () => {
     const input = bazaInput({
       type: 'BAZA', doors: 0,
-      drawers: { count: 3, system: 'METAL_BOX', bottomMaterialId: 'pfl-alb' },
+      drawers: { count: 3, system: 'TANDEMBOX' },
     });
     const fronts: FrontInfo[] = [
       { kind: 'SERTAR', widthMm: 596, heightMm: 236.67 },

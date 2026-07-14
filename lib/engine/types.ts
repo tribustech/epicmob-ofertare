@@ -51,25 +51,26 @@ export interface ConstructionConstants {
   palBoxSlideAllowanceMm: number;  // spațiu total lateral cutie sertar PAL (2×13)
   palBoxHeightDeductMm: number;    // înălțime cutie = front − această valoare
   palBoxMinHeightMm: number;       // înălțime minimă cutie
-  metalBoxBottomDeductMm: number;  // lățime fund sertar metalic = interior − această valoare
-  metalBoxBackHeightMm: number;    // înălțime spate sertar metalic
   legsPerCabinet: number;          // picioare per corp cu picioare
   shelfSpanWarnMm: number;         // avertizare poliță peste această deschidere
   doorMaxWidthMm: number;          // avertizare ușă peste această lățime
   blindPanelDefaultWidthMm: number; // lățime implicită panou orb la corpurile de colț
+  tandemboxFrontClearanceMm: number; // rezervă: laterala Tandembox ≤ front − această valoare
+  golaFrontDeductMm: number;         // GOLA: scurtarea fronturilor (profilul ocupă din înălțime)
+  frontExtensionDefaultMm: number;   // „fără mâner": prelungirea implicită a frontului
 }
 
 export type CabinetType = 'BAZA' | 'SUSPENDAT' | 'INALT' | 'COLT';
 
 export type PanelMount = 'INCADRAT' | 'APLICAT';
 
-export type DrawerSystem = 'PAL_BOX' | 'METAL_BOX';
+export type DrawerSystem = 'PAL_BOX' | 'TANDEMBOX';
 
 export interface DrawerOptions {
   count: number;
   frontHeightsMm?: number[];       // dacă lipsește: împărțire egală
   system: DrawerSystem;
-  bottomMaterialId: string;        // fund sertar (uzual PFL)
+  bottomMaterialId?: string;       // fund sertar (doar PAL_BOX; TANDEMBOX e complet)
 }
 
 export interface CabinetInput {
