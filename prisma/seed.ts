@@ -46,20 +46,9 @@ async function main() {
     await prisma.cuttingRate.upsert({ where: { id: c.id }, update: c, create: c });
   }
 
-  const laborRates = [
-    { cabinetType: 'BAZA', price: 150 },
-    { cabinetType: 'SUSPENDAT', price: 130 },
-    { cabinetType: 'INALT', price: 200 },
-    { cabinetType: 'SERTARE', price: 220 },
-    { cabinetType: 'COLT', price: 180 },
-  ];
-  for (const l of laborRates) {
-    await prisma.laborRate.upsert({ where: { cabinetType: l.cabinetType }, update: l, create: l });
-  }
-
   const settings = {
     id: 1,
-    markupPct: 30,
+    laborPct: 120,
     sheetYieldFactor: 0.8,
     cutKerfMm: 4,
     cutTrimMm: 10,

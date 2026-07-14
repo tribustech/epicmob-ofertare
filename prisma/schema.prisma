@@ -47,14 +47,9 @@ model CuttingRate {
   pricePerSheet  Float
 }
 
-model LaborRate {
-  cabinetType String @id // BAZA | SUSPENDAT | INALT | SERTARE | COLT
-  price       Float
-}
-
 model AppSettings {
   id               Int     @id @default(1)
-  markupPct        Float
+  laborPct         Float
   sheetYieldFactor Float
   cutKerfMm        Float   @default(4)
   cutTrimMm        Float   @default(10)
@@ -71,7 +66,7 @@ model Project {
   clientName    String?
   clientContact String?
   status        String     @default("CIORNA") // CIORNA | TRIMISA | ACCEPTATA
-  markupPct     Float
+  laborPct      Float
   yieldFactor   Float
   freeLinesJson String     @default("[]")
   snapshotJson  String?
