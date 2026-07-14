@@ -13,7 +13,6 @@ const CATALOGS: ProjectCatalogs = {
     { maxThicknessMm: 10, pricePerSheet: 33 },
     { maxThicknessMm: 32, pricePerSheet: 50 },
   ],
-  laborPerType: { BAZA: 150, SUSPENDAT: 130, INALT: 200, SERTARE: 220, COLT: 180 },
   hardwareDefaults: {
     hingeId: 'blum-cliptop',
     slideIdsByNominal: {},
@@ -25,7 +24,7 @@ const CATALOGS: ProjectCatalogs = {
 
 describe('computeProject — corp bază de referință (calcul de mână)', () => {
   const result = computeProject(
-    { cabinets: [bazaInput()], freeLines: [], markupPct: 30, nesting: { kerfMm: 4, trimMm: 10 } },
+    { cabinets: [bazaInput()], freeLines: [], laborPct: 30, nesting: { kerfMm: 4, trimMm: 10 } },
     CATALOGS,
   );
 
@@ -48,9 +47,10 @@ describe('computeProject — corp bază de referință (calcul de mână)', () =
   });
 
   it('costuri identice cu calculul de mână', () => {
-    expect(result.costs.totalCost).toBeCloseTo(836.16, 1);
-    expect(result.costs.sellPrice).toBeCloseTo(1087.01, 1);
-    expect(result.costs.leiPerMl).toBeCloseTo(1811.69, 0);
+    // bază materiale = 552.03 + 3.13 + 83 + 48 = 686.16 (fără manoperă); vezi costing.test.ts
+    expect(result.costs.totalCost).toBeCloseTo(686.16, 1);
+    expect(result.costs.sellPrice).toBeCloseTo(892.01, 1);
+    expect(result.costs.leiPerMl).toBeCloseTo(1486.69, 0);
   });
 
   it('fără avertismente pe corpul de referință', () => {
@@ -63,7 +63,7 @@ describe('computeProject — feronerie fără default merge în unresolved', () 
     const result = computeProject(
       {
         cabinets: [bazaInput({ type: 'SUSPENDAT', depthMm: 320 })],
-        freeLines: [], markupPct: 30, nesting: { kerfMm: 4, trimMm: 10 },
+        freeLines: [], laborPct: 30, nesting: { kerfMm: 4, trimMm: 10 },
       },
       CATALOGS,
     );

@@ -9,7 +9,6 @@ import type {
 export interface CostCatalogs extends Catalogs {
   hardware: HardwareItem[];
   cuttingRates: CuttingRate[];
-  laborPerType: Record<CabinetType, number>;
 }
 
 export interface CostBreakdown {
@@ -36,7 +35,7 @@ export function computeCosts(args: {
   hardwareLines: HardwareLine[];
   cabinets: CabinetInput[];
   freeLines: FreeLine[];
-  markupPct: number;
+  laborPct: number;
   nesting: NestParams;
   catalogs: CostCatalogs;
 }): CostResult {
@@ -74,12 +73,15 @@ export function computeCosts(args: {
     hardware += line.qty * item.pricePerUnit;
   }
 
-  const labor = args.cabinets.reduce((sum, c) => sum + catalogs.laborPerType[c.type], 0);
+  const materialBase = boards + edging + cuttingService + hardware;
+  // manopera atelierului: procent din tot materialul (inclusiv feronerie); include profitul
+  const labor = materialBase * (args.laborPct / 100);
   const freeLines = args.freeLines.reduce((sum, l) => sum + l.amount, 0);
 
   const breakdown: CostBreakdown = { boards, edging, cuttingService, hardware, labor, freeLines };
-  const totalCost = boards + edging + cuttingService + hardware + labor + freeLines;
-  const sellPrice = totalCost * (1 + args.markupPct / 100);
+  // totalCost = ce plătește atelierul; sellPrice = ce facturează (diferența e manopera)
+  const totalCost = materialBase + freeLines;
+  const sellPrice = materialBase + labor + freeLines;
 
   const baseRunM = args.cabinets
     .filter((c) => BASE_RUN_TYPES.has(c.type))

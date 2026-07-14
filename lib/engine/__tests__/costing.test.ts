@@ -15,13 +15,13 @@ const COST_CATALOGS: CostCatalogs = {
     { maxThicknessMm: 10, pricePerSheet: 33 },
     { maxThicknessMm: 32, pricePerSheet: 50 },
   ],
-  laborPerType: { BAZA: 150, SUSPENDAT: 130, INALT: 200, SERTARE: 220, COLT: 180 },
 };
 
 describe('computeCosts — corp bază de referință', () => {
   // Corp B1: 600×720×560, 1 poliță, 1 ușă MDF vopsit, spate PFL în falț.
   // Calcul de mână (vezi spec): plăci 552.03, cant 3.13, debitare 83,
-  // feronerie 48 (2 balamale×15 + 1 mâner×10 + 4 picioare×2), manoperă 150.
+  // feronerie 48 (2 balamale×15 + 1 mâner×10 + 4 picioare×2).
+  // bază materiale = 552.03 + 3.13 + 83 + 48 = 686.16; manoperă = bază × laborPct%.
   const expanded = expandCabinet(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
 
   const result = computeCosts({
@@ -33,7 +33,7 @@ describe('computeCosts — corp bază de referință', () => {
     ],
     cabinets: [expanded.input],
     freeLines: [],
-    markupPct: 30,
+    laborPct: 30,
     nesting: { kerfMm: 4, trimMm: 10 },
     catalogs: COST_CATALOGS,
   });
@@ -43,21 +43,21 @@ describe('computeCosts — corp bază de referință', () => {
     expect(result.breakdown.edging).toBeCloseTo(3.13, 1);          // 3.132 ml × 1
     expect(result.breakdown.cuttingService).toBeCloseTo(83, 5);    // PAL 50 + PFL 33
     expect(result.breakdown.hardware).toBeCloseTo(48, 5);
-    expect(result.breakdown.labor).toBeCloseTo(150, 5);
+    expect(result.breakdown.labor).toBeCloseTo(205.85, 1);         // 686.16 × 30%
     expect(result.breakdown.freeLines).toBe(0);
   });
 
   it('total, adaos și lei/ml', () => {
-    expect(result.totalCost).toBeCloseTo(836.16, 1);
-    expect(result.sellPrice).toBeCloseTo(1087.01, 1);              // ×1.3
-    expect(result.leiPerMl).toBeCloseTo(1811.69, 0);               // / 0.6 m
+    expect(result.totalCost).toBeCloseTo(686.16, 1);               // bază materiale, fără manoperă
+    expect(result.sellPrice).toBeCloseTo(892.01, 1);                // bază × 1.3
+    expect(result.leiPerMl).toBeCloseTo(1486.69, 0);                // / 0.6 m
   });
 });
 
 describe('computeCosts — cazuri particulare', () => {
   it('linii libere intră în total', () => {
     const r = computeCosts({
-      parts: [], hardwareLines: [], cabinets: [], nesting: { kerfMm: 4, trimMm: 10 }, markupPct: 0,
+      parts: [], hardwareLines: [], cabinets: [], nesting: { kerfMm: 4, trimMm: 10 }, laborPct: 0,
       freeLines: [{ name: 'Blat', amount: 800 }, { name: 'Transport', amount: 200 }],
       catalogs: COST_CATALOGS,
     });
@@ -71,7 +71,7 @@ describe('computeCosts — cazuri particulare', () => {
     expect(() =>
       computeCosts({
         parts: [], hardwareLines: [{ hardwareId: 'nu-exista', qty: 1 }],
-        cabinets: [], freeLines: [], markupPct: 0, nesting: { kerfMm: 4, trimMm: 10 },
+        cabinets: [], freeLines: [], laborPct: 0, nesting: { kerfMm: 4, trimMm: 10 },
         catalogs: COST_CATALOGS,
       }),
     ).toThrow(/feronerie/i);
@@ -93,7 +93,7 @@ describe('computeCosts — cazuri particulare', () => {
       ],
       cabinets: [expanded.input],
       freeLines: [],
-      markupPct: 30,
+      laborPct: 30,
       nesting: { kerfMm: 4, trimMm: 10 },
       catalogs,
     });
@@ -101,5 +101,23 @@ describe('computeCosts — cazuri particulare', () => {
     const sorted = computeCosts(argsFor(COST_CATALOGS));
     const reversed = computeCosts(argsFor(REVERSED_CATALOGS));
     expect(reversed.breakdown.cuttingService).toBeCloseTo(sorted.breakdown.cuttingService, 5);
+  });
+
+  it('manoperă procentuală: labor = bază materiale × %, liniile libere fără procent', () => {
+    const result = computeCosts({
+      parts: [],
+      hardwareLines: [{ hardwareId: 'maner-std', qty: 2 }], // maner-std: 10 lei/buc în catalogul de test
+      cabinets: [],
+      freeLines: [{ name: 'Transport', amount: 100 }],
+      laborPct: 120,
+      nesting: { kerfMm: 4, trimMm: 10 },
+      catalogs: COST_CATALOGS,
+    });
+    // bază materiale = doar feroneria (20 lei), fără piese
+    expect(result.breakdown.hardware).toBeCloseTo(20, 5);
+    expect(result.breakdown.labor).toBeCloseTo(24, 5);        // 20 × 120%
+    expect(result.breakdown.freeLines).toBeCloseTo(100, 5);
+    expect(result.totalCost).toBeCloseTo(120, 5);             // 20 + 100 (fără manoperă)
+    expect(result.sellPrice).toBeCloseTo(144, 5);              // 20 × 2.2 + 100
   });
 });

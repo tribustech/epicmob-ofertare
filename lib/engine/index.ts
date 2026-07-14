@@ -11,7 +11,7 @@ import type {
 export interface ProjectInput {
   cabinets: CabinetInput[];
   freeLines: FreeLine[];
-  markupPct: number;
+  laborPct: number;
   nesting: NestParams;
 }
 
@@ -43,7 +43,7 @@ export function computeProject(
     hardwareLines: lines,
     cabinets: project.cabinets,
     freeLines: project.freeLines,
-    markupPct: project.markupPct,
+    laborPct: project.laborPct,
     nesting: project.nesting,
     catalogs,
   });
