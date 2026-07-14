@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { CabinetIsoSvg } from '@/components/CabinetIsoSvg';
 
 export type FieldOption = { value: string; label: string };
 
@@ -427,6 +428,15 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             )}
           </CardContent>
         </Card>
+
+        {live && !live.expandError && (
+          <Card>
+            <CardHeader><CardTitle>Previzualizare</CardTitle></CardHeader>
+            <CardContent>
+              <CabinetIsoSvg input={live.input} cc={cc} />
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
