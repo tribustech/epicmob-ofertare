@@ -10,10 +10,12 @@ const checkbox = z.preprocess((v) => v === 'on' || v === 'true' || v === true, z
 export const cabinetFormSchema = z
   .object({
     label: z.string().trim().min(1),
-    type: z.enum(['BAZA', 'SUSPENDAT', 'INALT', 'SERTARE', 'COLT']),
+    type: z.enum(['BAZA', 'SUSPENDAT', 'INALT', 'COLT']),
     widthMm: posNum,
     heightMm: posNum,
     depthMm: posNum,
+    frontType: z.enum(['USI', 'SERTARE', 'FARA']),
+    withShelves: checkbox,
     shelves: intNonNeg,
     doors: intNonNeg,
     carcassMaterialId: z.string().min(1),
@@ -29,43 +31,57 @@ export const cabinetFormSchema = z
     drawersBottomMaterialId: optStr,
     drawerFrontHeightsMm: z.preprocess(emptyToUndefined, z.string().optional()),
   })
-  .refine((d) => d.type !== 'SERTARE' || d.drawersCount >= 1, {
+  .refine((d) => d.frontType !== 'USI' || d.doors >= 1, {
+    message: 'Corpul cu uși are nevoie de cel puțin o ușă',
+  })
+  .refine((d) => d.frontType !== 'SERTARE' || d.drawersCount >= 1, {
     message: 'Corpul cu sertare are nevoie de cel puțin un sertar',
   })
-  .refine((d) => d.type !== 'SERTARE' || !!d.drawersBottomMaterialId, {
+  .refine((d) => d.frontType !== 'SERTARE' || !!d.drawersBottomMaterialId, {
     message: 'Alege materialul pentru fundul sertarelor',
   })
+  .refine((d) => d.frontType === 'FARA' || !!d.frontMaterialId, {
+    message: 'Fronturile cer un material de front',
+  })
+  .refine((d) => {
+    if (d.frontType !== 'SERTARE' || !d.drawerFrontHeightsMm) return true;
+    const heights = parseDrawerHeights(d.drawerFrontHeightsMm);
+    return heights.length === d.drawersCount && heights.every((h) => h > 0);
+  }, { message: 'Înălțimile sertarelor nu corespund cu numărul de sertare' })
   .refine((d) => !d.backEnabled || !!d.backMaterialId, {
     message: 'Alege materialul pentru spate',
   });
 
 export type CabinetFormData = z.infer<typeof cabinetFormSchema>;
 
-export function toCabinetInput(d: CabinetFormData): CabinetInput {
-  const heights = d.drawerFrontHeightsMm
-    ?.split(',')
-    .map((s) => Number(s.trim()))
-    .filter((n) => Number.isFinite(n) && n > 0);
+export function parseDrawerHeights(s: string): number[] {
+  return s
+    .split(',')
+    .map((x) => Number(x.trim()))
+    .filter((n) => Number.isFinite(n));
+}
 
+export function toCabinetInput(d: CabinetFormData): CabinetInput {
+  const heights = d.drawerFrontHeightsMm ? parseDrawerHeights(d.drawerFrontHeightsMm) : [];
   return {
     label: d.label,
     type: d.type,
     widthMm: d.widthMm,
     heightMm: d.heightMm,
     depthMm: d.depthMm,
-    shelves: d.type === 'SERTARE' ? 0 : d.shelves,
-    doors: d.type === 'SERTARE' ? 0 : d.doors,
+    shelves: d.frontType === 'SERTARE' ? 0 : (d.frontType === 'USI' && !d.withShelves ? 0 : d.shelves),
+    doors: d.frontType === 'USI' ? d.doors : 0,
     drawers:
-      d.type === 'SERTARE'
+      d.frontType === 'SERTARE'
         ? {
             count: d.drawersCount,
             system: d.drawersSystem,
             bottomMaterialId: d.drawersBottomMaterialId!,
-            frontHeightsMm: heights && heights.length > 0 ? heights : undefined,
+            frontHeightsMm: heights.length > 0 ? heights : undefined,
           }
         : undefined,
     carcassMaterialId: d.carcassMaterialId,
-    frontMaterialId: d.frontMaterialId ?? null,
+    frontMaterialId: d.frontType === 'FARA' ? null : (d.frontMaterialId ?? null),
     back: { enabled: d.backEnabled, materialId: d.backMaterialId, mount: d.backMount },
     edgeBands: {
       carcassFrontEdgeId: d.carcassFrontEdgeId,
