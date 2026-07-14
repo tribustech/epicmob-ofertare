@@ -7,7 +7,7 @@ import type { CabinetInput } from '../types';
 function sertareInput(overrides: Partial<CabinetInput> = {}): CabinetInput {
   return bazaInput({
     label: 'S1', type: 'BAZA', doors: 0,
-    drawers: { count: 3, system: 'METAL_BOX', bottomMaterialId: 'pfl-alb' },
+    drawers: { count: 3, system: 'TANDEMBOX' },
     frontMaterialId: 'pal-alb',
     edgeBands: { carcassFrontEdgeId: 'abs-04', frontPerimeterId: 'abs-1' },
     ...overrides,

@@ -38,6 +38,7 @@ export function computeCosts(args: {
   laborPct: number;
   nesting: NestParams;
   catalogs: CostCatalogs;
+  extraHardware?: FreeLine[];
 }): CostResult {
   const { catalogs } = args;
   const needs = computeMaterialNeeds(args.parts, catalogs, args.nesting);
@@ -72,6 +73,9 @@ export function computeCosts(args: {
     if (!item) throw new Error(`Feronerie inexistentă în catalog: ${line.hardwareId}`);
     hardware += line.qty * item.pricePerUnit;
   }
+
+  // costuri de feronerie calculate în amonte (profil GOLA per ml, prelucrare profil J per front)
+  for (const line of args.extraHardware ?? []) hardware += line.amount;
 
   const materialBase = boards + edging + cuttingService + hardware;
   // manopera atelierului: procent din tot materialul (inclusiv feronerie); include profitul

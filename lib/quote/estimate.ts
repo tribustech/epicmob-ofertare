@@ -3,6 +3,7 @@ import {
 } from '@/lib/catalog/convert';
 import { expandCabinet, resolveSuggestions } from '@/lib/engine';
 import type { HardwareLine } from '@/lib/engine';
+import { handleExtraCost, withResolvedHandle, type ProjectHandle } from './handle';
 import { pickLegId } from './legs';
 import type { QuoteCabinet, SnapshotData } from './compute';
 
@@ -17,7 +18,7 @@ export interface CabinetEstimate {
 export function estimateCabinetCost(
   cabinet: QuoteCabinet,
   snap: SnapshotData,
-  opts: { laborPct: number; yieldFactor: number; legHeightMm: number | null },
+  opts: { laborPct: number; yieldFactor: number; legHeightMm: number | null; projectHandle: ProjectHandle },
 ): CabinetEstimate {
   try {
     const catalogs = toCostCatalogs(snap.materials, snap.edgeBands, snap.hardware, snap.cuttingRates);
@@ -26,12 +27,13 @@ export function estimateCabinetCost(
       defaults.legId = pickLegId(snap.hardware, opts.legHeightMm, defaults.legId);
     }
     const cc = parseConstruction(snap.settings.constructionJson);
-    const expanded = expandCabinet(cabinet.input, catalogs, cc);
+    const input = withResolvedHandle(cabinet.input, opts.projectHandle);
+    const expanded = expandCabinet(input, catalogs, cc);
 
     const parts = [...expanded.parts];
     for (const p of cabinet.extraParts) {
       parts.push({
-        cabinetLabel: cabinet.input.label, name: p.name,
+        cabinetLabel: input.label, name: p.name,
         lengthMm: p.lengthMm, widthMm: p.widthMm, qty: p.qty,
         materialId: p.materialId, edges: {},
       });
@@ -69,7 +71,8 @@ export function estimateCabinetCost(
       }
     }
 
-    const lines: HardwareLine[] = cabinet.hardwareOverrides ?? resolveSuggestions(expanded.hardware, defaults).lines;
+    const lines: HardwareLine[] = cabinet.hardwareOverrides
+      ?? resolveSuggestions(expanded.hardware, defaults, catalogs.hardware).lines;
     let hardware = 0;
     for (const line of lines) {
       const item = catalogs.hardware.find((h) => h.id === line.hardwareId);
@@ -77,7 +80,12 @@ export function estimateCabinetCost(
       hardware += line.qty * item.pricePerUnit;
     }
 
-    const cost = boards + cutting + edging + hardware;
+    const handlePrices = {
+      profilJPerFront: snap.settings.profilJPerFront ?? 0,
+      golaPricePerMl: snap.settings.golaPricePerMl ?? 0,
+    };
+    const extras = handleExtraCost(input, handlePrices).reduce((s, l) => s + l.amount, 0);
+    const cost = boards + cutting + edging + hardware + extras;
     return { cost, sell: cost * (1 + opts.laborPct / 100), error: null };
   } catch (e) {
     return { cost: 0, sell: 0, error: e instanceof Error ? e.message : 'Eroare de calcul' };

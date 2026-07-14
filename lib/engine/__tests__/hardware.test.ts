@@ -42,7 +42,7 @@ describe('suggestHardware — corp cu sertare', () => {
   it('un set glisiere per sertar, cu nominala corectă', () => {
     const input = bazaInput({
       type: 'BAZA', doors: 0,
-      drawers: { count: 3, system: 'METAL_BOX', bottomMaterialId: 'pfl-alb' },
+      drawers: { count: 3, system: 'TANDEMBOX' },
     });
     const fronts: FrontInfo[] = [
       { kind: 'SERTAR', widthMm: 596, heightMm: 236.67 },
@@ -67,6 +67,7 @@ describe('resolveSuggestions', () => {
         { category: 'MANER', name: 'Mâner', qty: 4 },
       ],
       DEFAULTS,
+      [],
     );
     expect(lines).toContainEqual({ hardwareId: 'blum-cliptop', qty: 4 });
     expect(lines).toContainEqual({ hardwareId: 'tbx-500', qty: 3 });
@@ -78,6 +79,7 @@ describe('resolveSuggestions', () => {
     const { lines } = resolveSuggestions(
       [{ category: 'SERTAR', name: 'Glisiere', qty: 1, nominalLengthMm: 400 }],
       DEFAULTS,
+      [],
     );
     expect(lines).toContainEqual({ hardwareId: 'tbx-450', qty: 1 });
   });
@@ -86,6 +88,7 @@ describe('resolveSuggestions', () => {
     const { lines, unresolved } = resolveSuggestions(
       [{ category: 'MANER', name: 'Mâner', qty: 2 }],
       { ...DEFAULTS, handleId: null },
+      [],
     );
     expect(lines).toEqual([]);
     expect(unresolved).toHaveLength(1);

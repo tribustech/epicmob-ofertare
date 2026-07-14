@@ -15,12 +15,14 @@ export interface EdgeBandRow { id: string; name: string; thicknessMm: number; pr
 export interface HardwareRow {
   id: string; name: string; category: string; pricePerUnit: number;
   nominalLengthMm: number | null; loadClassKg: number | null;
+  boxHeightMm: number | null;
 }
 export interface CuttingRateRow { maxThicknessMm: number; pricePerSheet: number }
 export interface SettingsRow {
   laborPct?: number | null; sheetYieldFactor: number; constructionJson: string;
   // opționale: snapshot-urile înghețate dinainte de nesting nu le au
   cutKerfMm?: number | null; cutTrimMm?: number | null;
+  profilJPerFront?: number | null; golaPricePerMl?: number | null;
   defaultHingeId: string | null; defaultHandleId: string | null;
   defaultLegId: string | null; defaultRailId: string | null;
 }
@@ -60,6 +62,7 @@ function toHardwareItem(row: HardwareRow): HardwareItem {
     pricePerUnit: row.pricePerUnit,
     nominalLengthMm: row.nominalLengthMm ?? undefined,
     loadClassKg: row.loadClassKg ?? undefined,
+    boxHeightMm: row.boxHeightMm ?? undefined,
   };
 }
 
@@ -83,7 +86,8 @@ export function buildHardwareDefaults(hardware: HardwareRow[], settings: Setting
   const slideIdsByNominal: Record<number, string> = {};
   const cheapest: Record<number, number> = {};
   for (const h of hardware) {
-    if (h.category !== 'SERTAR' || h.nominalLengthMm == null) continue;
+    // seturile Tandembox se rezolvă pe boxHeightMm, nu pe nominala implicită
+    if (h.category !== 'SERTAR' || h.nominalLengthMm == null || h.boxHeightMm != null) continue;
     const nominal = h.nominalLengthMm;
     if (slideIdsByNominal[nominal] === undefined || h.pricePerUnit < cheapest[nominal]) {
       slideIdsByNominal[nominal] = h.id;

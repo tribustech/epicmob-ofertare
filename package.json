@@ -8,7 +8,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:migrate": "prisma migrate dev",
-    "db:migrate-sertare": "tsx scripts/migrate-sertare.ts",
+    "db:migrate-inputs": "tsx scripts/migrate-inputs.ts",
     "db:seed": "prisma db seed",
     "db:seed-decoruri": "tsx scripts/seed-decoruri.ts",
     "db:studio": "prisma studio"

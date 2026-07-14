@@ -49,9 +49,9 @@ describe('buildHardwareDefaults', () => {
     defaultHingeId: 'h1', defaultHandleId: null, defaultLegId: 'l1', defaultRailId: null,
   };
   const slides: HardwareRow[] = [
-    { id: 's450-scump', name: 'A', category: 'SERTAR', pricePerUnit: 180, nominalLengthMm: 450, loadClassKg: 30 },
-    { id: 's450-ieftin', name: 'B', category: 'SERTAR', pricePerUnit: 35, nominalLengthMm: 450, loadClassKg: 25 },
-    { id: 's500', name: 'C', category: 'SERTAR', pricePerUnit: 190, nominalLengthMm: 500, loadClassKg: 30 },
+    { id: 's450-scump', name: 'A', category: 'SERTAR', pricePerUnit: 180, nominalLengthMm: 450, loadClassKg: 30, boxHeightMm: null },
+    { id: 's450-ieftin', name: 'B', category: 'SERTAR', pricePerUnit: 35, nominalLengthMm: 450, loadClassKg: 25, boxHeightMm: null },
+    { id: 's500', name: 'C', category: 'SERTAR', pricePerUnit: 190, nominalLengthMm: 500, loadClassKg: 30, boxHeightMm: null },
   ];
   it('slideIdsByNominal din itemele SERTAR; duplicat → cel mai ieftin', () => {
     const d = buildHardwareDefaults(slides, settings);

@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import type { Assembly } from '@prisma/client';
 import { legHeightByCabinet, loadProject, toQuoteInput, tryComputeQuote, type LoadedCabinet } from '@/lib/quote/load';
 import { getQuoteBasis } from '@/lib/quote/basis';
+import { HANDLE_TYPE_OPTIONS } from '@/lib/quote/handle';
+import { prisma } from '@/lib/db';
 import {
   addAssembly, addCabinet, addFreeLine, deleteAssembly, deleteCabinet, deleteProject,
   duplicateCabinet, refreshFrozenPrices, removeFreeLine, updateAssembly, updateProjectSettings,
@@ -42,6 +44,10 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
   const { project, assemblies, cabinets } = data;
   const legHeightMap = legHeightByCabinet(assemblies, cabinets);
   const freeLines = JSON.parse(project.freeLinesJson) as { name: string; amount: number }[];
+  const handleProducts = await prisma.hardwareItem.findMany({
+    where: { active: true, category: { in: ['MANER', 'ACCESORIU'] } },
+    orderBy: { name: 'asc' },
+  });
 
   const basis = await getQuoteBasis(project);
   const computed = basis.kind !== 'MISSING'
@@ -155,8 +161,20 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                 <NumberInput name="laborPct" label="Manoperă (%)" defaultValue={project.laborPct} />
                 <NumberInput name="yieldFactor" label="Factor utilizare foaie (doar estimarea per corp)" defaultValue={project.yieldFactor} step="0.01" />
                 <Select name="status" label="Stare" options={STATUS_OPTIONS} defaultValue={project.status} />
+                <Select
+                  name="handleType" label="Tip mâner (proiect)"
+                  options={HANDLE_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+                  defaultValue={project.handleType}
+                />
+                <Select
+                  name="handleItemId" label="Produs mâner implicit"
+                  options={handleProducts.map((h) => ({ value: h.id, label: `${h.name} (${h.pricePerUnit} lei)` }))}
+                  defaultValue={project.handleItemId}
+                  allowEmpty
+                />
                 <div><SubmitButton>Salvează</SubmitButton></div>
               </ActionForm>
+              <p className="mt-2 text-xs text-muted-foreground">Corpurile fără excepție de mâner moștenesc tipul proiectului.</p>
             </CardContent>
           </Card>
 

@@ -14,9 +14,9 @@ export function makeSnapshot(overrides: Partial<SnapshotData> = {}): SnapshotDat
       { id: 'abs-1', name: 'ABS 1mm', thicknessMm: 1, pricePerMl: 2, active: true },
     ],
     hardware: [
-      { id: 'blum-cliptop', name: 'Balama Blum', category: 'BALAMA', pricePerUnit: 15, nominalLengthMm: null, loadClassKg: null, active: true },
-      { id: 'maner-std', name: 'Mâner standard', category: 'MANER', pricePerUnit: 10, nominalLengthMm: null, loadClassKg: null, active: true },
-      { id: 'picior-std', name: 'Picior reglabil', category: 'PICIOR', pricePerUnit: 2, nominalLengthMm: null, loadClassKg: null, active: true },
+      { id: 'blum-cliptop', name: 'Balama Blum', category: 'BALAMA', pricePerUnit: 15, nominalLengthMm: null, loadClassKg: null, boxHeightMm: null, active: true },
+      { id: 'maner-std', name: 'Mâner standard', category: 'MANER', pricePerUnit: 10, nominalLengthMm: null, loadClassKg: null, boxHeightMm: null, active: true },
+      { id: 'picior-std', name: 'Picior reglabil', category: 'PICIOR', pricePerUnit: 2, nominalLengthMm: null, loadClassKg: null, boxHeightMm: null, active: true },
     ],
     // deliberat nesortate — computeCosts le sortează
     cuttingRates: [

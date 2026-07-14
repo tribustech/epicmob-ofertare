@@ -58,7 +58,7 @@ describe('expandCabinet', () => {
   it('uși + sertare simultan → eroare', () => {
     const input = bazaInput({
       doors: 1,
-      drawers: { count: 2, system: 'METAL_BOX', bottomMaterialId: 'pfl-alb' },
+      drawers: { count: 2, system: 'TANDEMBOX' },
       shelves: 0,
     });
     expect(() => expandCabinet(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION))
@@ -68,7 +68,7 @@ describe('expandCabinet', () => {
   it('sertare + polițe → eroare', () => {
     const input = bazaInput({
       doors: 0, shelves: 1,
-      drawers: { count: 2, system: 'METAL_BOX', bottomMaterialId: 'pfl-alb' },
+      drawers: { count: 2, system: 'TANDEMBOX' },
     });
     expect(() => expandCabinet(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION))
       .toThrow(/polițe/);
@@ -77,7 +77,7 @@ describe('expandCabinet', () => {
   it('drawers cu count 0 → eroare', () => {
     const input = bazaInput({
       doors: 0, shelves: 0,
-      drawers: { count: 0, system: 'METAL_BOX', bottomMaterialId: 'pfl-alb' },
+      drawers: { count: 0, system: 'TANDEMBOX' },
     });
     expect(() => expandCabinet(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION))
       .toThrow(/cel puțin un sertar/);
@@ -86,7 +86,7 @@ describe('expandCabinet', () => {
   it('sertare pe corp SUSPENDAT → merge (sertarele nu mai sunt un tip)', () => {
     const input = bazaInput({
       type: 'SUSPENDAT', doors: 0, shelves: 0,
-      drawers: { count: 2, system: 'METAL_BOX', bottomMaterialId: 'pfl-alb' },
+      drawers: { count: 2, system: 'TANDEMBOX' },
     });
     const result = expandCabinet(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
     expect(result.parts.filter((p) => p.name === 'Front sertar').length).toBeGreaterThan(0);

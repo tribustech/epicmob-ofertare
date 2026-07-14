@@ -18,15 +18,16 @@ const CATEGORY_OPTIONS = [
 
 function HardwareFields({ h }: { h?: {
   name: string; category: string; pricePerUnit: number;
-  nominalLengthMm: number | null; loadClassKg: number | null;
+  nominalLengthMm: number | null; loadClassKg: number | null; boxHeightMm: number | null;
 } }) {
   return (
-    <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
+    <div className="grid grid-cols-2 gap-2 md:grid-cols-7">
       <div className="col-span-2"><TextInput name="name" label="Denumire" defaultValue={h?.name} /></div>
       <Select name="category" label="Categorie" options={CATEGORY_OPTIONS} defaultValue={h?.category ?? 'BALAMA'} />
       <NumberInput name="pricePerUnit" label="Lei/buc (set)" defaultValue={h?.pricePerUnit} />
       <NumberInput name="nominalLengthMm" label="Nominală (mm)" defaultValue={h?.nominalLengthMm} required={false} />
       <NumberInput name="loadClassKg" label="Clasă (kg)" defaultValue={h?.loadClassKg} required={false} />
+      <NumberInput name="boxHeightMm" label="Laterală box (mm)" defaultValue={h?.boxHeightMm} required={false} />
     </div>
   );
 }
@@ -41,7 +42,7 @@ export default async function FeroneriePage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Feronerie</h1>
         <p className="text-sm text-muted-foreground">
-          La sertare/glisiere completează lungimea nominală — aplicația alege automat setul potrivit după adâncimea corpului.
+          La sertare/glisiere completează lungimea nominală — aplicația alege automat setul după adâncimea corpului. La seturile Tandembox completează și înălțimea lateralei (83/115/192/224).
         </p>
       </div>
       <div className="space-y-3">

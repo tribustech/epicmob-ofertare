@@ -11,10 +11,11 @@ export const DEFAULT_CONSTRUCTION: ConstructionConstants = {
   palBoxSlideAllowanceMm: 26,
   palBoxHeightDeductMm: 60,
   palBoxMinHeightMm: 80,
-  metalBoxBottomDeductMm: 87,
-  metalBoxBackHeightMm: 70,
   legsPerCabinet: 4,
   shelfSpanWarnMm: 900,
   doorMaxWidthMm: 650,
   blindPanelDefaultWidthMm: 100,
+  tandemboxFrontClearanceMm: 30,
+  golaFrontDeductMm: 35,
+  frontExtensionDefaultMm: 30,
 };

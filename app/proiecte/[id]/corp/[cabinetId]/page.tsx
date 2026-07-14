@@ -2,11 +2,16 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { buildHardwareDefaults, parseConstruction, toCostCatalogs } from '@/lib/catalog/convert';
-import { expandCabinet, resolveSuggestions, type CabinetInput, type ExpandedCabinet, type HardwareLine } from '@/lib/engine';
+import {
+  expandCabinet, resolveSuggestions,
+  type CabinetInput, type ExpandedCabinet, type HandleType, type HardwareCategory, type HardwareItem, type HardwareLine,
+} from '@/lib/engine';
 import { addExtraPart, removeExtraPart, resetCabinetHardware, saveCabinetHardware, updateCabinetData } from '@/lib/quote/actions';
 import { buildSnapshot } from '@/lib/quote/snapshot';
 import { pickLegId } from '@/lib/quote/legs';
+import { normalizeCabinetInput } from '@/lib/quote/normalize-input';
 import type { ExtraPart } from '@/lib/quote/cabinet-form';
+import { HANDLE_TYPE_OPTIONS, withResolvedHandle } from '@/lib/quote/handle';
 import { CabinetEditorForm, type FieldOption } from '@/components/CabinetEditorForm';
 import { ActionForm } from '@/components/ActionForm';
 import { DeleteButton } from '@/components/DeleteButton';
@@ -71,9 +76,18 @@ function cabinetInputToFormValues(input: CabinetInput): Record<string, string> {
     frontPerimeterId: input.edgeBands.frontPerimeterId ?? '',
     blindPanelWidthMm: input.blindPanelWidthMm != null ? String(input.blindPanelWidthMm) : '',
     drawersCount: String(input.drawers?.count ?? 0),
-    drawersSystem: input.drawers?.system ?? 'METAL_BOX',
+    drawersSystem: input.drawers?.system ?? 'TANDEMBOX',
     drawersBottomMaterialId: input.drawers?.bottomMaterialId ?? '',
     drawerFrontHeightsMm: input.drawers?.frontHeightsMm?.join(', ') ?? '',
+    mountTop: input.mount?.top ?? 'INCADRAT',
+    mountBottom: input.mount?.bottom ?? 'INCADRAT',
+    hingeId: input.hardwareSel?.hingeId ?? '',
+    slideId: input.hardwareSel?.slideId ?? '',
+    tandemboxHeightMm: input.hardwareSel?.tandemboxHeightMm != null ? String(input.hardwareSel.tandemboxHeightMm) : '',
+    handleMode: input.handle ? 'CUSTOM' : 'PROIECT',
+    handleType: input.handle?.type ?? 'APLICAT',
+    handleItemId: input.handle?.itemId ?? '',
+    frontExtensionMm: input.handle?.frontExtensionMm != null ? String(input.handle.frontExtensionMm) : '',
   };
 }
 
@@ -81,7 +95,7 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
   const { id, cabinetId } = await params;
   const cab = await prisma.cabinet.findUnique({ where: { id: cabinetId } });
   if (!cab || cab.projectId !== id) notFound();
-  const input = JSON.parse(cab.inputJson) as CabinetInput;
+  const input = normalizeCabinetInput(JSON.parse(cab.inputJson));
 
   const [project, assembly, materials, edgeBands, settings] = await Promise.all([
     prisma.project.findUniqueOrThrow({ where: { id } }),
@@ -102,6 +116,15 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
   const overrides = cab.hardwareJson ? (JSON.parse(cab.hardwareJson) as HardwareLine[]) : null;
   const extraParts = JSON.parse(cab.extraPartsJson) as ExtraPart[];
 
+  const hinges = hardwareItems.filter((h) => h.active && h.category === 'BALAMA');
+  const slides = hardwareItems.filter((h) => h.active && h.category === 'SERTAR' && h.boxHeightMm == null && h.nominalLengthMm != null);
+  const tandemboxHeights = [...new Set(
+    hardwareItems.filter((h) => h.active && h.category === 'SERTAR' && h.boxHeightMm != null).map((h) => h.boxHeightMm as number),
+  )].sort((a, b) => a - b);
+  const handleItems = hardwareItems.filter((h) => h.active && h.category === 'MANER');
+  const pushItems = hardwareItems.filter((h) => h.active && h.category === 'ACCESORIU');
+  const defaultHinge = settings?.defaultHingeId ? hardwareItems.find((h) => h.id === settings.defaultHingeId) : null;
+
   const snapshot = await buildSnapshot();
 
   let expanded: ExpandedCabinet | null = null;
@@ -114,7 +137,8 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
       [],
     );
     const cc = parseConstruction(settings?.constructionJson ?? '{}');
-    expanded = expandCabinet(input, catalogs, cc);
+    const expandInput = withResolvedHandle(input, { type: project.handleType as HandleType, itemId: project.handleItemId });
+    expanded = expandCabinet(expandInput, catalogs, cc);
   } catch (e) {
     expandError = e instanceof Error ? e.message : 'Eroare la generarea pieselor';
   }
@@ -126,7 +150,15 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
     if (legHeightMm != null) {
       defaults.legId = pickLegId(hardwareItems, legHeightMm, defaults.legId);
     }
-    const resolved = resolveSuggestions(expanded.hardware, defaults);
+    const hardwareItemsLike: HardwareItem[] = hardwareItems.map((h) => ({
+      id: h.id,
+      name: h.name,
+      category: h.category as HardwareCategory,
+      pricePerUnit: h.pricePerUnit,
+      nominalLengthMm: h.nominalLengthMm ?? undefined,
+      boxHeightMm: h.boxHeightMm ?? undefined,
+    }));
+    const resolved = resolveSuggestions(expanded.hardware, defaults, hardwareItemsLike);
     suggestedLines = resolved.lines;
     unresolvedSuggestions = resolved.unresolved;
   }
@@ -170,6 +202,18 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
         }}
         hardwareOverrides={overrides}
         extraParts={extraParts}
+        projectHandle={{
+          type: project.handleType, itemId: project.handleItemId,
+          label: HANDLE_TYPE_OPTIONS.find((o) => o.value === project.handleType)?.label ?? project.handleType,
+        }}
+        hardwareSelOptions={{
+          hinges: hinges.map((h) => ({ value: h.id, label: hardwareLabel(h) })),
+          slides: slides.map((h) => ({ value: h.id, label: hardwareLabel(h) })),
+          tandemboxHeights,
+          handleItems: handleItems.map((h) => ({ value: h.id, label: hardwareLabel(h) })),
+          pushItems: pushItems.map((h) => ({ value: h.id, label: hardwareLabel(h) })),
+          defaultHingeName: defaultHinge?.name ?? null,
+        }}
         save={updateCabinetData.bind(null, cabinetId)}
       />
 
