@@ -4,14 +4,17 @@ import { cabinetFormSchema, toCabinetInput } from '../cabinet-form';
 const base = {
   label: 'C1', type: 'BAZA',
   widthMm: '600', heightMm: '720', depthMm: '560',
+  mountTop: 'INCADRAT', mountBottom: 'INCADRAT',
   shelves: '1', doors: '1',
   frontType: 'USI', withShelves: 'true',
   carcassMaterialId: 'pal', frontMaterialId: 'pal',
   backEnabled: 'true', backMaterialId: 'pfl', backMount: 'FALT',
   carcassFrontEdgeId: 'abs04', frontPerimeterId: '',
   blindPanelWidthMm: '',
-  drawersCount: '0', drawersSystem: 'METAL_BOX',
+  drawersCount: '0', drawersSystem: 'TANDEMBOX',
   drawersBottomMaterialId: '', drawerFrontHeightsMm: '',
+  hingeId: '', slideId: '', tandemboxHeightMm: '',
+  handleMode: 'PROIECT', handleType: 'APLICAT', handleItemId: '', frontExtensionMm: '',
 };
 
 describe('cabinetFormSchema + toCabinetInput', () => {
@@ -36,7 +39,7 @@ describe('cabinetFormSchema + toCabinetInput', () => {
     expect(input.doors).toBe(0);
     expect(input.shelves).toBe(0);
     expect(input.drawers).toEqual({
-      count: 3, system: 'METAL_BOX', bottomMaterialId: 'pfl',
+      count: 3, system: 'TANDEMBOX', bottomMaterialId: undefined,
       frontHeightsMm: [200, 258, 258],
     });
   });
@@ -48,9 +51,18 @@ describe('cabinetFormSchema + toCabinetInput', () => {
     expect(r.success).toBe(false);
   });
 
-  it('sertare fără fund → eroare de validare', () => {
-    const r = cabinetFormSchema.safeParse({ ...base, frontType: 'SERTARE', drawersCount: '2', drawersBottomMaterialId: '' });
+  it('sertare PAL_BOX fără fund → eroare de validare', () => {
+    const r = cabinetFormSchema.safeParse({
+      ...base, frontType: 'SERTARE', drawersSystem: 'PAL_BOX', drawersCount: '2', drawersBottomMaterialId: '',
+    });
     expect(r.success).toBe(false);
+  });
+
+  it('sertare TANDEMBOX fără fund → valid (cutia e completă, nu se debitează fund)', () => {
+    const r = cabinetFormSchema.safeParse({
+      ...base, frontType: 'SERTARE', drawersSystem: 'TANDEMBOX', drawersCount: '2', drawersBottomMaterialId: '',
+    });
+    expect(r.success).toBe(true);
   });
 
   it('sertare cu număr de înălțimi diferit de numărul de sertare → eroare', () => {

@@ -14,6 +14,8 @@ export const cabinetFormSchema = z
     widthMm: posNum,
     heightMm: posNum,
     depthMm: posNum,
+    mountTop: z.enum(['INCADRAT', 'APLICAT']).default('INCADRAT'),
+    mountBottom: z.enum(['INCADRAT', 'APLICAT']).default('INCADRAT'),
     frontType: z.enum(['USI', 'SERTARE', 'FARA']),
     withShelves: checkbox,
     shelves: intNonNeg,
@@ -27,9 +29,16 @@ export const cabinetFormSchema = z
     frontPerimeterId: optStr,
     blindPanelWidthMm: z.preprocess(emptyToUndefined, posNum.optional()),
     drawersCount: intNonNeg.default(0),
-    drawersSystem: z.enum(['PAL_BOX', 'METAL_BOX']).default('METAL_BOX'),
+    drawersSystem: z.enum(['PAL_BOX', 'TANDEMBOX']).default('TANDEMBOX'),
     drawersBottomMaterialId: optStr,
     drawerFrontHeightsMm: z.preprocess(emptyToUndefined, z.string().optional()),
+    hingeId: optStr,
+    slideId: optStr,
+    tandemboxHeightMm: z.preprocess(emptyToUndefined, posNum.optional()),
+    handleMode: z.enum(['PROIECT', 'CUSTOM']).default('PROIECT'),
+    handleType: z.enum(['APLICAT', 'BUTON', 'INGROPAT', 'PROFIL_J', 'GOLA', 'PUSH', 'FARA']).default('APLICAT'),
+    handleItemId: optStr,
+    frontExtensionMm: z.preprocess(emptyToUndefined, posNum.optional()),
   })
   .refine((d) => d.frontType !== 'USI' || d.doors >= 1, {
     message: 'Corpul cu uși are nevoie de cel puțin o ușă',
@@ -37,8 +46,8 @@ export const cabinetFormSchema = z
   .refine((d) => d.frontType !== 'SERTARE' || d.drawersCount >= 1, {
     message: 'Corpul cu sertare are nevoie de cel puțin un sertar',
   })
-  .refine((d) => d.frontType !== 'SERTARE' || !!d.drawersBottomMaterialId, {
-    message: 'Alege materialul pentru fundul sertarelor',
+  .refine((d) => d.frontType !== 'SERTARE' || d.drawersSystem !== 'PAL_BOX' || !!d.drawersBottomMaterialId, {
+    message: 'Alege materialul pentru fundul sertarelor (cutie PAL)',
   })
   .refine((d) => d.frontType === 'FARA' || !!d.frontMaterialId, {
     message: 'Fronturile cer un material de front',
@@ -69,6 +78,7 @@ export function toCabinetInput(d: CabinetFormData): CabinetInput {
     widthMm: d.widthMm,
     heightMm: d.heightMm,
     depthMm: d.depthMm,
+    mount: { top: d.mountTop, bottom: d.mountBottom },
     shelves: d.frontType === 'SERTARE' ? 0 : (d.frontType === 'USI' && !d.withShelves ? 0 : d.shelves),
     doors: d.frontType === 'USI' ? d.doors : 0,
     drawers:
@@ -76,7 +86,7 @@ export function toCabinetInput(d: CabinetFormData): CabinetInput {
         ? {
             count: d.drawersCount,
             system: d.drawersSystem,
-            bottomMaterialId: d.drawersBottomMaterialId!,
+            bottomMaterialId: d.drawersSystem === 'PAL_BOX' ? d.drawersBottomMaterialId : undefined,
             frontHeightsMm: heights.length > 0 ? heights : undefined,
           }
         : undefined,
@@ -88,6 +98,21 @@ export function toCabinetInput(d: CabinetFormData): CabinetInput {
       frontPerimeterId: d.frontPerimeterId ?? null,
     },
     blindPanelWidthMm: d.type === 'COLT' ? d.blindPanelWidthMm : undefined,
+    hardwareSel: (() => {
+      const sel = {
+        hingeId: d.frontType === 'USI' ? d.hingeId : undefined,
+        slideId: d.frontType === 'SERTARE' && d.drawersSystem === 'PAL_BOX' ? d.slideId : undefined,
+        tandemboxHeightMm: d.frontType === 'SERTARE' && d.drawersSystem === 'TANDEMBOX' ? d.tandemboxHeightMm : undefined,
+      };
+      return sel.hingeId || sel.slideId || sel.tandemboxHeightMm !== undefined ? sel : undefined;
+    })(),
+    handle: d.handleMode === 'CUSTOM'
+      ? {
+          type: d.handleType,
+          itemId: d.handleItemId,
+          frontExtensionMm: d.handleType === 'FARA' ? d.frontExtensionMm : undefined,
+        }
+      : undefined,
   };
 }
 
