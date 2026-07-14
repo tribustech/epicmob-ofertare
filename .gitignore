@@ -7,3 +7,6 @@ next-env.d.ts
 .DS_Store
 dev.db
 dev.db-journal
+
+# git worktrees (izolare feature)
+.worktrees/
