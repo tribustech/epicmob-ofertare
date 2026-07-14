@@ -22,6 +22,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CabinetIsoSvg } from '@/components/CabinetIsoSvg';
+import { MaterialPicker } from '@/components/MaterialPicker';
+import { materialHasNoPrice } from '@/lib/quote/material-price';
 
 export type FieldOption = { value: string; label: string };
 
@@ -57,12 +59,6 @@ export interface CabinetEditorFormProps {
   laborPct: number;
   yieldFactor: number;
   legHeightMm: number | null;
-  materialOptions: {
-    carcass: FieldOption[];
-    front: FieldOption[];
-    back: FieldOption[];
-    drawersBottom: FieldOption[];
-  };
   bandOptions: {
     carcassFront: FieldOption[];
     frontPerimeter: FieldOption[];
@@ -75,7 +71,7 @@ export interface CabinetEditorFormProps {
 export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const {
     initial, snapshot, laborPct, yieldFactor, legHeightMm,
-    materialOptions, bandOptions, hardwareOverrides, extraParts, save,
+    bandOptions, hardwareOverrides, extraParts, save,
   } = props;
   const router = useRouter();
   const [values, setValues] = useState<Record<string, string>>(initial);
@@ -167,6 +163,21 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const materialName = (mid: string) => snapshot.materials.find((m) => m.id === mid)?.name ?? mid;
   const bandName = (bid?: string) => (bid ? (snapshot.edgeBands.find((e) => e.id === bid)?.name ?? bid) : '');
 
+  const pickerMaterials = useMemo(() => snapshot.materials.filter((m) => m.category !== 'BLAT'), [snapshot]);
+
+  const noPriceMaterials = useMemo(() => {
+    const ids = [values.carcassMaterialId, values.frontMaterialId, values.backMaterialId, values.drawersBottomMaterialId];
+    const seen = new Set<string>();
+    const names: string[] = [];
+    for (const id of ids) {
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      const m = snapshot.materials.find((x) => x.id === id);
+      if (m && materialHasNoPrice(m)) names.push(m.name);
+    }
+    return names;
+  }, [values.carcassMaterialId, values.frontMaterialId, values.backMaterialId, values.drawersBottomMaterialId, snapshot]);
+
   function handleSave() {
     startTransition(async () => {
       const result = await save(values);
@@ -215,11 +226,18 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
 
         <Card>
           <CardHeader><CardTitle>Materiale și canturi</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <SelectField label="Material carcasă" value={values.carcassMaterialId} onChange={(v) => set('carcassMaterialId', v)} options={materialOptions.carcass} />
-            <SelectField label="Material fronturi" value={values.frontMaterialId} onChange={(v) => set('frontMaterialId', v)} options={materialOptions.front} allowEmpty />
-            <SelectField label="Cant carcasă" value={values.carcassFrontEdgeId} onChange={(v) => set('carcassFrontEdgeId', v)} options={bandOptions.carcassFront} />
-            <SelectField label="Cant fronturi" value={values.frontPerimeterId} onChange={(v) => set('frontPerimeterId', v)} options={bandOptions.frontPerimeter} allowEmpty />
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <MaterialPicker label="Material carcasă" value={values.carcassMaterialId} onChange={(v) => set('carcassMaterialId', v)} materials={pickerMaterials} />
+              <MaterialPicker label="Material fronturi" value={values.frontMaterialId} onChange={(v) => set('frontMaterialId', v)} materials={pickerMaterials} allowEmpty />
+              <SelectField label="Cant carcasă" value={values.carcassFrontEdgeId} onChange={(v) => set('carcassFrontEdgeId', v)} options={bandOptions.carcassFront} />
+              <SelectField label="Cant fronturi" value={values.frontPerimeterId} onChange={(v) => set('frontPerimeterId', v)} options={bandOptions.frontPerimeter} allowEmpty />
+            </div>
+            {noPriceMaterials.length > 0 && (
+              <p className="rounded bg-amber-50 px-2 py-1 text-sm text-amber-800">
+                Materiale fără preț: {noPriceMaterials.join(', ')} — apar cu 0 lei în ofertă.
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -274,7 +292,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <NumField label="Nr. sertare" value={values.drawersCount} onChange={onDrawersCountChange} />
                   <SelectField label="Sistem sertare" value={values.drawersSystem} onChange={(v) => set('drawersSystem', v)} options={DRAWER_SYSTEM_OPTIONS} />
-                  <SelectField label="Fund sertare" value={values.drawersBottomMaterialId} onChange={(v) => set('drawersBottomMaterialId', v)} options={materialOptions.drawersBottom} allowEmpty />
+                  <MaterialPicker label="Fund sertare" value={values.drawersBottomMaterialId} onChange={(v) => set('drawersBottomMaterialId', v)} materials={pickerMaterials} allowEmpty />
                 </div>
                 {drawersCount > 0 && (
                   <div className="space-y-2">
@@ -316,7 +334,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             </div>
             {backEnabled && (
               <div className="grid grid-cols-2 gap-3">
-                <SelectField label="Material spate" value={values.backMaterialId} onChange={(v) => set('backMaterialId', v)} options={materialOptions.back} allowEmpty />
+                <MaterialPicker label="Material spate" value={values.backMaterialId} onChange={(v) => set('backMaterialId', v)} materials={pickerMaterials} allowEmpty />
                 <SelectField label="Montaj spate" value={values.backMount} onChange={(v) => set('backMount', v)} options={BACK_MOUNT_OPTIONS} />
               </div>
             )}

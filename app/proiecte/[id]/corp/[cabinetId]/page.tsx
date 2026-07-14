@@ -164,12 +164,6 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
         laborPct={project.laborPct}
         yieldFactor={project.yieldFactor}
         legHeightMm={legHeightMm}
-        materialOptions={{
-          carcass: optionsWithCurrent(materials, input.carcassMaterialId),
-          front: optionsWithCurrent(materials, input.frontMaterialId),
-          back: optionsWithCurrent(materials, input.back.materialId),
-          drawersBottom: optionsWithCurrent(materials, input.drawers?.bottomMaterialId),
-        }}
         bandOptions={{
           carcassFront: optionsWithCurrent(edgeBands, input.edgeBands.carcassFrontEdgeId),
           frontPerimeter: optionsWithCurrent(edgeBands, input.edgeBands.frontPerimeterId),
