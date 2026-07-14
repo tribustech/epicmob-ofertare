@@ -4,6 +4,9 @@ import { legHeightByCabinet, loadProject, toQuoteInput, tryComputeQuote, type Lo
 import { getQuoteBasis } from '@/lib/quote/basis';
 import { PrintButton } from '@/components/PrintButton';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { NoPriceBadge } from '@/components/NoPriceBadge';
+import { materialHasNoPrice } from '@/lib/quote/material-price';
 import { fmtLei } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -31,8 +34,29 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
   const { quote, error } = tryComputeQuote(toQuoteInput(project, cabinets, legHeightByCabinet(assemblies, cabinets)), snapshot);
   if (!quote) return <p className="text-sm text-red-700">Eroare de calcul: {error}</p>;
 
+  const materialById = (mid: string | null | undefined) =>
+    mid ? snapshot.materials.find((m) => m.id === mid) : undefined;
   const materialName = (mid: string | null) =>
-    mid ? (snapshot.materials.find((m) => m.id === mid)?.name ?? mid) : '—';
+    mid ? (materialById(mid)?.name ?? mid) : '—';
+  const idHasNoPrice = (mid: string | null | undefined) => {
+    const m = materialById(mid);
+    return !!m && materialHasNoPrice(m);
+  };
+
+  const noPriceNames = [
+    ...new Map(
+      cabinets
+        .flatMap((c) => [
+          c.input.carcassMaterialId,
+          c.input.frontMaterialId,
+          c.input.back?.materialId,
+          c.input.drawers?.bottomMaterialId,
+        ])
+        .map((mid) => materialById(mid))
+        .filter((m): m is NonNullable<typeof m> => !!m && materialHasNoPrice(m))
+        .map((m) => [m.id, m.name] as const),
+    ).values(),
+  ];
 
   const cabinetsByAssembly = new Map<string, LoadedCabinet[]>();
   for (const c of cabinets) {
@@ -68,13 +92,21 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
 
+      {noPriceNames.length > 0 && (
+        <Alert className="border-amber-300 bg-amber-50 text-amber-800">
+          <AlertDescription>
+            Atenție: unele materiale nu au preț și apar cu 0 lei — totalul e subevaluat: {noPriceNames.join(', ')}.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {assemblies.map((a) => {
         const assemblyCabinets = cabinetsByAssembly.get(a.id) ?? [];
         if (assemblyCabinets.length === 0) return null;
         return (
           <div key={a.id} className="space-y-2">
             <h2 className="text-sm font-semibold">{a.name}</h2>
-            <CabinetsTable cabinets={assemblyCabinets} materialName={materialName} />
+            <CabinetsTable cabinets={assemblyCabinets} materialName={materialName} idHasNoPrice={idHasNoPrice} />
           </div>
         );
       })}
@@ -82,7 +114,7 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
       {unassigned.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-sm font-semibold">Alte corpuri</h2>
-          <CabinetsTable cabinets={unassigned} materialName={materialName} />
+          <CabinetsTable cabinets={unassigned} materialName={materialName} idHasNoPrice={idHasNoPrice} />
         </div>
       )}
 
@@ -99,7 +131,7 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
   );
 }
 
-function CabinetsTable({ cabinets, materialName }: { cabinets: LoadedCabinet[]; materialName: (mid: string | null) => string }) {
+function CabinetsTable({ cabinets, materialName, idHasNoPrice }: { cabinets: LoadedCabinet[]; materialName: (mid: string | null) => string; idHasNoPrice: (mid: string | null | undefined) => boolean }) {
   return (
     <table className="w-full text-sm">
       <thead>
@@ -113,7 +145,12 @@ function CabinetsTable({ cabinets, materialName }: { cabinets: LoadedCabinet[]; 
             <td className="py-1">{c.input.label}</td>
             <td>{TYPE_LABELS[c.input.type] ?? c.input.type}</td>
             <td>{c.input.widthMm} × {c.input.heightMm} × {c.input.depthMm}</td>
-            <td>{materialName(c.input.frontMaterialId)}</td>
+            <td>
+              <span className="inline-flex items-center gap-1">
+                {materialName(c.input.frontMaterialId)}
+                {idHasNoPrice(c.input.frontMaterialId) && <NoPriceBadge />}
+              </span>
+            </td>
           </tr>
         ))}
       </tbody>
