@@ -1,4 +1,4 @@
-import type { CabinetInput, Catalogs, ConstructionConstants, Part, Warning } from './types';
+import type { CabinetInput, Catalogs, ConstructionConstants, PanelMount, Part, Warning } from './types';
 
 export function findMaterial(catalogs: Catalogs, id: string) {
   const m = catalogs.materials.find((mat) => mat.id === id);
@@ -27,18 +27,40 @@ export function expandCarcass(
   const fe = input.edgeBands.carcassFrontEdgeId;
   const innerW = assertPositiveDim(W - 2 * t, 'lățime interioară corp', label);
 
+  const mountTop: PanelMount = input.mount?.top ?? 'INCADRAT';
+  const mountBottom: PanelMount = input.mount?.bottom ?? 'INCADRAT';
+  // capetele aplicate acoperă toată lățimea și scurtează lateralele cu grosimea plăcii
+  const sideH = assertPositiveDim(
+    H - (mountTop === 'APLICAT' ? t : 0) - (mountBottom === 'APLICAT' ? t : 0),
+    'înălțime laterală', label,
+  );
+  const panelW = (m: PanelMount) => (m === 'APLICAT' ? W : innerW);
+
   const parts: Part[] = [
     {
       cabinetLabel: label, name: 'Laterală',
-      lengthMm: H, widthMm: D, qty: 2,
-      materialId: carcass.id, edges: { l1: fe },
-    },
-    {
-      cabinetLabel: label, name: 'Blat corp / Fund corp',
-      lengthMm: innerW, widthMm: D, qty: 2,
+      lengthMm: sideH, widthMm: D, qty: 2,
       materialId: carcass.id, edges: { l1: fe },
     },
   ];
+  if (mountTop === mountBottom) {
+    parts.push({
+      cabinetLabel: label, name: 'Blat corp / Fund corp',
+      lengthMm: panelW(mountTop), widthMm: D, qty: 2,
+      materialId: carcass.id, edges: { l1: fe },
+    });
+  } else {
+    parts.push({
+      cabinetLabel: label, name: 'Blat corp',
+      lengthMm: panelW(mountTop), widthMm: D, qty: 1,
+      materialId: carcass.id, edges: { l1: fe },
+    });
+    parts.push({
+      cabinetLabel: label, name: 'Fund corp',
+      lengthMm: panelW(mountBottom), widthMm: D, qty: 1,
+      materialId: carcass.id, edges: { l1: fe },
+    });
+  }
 
   if (input.shelves > 0) {
     const shelfW = assertPositiveDim(D - cc.shelfSetbackMm, 'lățime poliță', label);

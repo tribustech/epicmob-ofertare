@@ -61,6 +61,8 @@ export interface ConstructionConstants {
 
 export type CabinetType = 'BAZA' | 'SUSPENDAT' | 'INALT' | 'COLT';
 
+export type PanelMount = 'INCADRAT' | 'APLICAT';
+
 export type DrawerSystem = 'PAL_BOX' | 'METAL_BOX';
 
 export interface DrawerOptions {
@@ -76,6 +78,7 @@ export interface CabinetInput {
   widthMm: number;
   heightMm: number;
   depthMm: number;
+  mount?: { top?: PanelMount; bottom?: PanelMount }; // lipsă = încadrat (comportamentul istoric)
   shelves: number;
   doors: number;                   // 0 = fără uși; exclusiv cu drawers
   drawers?: DrawerOptions;         // sertare pe orice tip de corp; exclusiv cu doors
