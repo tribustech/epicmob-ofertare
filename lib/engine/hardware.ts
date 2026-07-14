@@ -102,15 +102,18 @@ export function resolveSuggestions(
     if (s.preferredId) {
       id = s.preferredId;
     } else if (s.category === 'SERTAR' && s.requiresBox) {
-      // set Tandembox: aceeași înălțime de laterală + nominala cea mai apropiată
-      const sets = hardware.filter(
-        (h) => h.category === 'SERTAR' && h.boxHeightMm === s.boxHeightMm && h.nominalLengthMm != null,
-      );
-      if (sets.length > 0 && s.nominalLengthMm !== undefined) {
-        const target = s.nominalLengthMm;
-        id = sets.reduce((a, b) =>
-          Math.abs(b.nominalLengthMm! - target) < Math.abs(a.nominalLengthMm! - target) ? b : a,
-        ).id;
+      // set Tandembox: aceeași înălțime de laterală + nominala cea mai apropiată;
+      // fără înălțime aleasă rămâne nerezolvat (boxHeightMm undefined ar potrivi glisierele simple)
+      if (s.boxHeightMm !== undefined && s.nominalLengthMm !== undefined) {
+        const sets = hardware.filter(
+          (h) => h.category === 'SERTAR' && h.boxHeightMm === s.boxHeightMm && h.nominalLengthMm != null,
+        );
+        if (sets.length > 0) {
+          const target = s.nominalLengthMm;
+          id = sets.reduce((a, b) =>
+            Math.abs(b.nominalLengthMm! - target) < Math.abs(a.nominalLengthMm! - target) ? b : a,
+          ).id;
+        }
       }
     } else if (s.category === 'BALAMA') id = defaults.hingeId;
     else if (s.category === 'MANER') id = defaults.handleId;
