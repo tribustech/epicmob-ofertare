@@ -98,7 +98,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const autoDoors = (widthMm: number) => (widthMm <= DOOR_SPLIT_WIDTH_MM ? 1 : 2);
   // ușile se precompletează după lățime cât timp utilizatorul nu le-a atins
   const [doorsTouched, setDoorsTouched] = useState(
-    () => Number(initial.doors) !== autoDoors(Number(initial.widthMm)),
+    () => initial.frontType === 'USI' && Number(initial.doors) !== autoDoors(Number(initial.widthMm)),
   );
   const onWidthChange = (v: string) => {
     setValues((prev) => ({
