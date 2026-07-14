@@ -17,6 +17,11 @@ model Material {
   pricingMode   String   // PER_SHEET | PER_SQM
   pricePerSheet Float?
   pricePerSqm   Float?
+  imageUrl      String?
+  decorCode     String?
+  brand         String?
+  structura     String?
+  category      String   @default("PLACA") // PLACA | BLAT
   active        Boolean  @default(true)
   updatedAt     DateTime @updatedAt
 }

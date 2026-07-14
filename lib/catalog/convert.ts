@@ -8,6 +8,8 @@ export interface MaterialRow {
   id: string; name: string; kind: string; thicknessMm: number;
   sheetLengthMm: number; sheetWidthMm: number;
   pricingMode: string; pricePerSheet: number | null; pricePerSqm: number | null;
+  imageUrl?: string | null; decorCode?: string | null;
+  brand?: string | null; structura?: string | null; category?: string | null;
 }
 export interface EdgeBandRow { id: string; name: string; thicknessMm: number; pricePerMl: number }
 export interface HardwareRow {
