@@ -76,9 +76,8 @@ async function main() {
       brand: r.brand,
       structura: r.structura,
       category: isBlat ? 'BLAT' : 'PLACA',
-      active: true,
     };
-    await prisma.material.upsert({ where: { id }, create: { id, ...data }, update: data });
+    await prisma.material.upsert({ where: { id }, create: { id, ...data, active: true }, update: data });
     seeded++;
     if (r.pret_ron == null) noPrice++;
   }

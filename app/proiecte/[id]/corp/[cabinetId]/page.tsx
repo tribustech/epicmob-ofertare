@@ -262,7 +262,9 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
             <NumberInput name="lengthMm" label="Lungime (mm)" step="1" />
             <NumberInput name="widthMm" label="Lățime (mm)" step="1" />
             <NumberInput name="qty" label="Buc" defaultValue={1} step="1" />
-            <Select name="materialId" label="Material" options={activeMaterials.map((m) => ({ value: m.id, label: m.name }))} />
+            <Select name="materialId" label="Material" options={activeMaterials
+              .filter((m) => m.category !== 'BLAT')
+              .map((m) => ({ value: m.id, label: m.decorCode ? `${m.decorCode} · ${m.name}` : m.name }))} />
             <div><SubmitButton>Adaugă</SubmitButton></div>
           </ActionForm>
         </CardContent>

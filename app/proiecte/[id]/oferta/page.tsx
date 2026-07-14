@@ -51,6 +51,7 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
           c.input.frontMaterialId,
           c.input.back?.materialId,
           c.input.drawers?.bottomMaterialId,
+          ...c.extraParts.map((p) => p.materialId),
         ])
         .map((mid) => materialById(mid))
         .filter((m): m is NonNullable<typeof m> => !!m && materialHasNoPrice(m))

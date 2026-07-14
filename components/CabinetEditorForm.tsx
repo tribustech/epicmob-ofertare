@@ -166,7 +166,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const pickerMaterials = useMemo(() => snapshot.materials.filter((m) => m.category !== 'BLAT'), [snapshot]);
 
   const noPriceMaterials = useMemo(() => {
-    const ids = [values.carcassMaterialId, values.frontMaterialId, values.backMaterialId, values.drawersBottomMaterialId];
+    const ids = [values.carcassMaterialId, values.frontMaterialId, values.backMaterialId, values.drawersBottomMaterialId, ...extraParts.map((p) => p.materialId)];
     const seen = new Set<string>();
     const names: string[] = [];
     for (const id of ids) {
@@ -176,7 +176,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
       if (m && materialHasNoPrice(m)) names.push(m.name);
     }
     return names;
-  }, [values.carcassMaterialId, values.frontMaterialId, values.backMaterialId, values.drawersBottomMaterialId, snapshot]);
+  }, [values.carcassMaterialId, values.frontMaterialId, values.backMaterialId, values.drawersBottomMaterialId, extraParts, snapshot]);
 
   function handleSave() {
     startTransition(async () => {
