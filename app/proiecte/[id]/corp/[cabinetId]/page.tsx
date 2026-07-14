@@ -135,8 +135,7 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
       category: h.category as HardwareCategory,
       pricePerUnit: h.pricePerUnit,
       nominalLengthMm: h.nominalLengthMm ?? undefined,
-      // câmpul devine real în Task 5; cast temporar ca să compileze în ambele stări
-      boxHeightMm: (h as { boxHeightMm?: number | null }).boxHeightMm ?? undefined,
+      boxHeightMm: h.boxHeightMm ?? undefined,
     }));
     const resolved = resolveSuggestions(expanded.hardware, defaults, hardwareItemsLike);
     suggestedLines = resolved.lines;

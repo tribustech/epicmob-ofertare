@@ -55,7 +55,7 @@ describe('computeQuote — override-uri și piese suplimentare', () => {
 
   it('picioarele urmează înălțimea ansamblului', () => {
     const snap = makeSnapshot();
-    snap.hardware.push({ id: 'p150', name: 'Picior 150', category: 'PICIOR', pricePerUnit: 3, nominalLengthMm: 150, loadClassKg: null, active: true });
+    snap.hardware.push({ id: 'p150', name: 'Picior 150', category: 'PICIOR', pricePerUnit: 3, nominalLengthMm: 150, loadClassKg: null, boxHeightMm: null, active: true });
     const q = baseQuote();
     q.cabinets[0].legHeightMm = 150;
     const r = computeQuote(q, snap);

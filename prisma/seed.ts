@@ -32,6 +32,10 @@ async function main() {
     { id: 'maner-standard', name: 'Mâner standard 128mm', category: 'MANER', pricePerUnit: 10, nominalLengthMm: null, loadClassKg: null },
     { id: 'picior-reglabil', name: 'Picior reglabil 100mm', category: 'PICIOR', pricePerUnit: 2.5, nominalLengthMm: null, loadClassKg: null },
     { id: 'sina-suspendare', name: 'Set suspendare corp (2 suporți + șină)', category: 'SINA_SUSPENDARE', pricePerUnit: 8, nominalLengthMm: null, loadClassKg: null },
+    { id: 'tandembox-m-500', name: 'Tandembox antaro M (83mm) 500mm', category: 'SERTAR', pricePerUnit: 120, nominalLengthMm: 500, boxHeightMm: 83 },
+    { id: 'tandembox-k-500', name: 'Tandembox antaro K (115mm) 500mm', category: 'SERTAR', pricePerUnit: 135, nominalLengthMm: 500, boxHeightMm: 115 },
+    { id: 'tandembox-c-500', name: 'Tandembox antaro C (192mm) 500mm', category: 'SERTAR', pricePerUnit: 155, nominalLengthMm: 500, boxHeightMm: 192 },
+    { id: 'tandembox-d-500', name: 'Tandembox antaro D (224mm) 500mm', category: 'SERTAR', pricePerUnit: 170, nominalLengthMm: 500, boxHeightMm: 224 },
   ];
   for (const h of hardware) {
     await prisma.hardwareItem.upsert({ where: { id: h.id }, update: h, create: h });
@@ -49,6 +53,8 @@ async function main() {
   const settings = {
     id: 1,
     laborPct: 120,
+    profilJPerFront: 25,
+    golaPricePerMl: 90,
     sheetYieldFactor: 0.8,
     cutKerfMm: 4,
     cutTrimMm: 10,

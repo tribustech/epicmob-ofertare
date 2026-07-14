@@ -17,8 +17,9 @@ const CONSTRUCTION_LABELS: Record<string, string> = {
   palBoxSlideAllowanceMm: 'Spațiu lateral cutie sertar PAL (mm)',
   palBoxHeightDeductMm: 'Reducere înălțime cutie sertar (mm)',
   palBoxMinHeightMm: 'Înălțime minimă cutie sertar (mm)',
-  metalBoxBottomDeductMm: 'Reducere fund sertar metalic (mm)',
-  metalBoxBackHeightMm: 'Înălțime spate sertar metalic (mm)',
+  tandemboxFrontClearanceMm: 'Rezervă laterală Tandembox (mm)',
+  golaFrontDeductMm: 'GOLA: scurtare fronturi (mm)',
+  frontExtensionDefaultMm: 'Prelungire front fără mâner (mm)',
   legsPerCabinet: 'Picioare per corp',
   shelfSpanWarnMm: 'Avertizare poliță peste (mm)',
   doorMaxWidthMm: 'Avertizare ușă peste (mm)',
@@ -50,6 +51,8 @@ export default async function SetariPage() {
               <NumberInput name="sheetYieldFactor" label="Factor utilizare foaie (doar estimarea per corp)" defaultValue={settings.sheetYieldFactor} step="0.01" />
               <NumberInput name="cutKerfMm" label="Kerf pânză (mm)" defaultValue={settings.cutKerfMm} step="0.1" />
               <NumberInput name="cutTrimMm" label="Margine curățare placă (mm)" defaultValue={settings.cutTrimMm} step="1" />
+              <NumberInput name="profilJPerFront" label="Profil J (lei/front frezat)" defaultValue={settings.profilJPerFront} />
+              <NumberInput name="golaPricePerMl" label="Profil GOLA (lei/ml)" defaultValue={settings.golaPricePerMl} />
             </div>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
               <Select name="defaultHingeId" label="Balama implicită" options={byCategory('BALAMA')} defaultValue={settings.defaultHingeId} allowEmpty />

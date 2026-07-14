@@ -41,6 +41,7 @@ export const hardwareSchema = z.object({
   pricePerUnit: posNum,
   nominalLengthMm: optPosNum,
   loadClassKg: optPosNum,
+  boxHeightMm: optPosNum,
 });
 
 export const cuttingRateSchema = z.object({
@@ -52,6 +53,8 @@ const optId = z.preprocess(emptyToUndefined, z.string().optional());
 
 export const settingsSchema = z.object({
   laborPct: num.nonnegative(),
+  profilJPerFront: num.nonnegative(),
+  golaPricePerMl: num.nonnegative(),
   sheetYieldFactor: num.gt(0).lte(1),
   cutKerfMm: num.nonnegative().lte(50),
   cutTrimMm: num.nonnegative().lte(200),

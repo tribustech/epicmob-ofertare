@@ -37,6 +37,7 @@ model HardwareItem {
   pricePerUnit    Float
   nominalLengthMm Float?
   loadClassKg     Float?
+  boxHeightMm     Float?
   active          Boolean  @default(true)
   updatedAt       DateTime @updatedAt
 }
@@ -50,6 +51,8 @@ model CuttingRate {
 model AppSettings {
   id               Int     @id @default(1)
   laborPct         Float
+  profilJPerFront  Float   @default(0)
+  golaPricePerMl   Float   @default(0)
   sheetYieldFactor Float
   cutKerfMm        Float   @default(4)
   cutTrimMm        Float   @default(10)
@@ -68,6 +71,8 @@ model Project {
   status        String     @default("CIORNA") // CIORNA | TRIMISA | ACCEPTATA
   laborPct      Float
   yieldFactor   Float
+  handleType    String     @default("APLICAT")
+  handleItemId  String?
   freeLinesJson String     @default("[]")
   snapshotJson  String?
   createdAt     DateTime   @default(now())
