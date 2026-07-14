@@ -46,7 +46,7 @@ export default async function SetariPage() {
         <CardContent>
           <ActionForm action={updateSettings} className="space-y-3">
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-              <NumberInput name="markupPct" label="Adaos implicit (%)" defaultValue={settings.markupPct} />
+              <NumberInput name="laborPct" label="Manoperă implicită (% din materiale)" defaultValue={settings.laborPct} />
               <NumberInput name="sheetYieldFactor" label="Factor utilizare foaie (doar estimarea per corp)" defaultValue={settings.sheetYieldFactor} step="0.01" />
               <NumberInput name="cutKerfMm" label="Kerf pânză (mm)" defaultValue={settings.cutKerfMm} step="0.1" />
               <NumberInput name="cutTrimMm" label="Margine curățare placă (mm)" defaultValue={settings.cutTrimMm} step="1" />

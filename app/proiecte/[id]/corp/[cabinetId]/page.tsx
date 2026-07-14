@@ -107,11 +107,6 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
       edgeBands.map((e) => e),
       [],
       [],
-      [
-        { cabinetType: 'BAZA', price: 0 }, { cabinetType: 'SUSPENDAT', price: 0 },
-        { cabinetType: 'INALT', price: 0 }, { cabinetType: 'SERTARE', price: 0 },
-        { cabinetType: 'COLT', price: 0 },
-      ],
     );
     const cc = parseConstruction(settings?.constructionJson ?? '{}');
     expanded = expandCabinet(input, catalogs, cc);
@@ -161,7 +156,7 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
         cabinetId={cabinetId}
         initial={cabinetInputToFormValues(input)}
         snapshot={snapshot}
-        markupPct={project.markupPct}
+        laborPct={project.laborPct}
         yieldFactor={project.yieldFactor}
         legHeightMm={legHeightMm}
         materialOptions={{

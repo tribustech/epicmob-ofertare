@@ -152,7 +152,7 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
             <CardHeader><CardTitle>Setările proiectului</CardTitle></CardHeader>
             <CardContent>
               <ActionForm action={updateProjectSettings.bind(null, project.id)} className="grid grid-cols-2 items-end gap-2">
-                <NumberInput name="markupPct" label="Adaos (%)" defaultValue={project.markupPct} />
+                <NumberInput name="laborPct" label="Manoperă (%)" defaultValue={project.laborPct} />
                 <NumberInput name="yieldFactor" label="Factor utilizare foaie (doar estimarea per corp)" defaultValue={project.yieldFactor} step="0.01" />
                 <Select name="status" label="Stare" options={STATUS_OPTIONS} defaultValue={project.status} />
                 <div><SubmitButton>Salvează</SubmitButton></div>
@@ -226,7 +226,7 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                     </Card>
                     <Card size="sm">
                       <CardContent>
-                        <div className="text-xs text-muted-foreground">Preț de vânzare (adaos {fmtNum(project.markupPct)}%)</div>
+                        <div className="text-xs text-muted-foreground">Preț de vânzare (manoperă {fmtNum(project.laborPct)}%)</div>
                         <div className="text-xl font-bold">{fmtLei(quote.costs.sellPrice)}</div>
                       </CardContent>
                     </Card>

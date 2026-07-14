@@ -46,7 +46,7 @@ export interface CabinetEditorFormProps {
   cabinetId: string;
   initial: Record<string, string>;
   snapshot: SnapshotData;
-  markupPct: number;
+  laborPct: number;
   yieldFactor: number;
   legHeightMm: number | null;
   materialOptions: {
@@ -66,7 +66,7 @@ export interface CabinetEditorFormProps {
 
 export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const {
-    initial, snapshot, markupPct, yieldFactor, legHeightMm,
+    initial, snapshot, laborPct, yieldFactor, legHeightMm,
     materialOptions, bandOptions, hardwareOverrides, extraParts, save,
   } = props;
   const router = useRouter();
@@ -83,7 +83,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const parsed = useMemo(() => cabinetFormSchema.safeParse(values), [values]);
 
   const catalogs = useMemo(
-    () => toCostCatalogs(snapshot.materials, snapshot.edgeBands, snapshot.hardware, snapshot.cuttingRates, snapshot.laborRates),
+    () => toCostCatalogs(snapshot.materials, snapshot.edgeBands, snapshot.hardware, snapshot.cuttingRates),
     [snapshot],
   );
   const cc = useMemo(() => parseConstruction(snapshot.settings.constructionJson), [snapshot]);
@@ -101,9 +101,9 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     } catch (e) {
       expandError = e instanceof Error ? e.message : 'Eroare la generarea pieselor';
     }
-    const estimate = estimateCabinetCost({ input, hardwareOverrides, extraParts }, snapshot, { markupPct, yieldFactor, legHeightMm });
+    const estimate = estimateCabinetCost({ input, hardwareOverrides, extraParts }, snapshot, { laborPct, yieldFactor, legHeightMm });
     return { input, parts, warnings, expandError, estimate };
-  }, [parsed, catalogs, cc, hardwareOverrides, extraParts, snapshot, markupPct, yieldFactor, legHeightMm]);
+  }, [parsed, catalogs, cc, hardwareOverrides, extraParts, snapshot, laborPct, yieldFactor, legHeightMm]);
 
   const [lastPrice, setLastPrice] = useState<{ cost: number; sell: number } | null>(() =>
     live && !live.expandError && !live.estimate.error ? { cost: live.estimate.cost, sell: live.estimate.sell } : null,

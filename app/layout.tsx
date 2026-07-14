@@ -15,7 +15,6 @@ const NAV = [
   { href: '/cataloage/canturi', label: 'Canturi' },
   { href: '/cataloage/feronerie', label: 'Feronerie' },
   { href: '/cataloage/debitare', label: 'Debitare' },
-  { href: '/cataloage/manopera', label: 'Manoperă' },
   { href: '/setari', label: 'Setări' },
 ];
 
