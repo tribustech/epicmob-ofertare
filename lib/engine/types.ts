@@ -64,6 +64,13 @@ export type CabinetType = 'BAZA' | 'SUSPENDAT' | 'INALT' | 'COLT';
 
 export type PanelMount = 'INCADRAT' | 'APLICAT';
 
+export type HandleType = 'APLICAT' | 'BUTON' | 'INGROPAT' | 'PROFIL_J' | 'GOLA' | 'PUSH' | 'FARA';
+export interface HandleConfig {
+  type: HandleType;
+  itemId?: string;           // produs MANER (aplicat/buton/îngropat) sau ACCESORIU (push)
+  frontExtensionMm?: number; // doar FARA: prelungirea frontului (uși)
+}
+
 export type DrawerSystem = 'PAL_BOX' | 'TANDEMBOX';
 
 export interface DrawerOptions {
@@ -91,6 +98,12 @@ export interface CabinetInput {
     frontPerimeterId: string | null; // cant fronturi PAL (uzual ABS 1); MDF vopsit = fără
   };
   blindPanelWidthMm?: number;      // doar COLT; implicit cc.blindPanelDefaultWidthMm
+  hardwareSel?: {
+    hingeId?: string;           // uși: model balama; lipsă = default global
+    slideId?: string;           // PAL_BOX: model glisiere Tandem; lipsă = cel mai ieftin la nominală
+    tandemboxHeightMm?: number; // TANDEMBOX: înălțimea lateralei alese (M/K/C/D)
+  };
+  handle?: HandleConfig;        // rezolvat (excepția corpului sau moștenirea proiectului); lipsă = APLICAT + produs implicit
 }
 
 export interface PartEdges {

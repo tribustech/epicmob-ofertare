@@ -41,7 +41,14 @@ export function expandFronts(
   const usableW = assertPositiveDim(
     input.widthMm - 2 * cc.outerGapMm - blindW, 'lățime utilă fronturi', input.label,
   );
-  const frontH = assertPositiveDim(input.heightMm - 2 * cc.outerGapMm, 'înălțime front', input.label);
+  let frontH = assertPositiveDim(input.heightMm - 2 * cc.outerGapMm, 'înălțime front', input.label);
+  const handleType = input.handle?.type;
+  if (handleType === 'GOLA') {
+    frontH = assertPositiveDim(frontH - cc.golaFrontDeductMm, 'înălțime front (GOLA)', input.label);
+  }
+  if (handleType === 'FARA' && input.handle?.frontExtensionMm && input.doors > 0) {
+    frontH += input.handle.frontExtensionMm; // front prelungit ca să ai de unde deschide
+  }
 
   const parts: Part[] = [];
   const fronts: FrontInfo[] = [];
@@ -57,9 +64,13 @@ export function expandFronts(
 
   if ((input.drawers?.count ?? 0) > 0) {
     const heights = drawerFrontHeights(input, cc);
+    // GOLA: profilul ocupă din frontul de sus al stivei de sertare
+    const adjusted = handleType === 'GOLA' && heights.length > 0
+      ? [assertPositiveDim(heights[0] - cc.golaFrontDeductMm, 'front sertar sus (GOLA)', input.label), ...heights.slice(1)]
+      : heights;
     // grupează înălțimile identice într-o singură linie de piesă
     const groups = new Map<number, number>();
-    for (const h of heights) groups.set(h, (groups.get(h) ?? 0) + 1);
+    for (const h of adjusted) groups.set(h, (groups.get(h) ?? 0) + 1);
     for (const [h, qty] of groups) {
       parts.push({
         cabinetLabel: input.label, name: 'Front sertar',
@@ -67,7 +78,7 @@ export function expandFronts(
         materialId: material.id, edges,
       });
     }
-    for (const h of heights) fronts.push({ kind: 'SERTAR', widthMm: usableW, heightMm: h });
+    for (const h of adjusted) fronts.push({ kind: 'SERTAR', widthMm: usableW, heightMm: h });
   } else if (input.doors > 0) {
     const doorW = assertPositiveDim(
       (usableW - (input.doors - 1) * cc.frontGapMm) / input.doors, 'lățime ușă', input.label,
