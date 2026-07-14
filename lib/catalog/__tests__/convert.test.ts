@@ -22,8 +22,14 @@ describe('toBoardMaterial', () => {
   it('kind necunoscut → eroare', () => {
     expect(() => toBoardMaterial({ ...palRow, kind: 'OSB' })).toThrow(/tip de material/i);
   });
-  it('PER_SHEET fără preț → eroare', () => {
-    expect(() => toBoardMaterial({ ...palRow, pricePerSheet: null })).toThrow(/preț/i);
+  it('materialul PER_SHEET fără preț → pricePerSheet 0 (nu aruncă)', () => {
+    const row: MaterialRow = {
+      id: 'm1', name: 'PAL fără preț', kind: 'PAL', thicknessMm: 18,
+      sheetLengthMm: 2800, sheetWidthMm: 2070,
+      pricingMode: 'PER_SHEET', pricePerSheet: null, pricePerSqm: null,
+    };
+    const bm = toBoardMaterial(row);
+    expect(bm.pricing).toEqual({ mode: 'PER_SHEET', pricePerSheet: 0 });
   });
 });
 

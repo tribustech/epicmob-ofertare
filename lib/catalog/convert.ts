@@ -34,11 +34,9 @@ export function toBoardMaterial(row: MaterialRow): BoardMaterial {
   }
   let pricing: BoardMaterial['pricing'];
   if (row.pricingMode === 'PER_SHEET') {
-    if (row.pricePerSheet == null) throw new Error(`Materialul ${row.name} nu are preț per foaie`);
-    pricing = { mode: 'PER_SHEET', pricePerSheet: row.pricePerSheet };
+    pricing = { mode: 'PER_SHEET', pricePerSheet: row.pricePerSheet ?? 0 };
   } else if (row.pricingMode === 'PER_SQM') {
-    if (row.pricePerSqm == null) throw new Error(`Materialul ${row.name} nu are preț per m²`);
-    pricing = { mode: 'PER_SQM', pricePerSqm: row.pricePerSqm };
+    pricing = { mode: 'PER_SQM', pricePerSqm: row.pricePerSqm ?? 0 };
   } else {
     throw new Error(`Mod de preț necunoscut: ${row.pricingMode} (${row.name})`);
   }
