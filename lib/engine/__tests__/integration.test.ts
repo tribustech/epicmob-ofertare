@@ -20,6 +20,10 @@ const CATALOGS: ProjectCatalogs = {
     legId: 'picior-std',
     railId: null,
   },
+  frontSuppliers: [],
+  frontModels: [],
+  frontPrices: [],
+  eurToRon: 1,
 };
 
 describe('computeProject — corp bază de referință (calcul de mână)', () => {

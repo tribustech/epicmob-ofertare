@@ -15,6 +15,10 @@ const COST_CATALOGS: CostCatalogs = {
     { maxThicknessMm: 10, pricePerSheet: 33 },
     { maxThicknessMm: 32, pricePerSheet: 50 },
   ],
+  frontSuppliers: [],
+  frontModels: [],
+  frontPrices: [],
+  eurToRon: 1,
 };
 
 describe('computeCosts — corp bază de referință', () => {
@@ -119,5 +123,87 @@ describe('computeCosts — cazuri particulare', () => {
     expect(result.breakdown.freeLines).toBeCloseTo(100, 5);
     expect(result.totalCost).toBeCloseTo(120, 5);             // 20 + 100 (fără manoperă)
     expect(result.sellPrice).toBeCloseTo(144, 5);              // 20 × 2.2 + 100
+  });
+});
+
+describe('computeCosts — fronturi MDF vopsit cotate per m² (EUR × curs)', () => {
+  // Catalog de fronturi vopsite: furnizor + model + preț/m² în EUR, curs EUR→RON = 5.
+  const VOPSIT_CATALOGS: CostCatalogs = {
+    ...COST_CATALOGS,
+    frontSuppliers: [
+      { id: 'paintmob', handleMillingEur: 3, vividSurchargeEur: 10, metallicSurchargeEur: 20, blackGlossEurPerFace: 7 },
+    ],
+    frontModels: [
+      { id: 'model-mediu', tier: 'MEDIU', hasHandleMilling: false },
+      { id: 'model-mediu-frez', tier: 'MEDIU', hasHandleMilling: true },
+    ],
+    frontPrices: [
+      { supplierId: 'paintmob', tier: 'MEDIU', finish: 'MAT', faces: 1, thicknessMm: 18, pricePerSqmEur: 115 },
+    ],
+    eurToRon: 5,
+  };
+
+  const NEST = { kerfMm: 4, trimMm: 10 };
+
+  // Corpul cu ușă MDF (bazaInput are frontMaterialId = 'mdf-vopsit') — geometria fronturilor
+  // e identică indiferent de frontKind, deci calculăm o singură dată aria frontului.
+  const plain = expandCabinet(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+  const frontArea = plain.parts
+    .filter((p) => p.name === 'Ușă')
+    .reduce((s, p) => s + (p.lengthMm / 1000) * (p.widthMm / 1000) * p.qty, 0);
+
+  // Referință: fără ramura vopsit, frontul e cotat ca placă PER_SQM (mdf-vopsit = 450 lei/m²).
+  const baseline = computeCosts({
+    parts: plain.parts, hardwareLines: [], cabinets: [plain.input],
+    freeLines: [], laborPct: 0, nesting: NEST, catalogs: VOPSIT_CATALOGS,
+  });
+  // Costul plăcilor DOAR pentru carcasă + spate (fără contribuția frontului ca placă).
+  const carcassBoards = baseline.breakdown.boards - frontArea * 450;
+
+  const vopsitInput = (mdf: Partial<NonNullable<typeof plain.input.mdfFront>> = {}) =>
+    bazaInput({
+      frontKind: 'MDF_VOPSIT',
+      mdfFront: {
+        supplierId: 'paintmob', modelId: 'model-mediu',
+        finish: 'MAT', faces: 1, ralCode: 'RAL 9010', colorCategory: 'NORMALA',
+        ...mdf,
+      },
+    });
+
+  it('frontul vopsit e cotat per m² (EUR×curs) și NU mai intră ca placă/cant', () => {
+    const exp = expandCabinet(vopsitInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const r = computeCosts({
+      parts: exp.parts, hardwareLines: [], cabinets: [exp.input],
+      freeLines: [], laborPct: 0, nesting: NEST, catalogs: VOPSIT_CATALOGS,
+    });
+    // boards = carcasă+spate (fără front ca placă) + front vopsit (aria × 115 EUR × 5)
+    expect(r.breakdown.boards).toBeCloseTo(carcassBoards + frontArea * 115 * 5, 4);
+    // frontul MDF vopsit nu are cant → edging neschimbat față de referință
+    expect(r.breakdown.edging).toBeCloseTo(baseline.breakdown.edging, 6);
+    expect(r.warnings ?? []).toHaveLength(0);
+  });
+
+  it('model cu frezare mâner: + handleMillingEur × frontCount × curs', () => {
+    const exp = expandCabinet(vopsitInput({ modelId: 'model-mediu-frez' }), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const r = computeCosts({
+      parts: exp.parts, hardwareLines: [], cabinets: [exp.input],
+      freeLines: [], laborPct: 0, nesting: NEST, catalogs: VOPSIT_CATALOGS,
+    });
+    // 1 ușă → frontCount = 1; +3 EUR frezare × 5 curs față de modelul fără frezare
+    expect(r.breakdown.boards).toBeCloseTo(carcassBoards + frontArea * 115 * 5 + 3 * 1 * 5, 4);
+  });
+
+  it('combinație de preț lipsă → fără excepție, contribuție 0 + avertizare „preț la cerere"', () => {
+    // finish LUCIOS nu are rând de preț în catalog
+    const exp = expandCabinet(vopsitInput({ finish: 'LUCIOS' }), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const r = computeCosts({
+      parts: exp.parts, hardwareLines: [], cabinets: [exp.input],
+      freeLines: [], laborPct: 0, nesting: NEST, catalogs: VOPSIT_CATALOGS,
+    });
+    // frontul scos din plăci, nimic adăugat (cost 0)
+    expect(r.breakdown.boards).toBeCloseTo(carcassBoards, 4);
+    expect(r.warnings ?? []).toEqual(
+      expect.arrayContaining([expect.stringMatching(/preț la cerere/i)]),
+    );
   });
 });

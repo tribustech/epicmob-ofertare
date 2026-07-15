@@ -1,3 +1,14 @@
+// Verificarea „negru lucios" e trivială (doar 4 coduri RAL) — o ținem aici, într-un modul
+// PUR (fără fs/path), ca engine-ul să nu importe lib/ral.ts (care citește un JSON de pe disc
+// și ar băga node:fs/node:path în bundle-ul de browser prin estimarea live din client).
+const BLACK_RAL = new Set(['9004', '9005', '9011', '9017']);
+
+export function ralIsBlack(code: string | null | undefined): boolean {
+  if (!code) return false;
+  const num = String(code).toUpperCase().replace(/[^0-9]/g, ''); // "RAL 9005" → "9005"
+  return BLACK_RAL.has(num);
+}
+
 export type FrontVopsitCostArgs = {
   areaSqm: number;
   frontCount: number;
