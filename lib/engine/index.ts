@@ -64,7 +64,11 @@ export function computeProject(
 export { DEFAULT_CONSTRUCTION } from './constants';
 export { expandCabinet } from './templates';
 export { computeMaterialNeeds, type BoardNeed, type EdgingNeed } from './needs';
-export { computeCosts, type CostCatalogs, type CostBreakdown, type CostResult } from './costing';
+export {
+  computeCosts, type CostCatalogs, type CostBreakdown, type CostResult,
+  type FrontSupplier, type FrontModel, type FrontPrice,
+  FRONT_PART_NAMES, HANDLE_FRONT_PART_NAMES, FRONT_THICKNESS_MM,
+} from './costing';
 export { cutListCsv, aggregateHardware, type CutListFile, type HardwareSummaryRow } from './cutlist';
 export { suggestHardware, resolveSuggestions } from './hardware';
 export { suggestHingeCount, doorWeightKg } from './hinges';

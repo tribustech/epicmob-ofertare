@@ -24,7 +24,10 @@ export function expandCabinet(
   if (drawerCount > 0 && input.shelves > 0) {
     throw new Error(`Corpul ${input.label}: corpul cu sertare nu poate avea polițe`);
   }
-  if ((input.doors > 0 || drawerCount > 0) && !input.frontMaterialId) {
+  // MDF vopsit nu folosește un material de front din catalogul de plăci (frontMaterialId e null);
+  // geometria vine dintr-un material generic MDF_VOPSIT rezolvat în expandFronts.
+  const isVopsitFront = input.frontKind === 'MDF_VOPSIT' && !!input.mdfFront;
+  if ((input.doors > 0 || drawerCount > 0) && !input.frontMaterialId && !isVopsitFront) {
     throw new Error(`Corpul ${input.label}: fronturile cer un material de front`);
   }
   if (

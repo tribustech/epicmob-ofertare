@@ -92,7 +92,13 @@ export interface CabinetInput {
   doors: number;                   // 0 = fără uși; exclusiv cu drawers
   drawers?: DrawerOptions;         // sertare pe orice tip de corp; exclusiv cu doors
   carcassMaterialId: string;
+  frontKind?: 'PAL' | 'MDF_MELAMINAT' | 'MDF_INFOLIAT' | 'MDF_VOPSIT'; // lipsă = PAL (comportament istoric)
   frontMaterialId: string | null;  // null = corp fără fronturi
+  mdfFront?: {                      // doar frontKind === 'MDF_VOPSIT'
+    supplierId: string; modelId: string;
+    finish: 'MAT' | 'LUCIOS'; faces: number;
+    ralCode: string; colorCategory: 'NORMALA' | 'VIE' | 'METALIZAT';
+  };
   back: { enabled: boolean; materialId?: string; mount: 'FALT' | 'APLICAT' };
   edgeBands: {
     carcassFrontEdgeId: string;    // cant muchii frontale carcasă (uzual ABS 0.4)

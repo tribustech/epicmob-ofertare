@@ -1,7 +1,8 @@
 import { DEFAULT_CONSTRUCTION } from '@/lib/engine';
 import type {
   BoardMaterial, ConstructionConstants, CostCatalogs,
-  EdgeBand, HardwareCategory, HardwareDefaults, HardwareItem, MaterialKind,
+  EdgeBand, FrontModel, FrontPrice, FrontSupplier,
+  HardwareCategory, HardwareDefaults, HardwareItem, MaterialKind,
 } from '@/lib/engine';
 
 export interface MaterialRow {
@@ -23,6 +24,7 @@ export interface SettingsRow {
   // opționale: snapshot-urile înghețate dinainte de nesting nu le au
   cutKerfMm?: number | null; cutTrimMm?: number | null;
   profilJPerFront?: number | null; golaPricePerMl?: number | null;
+  eurToRon?: number | null; // curs EUR→RON pentru fronturile MDF vopsit
   defaultHingeId: string | null; defaultHandleId: string | null;
   defaultLegId: string | null; defaultRailId: string | null;
 }
@@ -66,11 +68,22 @@ function toHardwareItem(row: HardwareRow): HardwareItem {
   };
 }
 
+// Catalogul de fronturi MDF vopsit + cursul EUR→RON. Opțional: apelanții care nu au
+// încă datele cablate (până la Task 7) pot omite parametrul — se folosesc valori goale
+// și curs 1, iar corpurile fără front vopsit se comportă identic ca înainte.
+export interface FrontCatalogs {
+  suppliers?: FrontSupplier[];
+  models?: FrontModel[];
+  prices?: FrontPrice[];
+  eurToRon?: number;
+}
+
 export function toCostCatalogs(
   materials: MaterialRow[],
   edgeBands: EdgeBandRow[],
   hardware: HardwareRow[],
   cuttingRates: CuttingRateRow[],
+  fronts: FrontCatalogs = {},
 ): CostCatalogs {
   return {
     materials: materials.map(toBoardMaterial),
@@ -79,6 +92,10 @@ export function toCostCatalogs(
     cuttingRates: [...cuttingRates]
       .sort((a, b) => a.maxThicknessMm - b.maxThicknessMm)
       .map((c) => ({ maxThicknessMm: c.maxThicknessMm, pricePerSheet: c.pricePerSheet })),
+    frontSuppliers: fronts.suppliers ?? [],
+    frontModels: fronts.models ?? [],
+    frontPrices: fronts.prices ?? [],
+    eurToRon: fronts.eurToRon ?? 1,
   };
 }
 
