@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { cabinetFormSchema, toCabinetInput } from '@/lib/quote/cabinet-form';
 import type { ExtraPart } from '@/lib/quote/cabinet-form';
 import { estimateCabinetCost } from '@/lib/quote/estimate';
-import type { SnapshotData } from '@/lib/quote/compute';
+import { frontCatalogsFromSnapshot, type SnapshotData } from '@/lib/quote/compute';
 import { HANDLE_TYPE_OPTIONS, withResolvedHandle } from '@/lib/quote/handle';
 import { expandCabinet } from '@/lib/engine';
 import type { HandleType, HardwareLine, Part, Warning } from '@/lib/engine';
@@ -26,9 +26,34 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CabinetIsoSvg } from '@/components/CabinetIsoSvg';
 import { MaterialPicker } from '@/components/MaterialPicker';
+import { FrontModelPicker, type FrontModelOption } from '@/components/FrontModelPicker';
+import { RalPicker, type RalColor } from '@/components/RalPicker';
 import { materialHasNoPrice } from '@/lib/quote/material-price';
 
 export type FieldOption = { value: string; label: string };
+
+const FRONT_KIND_OPTIONS: FieldOption[] = [
+  { value: 'PAL', label: 'PAL' },
+  { value: 'MDF_MELAMINAT', label: 'MDF melaminat' },
+  { value: 'MDF_INFOLIAT', label: 'MDF infoliat' },
+  { value: 'MDF_VOPSIT', label: 'MDF vopsit' },
+];
+
+const MDF_FINISH_OPTIONS: FieldOption[] = [
+  { value: 'MAT', label: 'Mat' },
+  { value: 'LUCIOS', label: 'Lucios' },
+];
+
+const MDF_FACES_OPTIONS: FieldOption[] = [
+  { value: '1', label: '1 față' },
+  { value: '2', label: '2 fețe' },
+];
+
+const MDF_COLOR_CATEGORY_OPTIONS: FieldOption[] = [
+  { value: 'NORMALA', label: 'Normală' },
+  { value: 'VIE', label: 'Vie' },
+  { value: 'METALIZAT', label: 'Metalizat' },
+];
 
 const TYPE_OPTIONS: FieldOption[] = [
   { value: 'BAZA', label: 'Corp bază' },
@@ -77,6 +102,9 @@ export interface CabinetEditorFormProps {
   feronerieSummary: string;
   extraPartsSlot: ReactNode;
   extraPartsSummary: string;
+  frontSupplierOptions: FieldOption[];
+  frontModelOptions: FrontModelOption[];
+  ralColors: RalColor[];
   projectHandle: { type: string; itemId: string | null; label: string };
   hardwareSelOptions: {
     hinges: FieldOption[];
@@ -94,6 +122,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     initial, snapshot, laborPct, yieldFactor, legHeightMm,
     bandOptions, hardwareOverrides, extraParts,
     feronerieSlot, feronerieSummary, extraPartsSlot, extraPartsSummary,
+    frontSupplierOptions, frontModelOptions, ralColors,
     projectHandle, hardwareSelOptions, save,
   } = props;
   const router = useRouter();
@@ -106,12 +135,16 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const parsed = useMemo(() => cabinetFormSchema.safeParse(values), [values]);
 
   const catalogs = useMemo(
-    () => toCostCatalogs(snapshot.materials, snapshot.edgeBands, snapshot.hardware, snapshot.cuttingRates),
+    () => toCostCatalogs(
+      snapshot.materials, snapshot.edgeBands, snapshot.hardware, snapshot.cuttingRates,
+      frontCatalogsFromSnapshot(snapshot),
+    ),
     [snapshot],
   );
   const cc = useMemo(() => parseConstruction(snapshot.settings.constructionJson), [snapshot]);
 
   const frontType = values.frontType;
+  const frontKind = values.frontKind ?? 'PAL';
   const withShelves = values.withShelves === 'true';
   const drawersCount = Math.max(0, Math.trunc(Number(values.drawersCount) || 0));
 
@@ -288,10 +321,51 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
           <div className="space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <MaterialPicker label="Material carcasă" value={values.carcassMaterialId} onChange={(v) => set('carcassMaterialId', v)} materials={pickerMaterials} />
-              <MaterialPicker label="Material fronturi" value={values.frontMaterialId} onChange={(v) => set('frontMaterialId', v)} materials={pickerMaterials} allowEmpty />
               <SelectField label="Cant carcasă" value={values.carcassFrontEdgeId} onChange={(v) => set('carcassFrontEdgeId', v)} options={bandOptions.carcassFront} />
-              <SelectField label="Cant fronturi" value={values.frontPerimeterId} onChange={(v) => set('frontPerimeterId', v)} options={bandOptions.frontPerimeter} allowEmpty />
             </div>
+
+            <div className="grid gap-2 border-t pt-3">
+              <Label className={fieldLabelCls}>Tip front</Label>
+              <SegmentedControl value={frontKind} onChange={(v) => set('frontKind', v)} options={FRONT_KIND_OPTIONS} />
+            </div>
+
+            {frontKind !== 'MDF_VOPSIT' ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <MaterialPicker label="Material fronturi" value={values.frontMaterialId} onChange={(v) => set('frontMaterialId', v)} materials={pickerMaterials} allowEmpty />
+                <SelectField label="Cant fronturi" value={values.frontPerimeterId} onChange={(v) => set('frontPerimeterId', v)} options={bandOptions.frontPerimeter} allowEmpty />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <SelectField label="Furnizor" value={values.mdfSupplierId} onChange={(v) => set('mdfSupplierId', v)} options={frontSupplierOptions} allowEmpty />
+                  <FrontModelPicker label="Model" value={values.mdfModelId} onChange={(v) => set('mdfModelId', v)} models={frontModelOptions} allowEmpty />
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="grid gap-2">
+                    <Label className={fieldLabelCls}>Finisaj</Label>
+                    <SegmentedControl value={values.mdfFinish} onChange={(v) => set('mdfFinish', v)} options={MDF_FINISH_OPTIONS} />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className={fieldLabelCls}>Nr. fețe</Label>
+                    <SegmentedControl value={values.mdfFaces} onChange={(v) => set('mdfFaces', v)} options={MDF_FACES_OPTIONS} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <RalPicker
+                    label="Culoare RAL"
+                    value={values.mdfRalCode}
+                    onChange={(v) => set('mdfRalCode', v)}
+                    colors={ralColors}
+                    onVividHint={(vivid) => { if (vivid) set('mdfColorCategory', 'VIE'); }}
+                    allowEmpty
+                  />
+                  <div className="grid gap-2">
+                    <Label className={fieldLabelCls}>Categorie culoare</Label>
+                    <SegmentedControl value={values.mdfColorCategory} onChange={(v) => set('mdfColorCategory', v)} options={MDF_COLOR_CATEGORY_OPTIONS} />
+                  </div>
+                </div>
+              </div>
+            )}
             {noPriceMaterials.length > 0 && (
               <p className="rounded bg-amber-50 px-2 py-1 text-sm text-amber-800">
                 Materiale fără preț: {noPriceMaterials.join(', ')} — apar cu 0 lei în ofertă.

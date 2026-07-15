@@ -42,10 +42,10 @@ export interface CostCatalogs extends Catalogs {
 
 // numele pieselor de front produse de expandFronts — le identificăm ca să le
 // scoatem din costul de placă/cant și să le cotăm separat pe fronturi vopsite
-const FRONT_PART_NAMES = new Set(['Ușă', 'Front sertar', 'Panou orb']);
+export const FRONT_PART_NAMES = new Set(['Ușă', 'Front sertar', 'Panou orb']);
 // doar ușile și fronturile de sertar poartă mâner (contează la frezare); panoul orb nu
-const HANDLE_FRONT_PART_NAMES = new Set(['Ușă', 'Front sertar']);
-const FRONT_THICKNESS_MM = 18;
+export const HANDLE_FRONT_PART_NAMES = new Set(['Ușă', 'Front sertar']);
+export const FRONT_THICKNESS_MM = 18;
 
 export interface CostBreakdown {
   boards: number;

@@ -13,6 +13,9 @@ import { normalizeCabinetInput } from '@/lib/quote/normalize-input';
 import type { ExtraPart } from '@/lib/quote/cabinet-form';
 import { HANDLE_TYPE_OPTIONS, withResolvedHandle } from '@/lib/quote/handle';
 import { CabinetEditorForm, type FieldOption } from '@/components/CabinetEditorForm';
+import type { FrontModelOption } from '@/components/FrontModelPicker';
+import type { RalColor } from '@/components/RalPicker';
+import { getRalColors } from '@/lib/ral';
 import { ActionForm } from '@/components/ActionForm';
 import { DeleteButton } from '@/components/DeleteButton';
 import { NumberInput, Select, SubmitButton, TextInput } from '@/components/forms';
@@ -103,12 +106,14 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
   if (!cab || cab.projectId !== id) notFound();
   const input = normalizeCabinetInput(JSON.parse(cab.inputJson));
 
-  const [project, assembly, materials, edgeBands, settings] = await Promise.all([
+  const [project, assembly, materials, edgeBands, settings, frontSuppliers, frontModels] = await Promise.all([
     prisma.project.findUniqueOrThrow({ where: { id } }),
     cab.assemblyId ? prisma.assembly.findUnique({ where: { id: cab.assemblyId } }) : Promise.resolve(null),
     prisma.material.findMany({ orderBy: { name: 'asc' } }),
     prisma.edgeBand.findMany({ orderBy: { thicknessMm: 'asc' } }),
     prisma.appSettings.findUnique({ where: { id: 1 } }),
+    prisma.frontSupplier.findMany({ orderBy: { name: 'asc' } }),
+    prisma.frontModel.findMany({ where: { active: true }, orderBy: [{ tier: 'asc' }, { code: 'asc' }] }),
   ]);
   const legHeightMm = assembly?.legHeightMm ?? null;
   const activeMaterials = materials.filter((m) => m.active);
@@ -188,6 +193,16 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
   const extraPartsSummary = extraParts.length === 0
     ? 'Nicio piesă suplimentară'
     : `${extraParts.length} ${extraParts.length === 1 ? 'piesă' : 'piese'}`;
+
+  // Fronturi MDF vopsit: opțiuni pentru sub-formular (furnizor/model) + paleta RAL (plain data client-safe)
+  const frontSupplierOptions: FieldOption[] = frontSuppliers.map((s) => ({ value: s.id, label: s.name }));
+  const frontModelOptions: FrontModelOption[] = frontModels.map((m) => ({
+    id: m.id, code: m.code, name: m.name, tier: m.tier,
+    collection: m.collection, shapeFamily: m.shapeFamily, imageUrl: m.imageUrl,
+  }));
+  const ralColors: RalColor[] = getRalColors().map((c) => ({
+    code: c.code, num: c.num, name_en: c.name_en, hex: c.hex, vivid: c.vivid, black: c.black,
+  }));
 
   const feronerieSlot = (
     <>
@@ -319,6 +334,9 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
         feronerieSummary={feronerieSummary}
         extraPartsSlot={extraPartsSlot}
         extraPartsSummary={extraPartsSummary}
+        frontSupplierOptions={frontSupplierOptions}
+        frontModelOptions={frontModelOptions}
+        ralColors={ralColors}
         projectHandle={{
           type: project.handleType, itemId: project.handleItemId,
           label: HANDLE_TYPE_OPTIONS.find((o) => o.value === project.handleType)?.label ?? project.handleType,

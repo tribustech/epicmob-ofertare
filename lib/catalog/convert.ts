@@ -24,6 +24,7 @@ export interface SettingsRow {
   // opționale: snapshot-urile înghețate dinainte de nesting nu le au
   cutKerfMm?: number | null; cutTrimMm?: number | null;
   profilJPerFront?: number | null; golaPricePerMl?: number | null;
+  eurToRon?: number | null; // curs EUR→RON pentru fronturile MDF vopsit
   defaultHingeId: string | null; defaultHandleId: string | null;
   defaultLegId: string | null; defaultRailId: string | null;
 }

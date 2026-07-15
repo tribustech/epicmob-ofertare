@@ -8,6 +8,7 @@ import {
 } from '@/lib/engine';
 import type {
   CabinetInput, CostResult, CutListFile, ExpandedCabinet, FreeLine,
+  FrontModel, FrontPrice, FrontSupplier,
   HardwareLine, HardwareSuggestion, HardwareSummaryRow, NestParams, Part, Warning,
 } from '@/lib/engine';
 import type { ExtraPart } from './cabinet-form';
@@ -20,7 +21,22 @@ export interface SnapshotData {
   edgeBands: (EdgeBandRow & { active: boolean })[];
   hardware: (HardwareRow & { active: boolean })[];
   cuttingRates: CuttingRateRow[];
+  // catalog fronturi MDF vopsit (Prisma rows, structural compatibile cu tipurile motorului);
+  // settings.eurToRon poartă cursul EUR→RON
+  frontSuppliers: FrontSupplier[];
+  frontModels: FrontModel[];
+  frontPrices: FrontPrice[];
   settings: SettingsRow;
+}
+
+// Catalogul de fronturi MDF vopsit împachetat pentru toCostCatalogs (al 5-lea argument).
+export function frontCatalogsFromSnapshot(snap: SnapshotData) {
+  return {
+    suppliers: snap.frontSuppliers,
+    models: snap.frontModels,
+    prices: snap.frontPrices,
+    eurToRon: snap.settings.eurToRon ?? 1,
+  };
 }
 
 export interface QuoteCabinet {
@@ -50,7 +66,9 @@ export interface QuoteResult {
 
 export function computeQuote(q: QuoteInput, snap: SnapshotData): QuoteResult {
   // catalogul de cost include TOATE rândurile — snapshot-urile vechi nu aruncă la referințe dezactivate
-  const catalogs = toCostCatalogs(snap.materials, snap.edgeBands, snap.hardware, snap.cuttingRates);
+  const catalogs = toCostCatalogs(
+    snap.materials, snap.edgeBands, snap.hardware, snap.cuttingRates, frontCatalogsFromSnapshot(snap),
+  );
   // sugestiile implicite folosesc doar feroneria activă
   const defaults = buildHardwareDefaults(snap.hardware.filter((h) => h.active), snap.settings);
   const cc = parseConstruction(snap.settings.constructionJson);

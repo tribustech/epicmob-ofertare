@@ -24,9 +24,18 @@ export function expandFronts(
   catalogs: Catalogs,
   cc: ConstructionConstants,
 ): { parts: Part[]; fronts: FrontInfo[]; warnings: Warning[] } {
-  if (!input.frontMaterialId) return { parts: [], fronts: [], warnings: [] };
+  // MDF vopsit: frontMaterialId e null (frontul se cotează per m² în EUR, nu din catalogul
+  // de plăci). Geometria/grosimea frontului vine dintr-un material generic MDF_VOPSIT din
+  // catalog; costul lui de placă e ulterior scos din bucket-ul de plăci de către computeCosts.
+  const isVopsit = input.frontKind === 'MDF_VOPSIT' && !!input.mdfFront;
+  if (!input.frontMaterialId && !isVopsit) return { parts: [], fronts: [], warnings: [] };
 
-  const material = findMaterial(catalogs, input.frontMaterialId);
+  const material = input.frontMaterialId
+    ? findMaterial(catalogs, input.frontMaterialId)
+    : catalogs.materials.find((m) => m.kind === 'MDF_VOPSIT');
+  if (!material) {
+    throw new Error(`Corpul ${input.label}: nu există un material MDF vopsit în catalog pentru fronturi`);
+  }
   // MDF vopsit și MDF înfoliat au fața finisată pe toate laturile — fără cant ABS
   const NO_EDGE_KINDS: MaterialKind[] = ['MDF_VOPSIT', 'MDF_INFOLIAT'];
   const bandId = NO_EDGE_KINDS.includes(material.kind) ? null : input.edgeBands.frontPerimeterId;

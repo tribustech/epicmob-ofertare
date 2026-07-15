@@ -23,9 +23,12 @@ export function makeSnapshot(overrides: Partial<SnapshotData> = {}): SnapshotDat
       { maxThicknessMm: 32, pricePerSheet: 50 },
       { maxThicknessMm: 10, pricePerSheet: 33 },
     ],
+    frontSuppliers: [],
+    frontModels: [],
+    frontPrices: [],
     settings: {
       sheetYieldFactor: 0.8, constructionJson: '{}',
-      cutKerfMm: 4, cutTrimMm: 10,
+      cutKerfMm: 4, cutTrimMm: 10, eurToRon: 5,
       defaultHingeId: 'blum-cliptop', defaultHandleId: 'maner-std',
       defaultLegId: 'picior-std', defaultRailId: null,
     },
