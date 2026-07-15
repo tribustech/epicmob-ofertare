@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { NoPriceBadge } from '@/components/NoPriceBadge';
 import { materialHasNoPrice } from '@/lib/quote/material-price';
+import { fieldLabelCls } from '@/components/forms';
 
 export type MaterialPickerItem = {
   id: string;
@@ -100,7 +101,7 @@ export function MaterialPicker({
 
   return (
     <div className="grid gap-1">
-      <Label>{label}</Label>
+      <Label className={fieldLabelCls}>{label}</Label>
       <Popover.Root open={open} onOpenChange={setOpen}>
         <Popover.Trigger asChild>
           <button type="button" className={triggerCls}>
