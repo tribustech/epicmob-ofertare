@@ -51,6 +51,7 @@ export default async function SetariPage() {
               <NumberInput name="sheetYieldFactor" label="Factor utilizare foaie (doar estimarea per corp)" defaultValue={settings.sheetYieldFactor} step="0.01" />
               <NumberInput name="cutKerfMm" label="Kerf pânză (mm)" defaultValue={settings.cutKerfMm} step="0.1" />
               <NumberInput name="cutTrimMm" label="Margine curățare placă (mm)" defaultValue={settings.cutTrimMm} step="1" />
+              <NumberInput name="eurToRon" label="Curs EUR→RON" defaultValue={settings.eurToRon} step="0.01" />
               <NumberInput name="profilJPerFront" label="Profil J (lei/front frezat)" defaultValue={settings.profilJPerFront} />
               <NumberInput name="golaPricePerMl" label="Profil GOLA (lei/ml)" defaultValue={settings.golaPricePerMl} />
             </div>

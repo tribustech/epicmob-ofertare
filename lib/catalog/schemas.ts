@@ -58,6 +58,7 @@ export const settingsSchema = z.object({
   sheetYieldFactor: num.gt(0).lte(1),
   cutKerfMm: num.nonnegative().lte(50),
   cutTrimMm: num.nonnegative().lte(200),
+  eurToRon: posNum,
   defaultHingeId: optId,
   defaultHandleId: optId,
   defaultLegId: optId,
