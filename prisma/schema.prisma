@@ -53,6 +53,50 @@ model CuttingRate {
   pricePerSheet  Float
 }
 
+model FrontSupplier {
+  id                   String       @id @default(cuid())
+  name                 String
+  productType          String // VOPSIT | INFOLIAT
+  currency             String       @default("EUR")
+  handleMillingEur     Float        @default(0)
+  vividSurchargeEur    Float        @default(0)
+  metallicSurchargeEur Float        @default(0)
+  blackGlossEurPerFace Float        @default(0)
+  active               Boolean      @default(true)
+  updatedAt            DateTime     @updatedAt
+  models               FrontModel[]
+  prices               FrontPrice[]
+}
+
+model FrontModel {
+  id               String        @id
+  supplierId       String
+  supplier         FrontSupplier @relation(fields: [supplierId], references: [id])
+  code             String
+  name             String
+  shapeFamily      String // PLAN|CLASIC|RIFLAJ|MANER|PERFORAT
+  tier             String // cheie spre FrontPrice
+  collection       String?
+  hasHandleMilling Boolean       @default(false)
+  imageUrl         String?
+  active           Boolean       @default(true)
+
+  @@index([supplierId])
+}
+
+model FrontPrice {
+  id             String        @id @default(cuid())
+  supplierId     String
+  supplier       FrontSupplier @relation(fields: [supplierId], references: [id])
+  tier           String
+  finish         String // MAT|LUCIOS
+  faces          Int // 1|2
+  thicknessMm    Int           @default(18)
+  pricePerSqmEur Float
+
+  @@unique([supplierId, tier, finish, faces, thicknessMm])
+}
+
 model AppSettings {
   id               Int     @id @default(1)
   laborPct         Float
@@ -66,6 +110,7 @@ model AppSettings {
   defaultHandleId  String?
   defaultLegId     String?
   defaultRailId    String?
+  eurToRon         Float   @default(4.97)
 }
 
 model Project {
