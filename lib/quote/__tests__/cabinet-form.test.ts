@@ -78,6 +78,37 @@ describe('cabinetFormSchema + toCabinetInput', () => {
     expect(r.success).toBe(false);
   });
 
+  it('front implicit PAL: frontKind PAL, mdfFront lipsește', () => {
+    const d = cabinetFormSchema.parse(base);
+    expect(d.frontKind).toBe('PAL');
+    const input = toCabinetInput(d);
+    expect(input.frontKind).toBe('PAL');
+    expect(input.mdfFront).toBeUndefined();
+  });
+
+  it('MDF vopsit fără model → eroare de validare', () => {
+    const r = cabinetFormSchema.safeParse({
+      ...base, frontType: 'USI', frontKind: 'MDF_VOPSIT', frontMaterialId: '',
+      mdfSupplierId: 'paint-mob', mdfModelId: '', mdfRalCode: '9010',
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it('MDF vopsit complet → valid, mdfFront populat, frontMaterialId null', () => {
+    const d = cabinetFormSchema.parse({
+      ...base, frontType: 'USI', frontKind: 'MDF_VOPSIT', frontMaterialId: '', frontPerimeterId: '',
+      mdfSupplierId: 'paint-mob', mdfModelId: 'model-x', mdfFinish: 'LUCIOS',
+      mdfFaces: '2', mdfRalCode: '9010', mdfColorCategory: 'METALIZAT',
+    });
+    const input = toCabinetInput(d);
+    expect(input.frontKind).toBe('MDF_VOPSIT');
+    expect(input.frontMaterialId).toBeNull();
+    expect(input.mdfFront).toEqual({
+      supplierId: 'paint-mob', modelId: 'model-x', finish: 'LUCIOS',
+      faces: 2, ralCode: '9010', colorCategory: 'METALIZAT',
+    });
+  });
+
   it('fără front: doors 0, drawers lipsește, frontMaterialId null, polițele rămân', () => {
     const input = toCabinetInput(cabinetFormSchema.parse({ ...base, frontType: 'FARA', shelves: '2' }));
     expect(input.doors).toBe(0);

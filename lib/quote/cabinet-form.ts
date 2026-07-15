@@ -21,7 +21,14 @@ export const cabinetFormSchema = z
     shelves: intNonNeg,
     doors: intNonNeg,
     carcassMaterialId: z.string().min(1),
+    frontKind: z.enum(['PAL', 'MDF_MELAMINAT', 'MDF_INFOLIAT', 'MDF_VOPSIT']).default('PAL'),
     frontMaterialId: optStr,
+    mdfSupplierId: optStr,
+    mdfModelId: optStr,
+    mdfFinish: z.enum(['MAT', 'LUCIOS']).default('MAT'),
+    mdfFaces: z.coerce.number().int().min(1).max(2).default(1),
+    mdfRalCode: optStr,
+    mdfColorCategory: z.enum(['NORMALA', 'VIE', 'METALIZAT']).default('NORMALA'),
     backEnabled: checkbox,
     backMaterialId: optStr,
     backMount: z.enum(['FALT', 'APLICAT']),
@@ -49,9 +56,16 @@ export const cabinetFormSchema = z
   .refine((d) => d.frontType !== 'SERTARE' || d.drawersSystem !== 'PAL_BOX' || !!d.drawersBottomMaterialId, {
     message: 'Alege materialul pentru fundul sertarelor (cutie PAL)',
   })
-  .refine((d) => d.frontType === 'FARA' || !!d.frontMaterialId, {
+  .refine((d) => d.frontType === 'FARA' || d.frontKind === 'MDF_VOPSIT' || !!d.frontMaterialId, {
     message: 'Fronturile cer un material de front',
   })
+  .refine(
+    (d) =>
+      d.frontType === 'FARA' ||
+      d.frontKind !== 'MDF_VOPSIT' ||
+      (!!d.mdfSupplierId && !!d.mdfModelId && !!d.mdfRalCode),
+    { message: 'MDF vopsit cere furnizor, model și culoare' },
+  )
   .refine((d) => {
     if (d.frontType !== 'SERTARE' || !d.drawerFrontHeightsMm) return true;
     const heights = parseDrawerHeights(d.drawerFrontHeightsMm);
@@ -72,6 +86,7 @@ export function parseDrawerHeights(s: string): number[] {
 
 export function toCabinetInput(d: CabinetFormData): CabinetInput {
   const heights = d.drawerFrontHeightsMm ? parseDrawerHeights(d.drawerFrontHeightsMm) : [];
+  const isMdfVopsit = d.frontType !== 'FARA' && d.frontKind === 'MDF_VOPSIT';
   return {
     label: d.label,
     type: d.type,
@@ -91,7 +106,18 @@ export function toCabinetInput(d: CabinetFormData): CabinetInput {
           }
         : undefined,
     carcassMaterialId: d.carcassMaterialId,
-    frontMaterialId: d.frontType === 'FARA' ? null : (d.frontMaterialId ?? null),
+    frontKind: d.frontKind,
+    frontMaterialId: isMdfVopsit ? null : (d.frontType === 'FARA' ? null : (d.frontMaterialId ?? null)),
+    mdfFront: isMdfVopsit
+      ? {
+          supplierId: d.mdfSupplierId!,
+          modelId: d.mdfModelId!,
+          finish: d.mdfFinish,
+          faces: d.mdfFaces,
+          ralCode: d.mdfRalCode!,
+          colorCategory: d.mdfColorCategory,
+        }
+      : undefined,
     back: { enabled: d.backEnabled, materialId: d.backMaterialId, mount: d.backMount },
     edgeBands: {
       carcassFrontEdgeId: d.carcassFrontEdgeId,
