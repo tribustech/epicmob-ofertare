@@ -19,6 +19,9 @@ export interface FrontModel {
   id: string;
   tier: string;
   hasHandleMilling: boolean;
+  // metadate afișabile (din catalogul Prisma) — nu intervin în costing
+  code?: string;
+  name?: string;
 }
 
 export interface FrontPrice {

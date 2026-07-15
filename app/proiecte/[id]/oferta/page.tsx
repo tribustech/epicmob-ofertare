@@ -43,6 +43,20 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
     return !!m && materialHasNoPrice(m);
   };
 
+  const FINISH_LABELS: Record<string, string> = { MAT: 'mat', LUCIOS: 'lucios' };
+  const frontLabel = (c: LoadedCabinet): string => {
+    if (c.input.frontKind === 'MDF_VOPSIT' && c.input.mdfFront) {
+      const mdf = c.input.mdfFront;
+      const model = snapshot.frontModels.find((m) => m.id === mdf.modelId);
+      const parts = ['MDF vopsit'];
+      if (model?.code) parts.push(model.code);
+      parts.push(FINISH_LABELS[mdf.finish] ?? mdf.finish);
+      if (mdf.ralCode) parts.push(mdf.ralCode);
+      return parts.join(' · ');
+    }
+    return materialName(c.input.frontMaterialId);
+  };
+
   const noPriceNames = [
     ...new Map(
       cabinets
@@ -107,7 +121,7 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
         return (
           <div key={a.id} className="space-y-2">
             <h2 className="text-sm font-semibold">{a.name}</h2>
-            <CabinetsTable cabinets={assemblyCabinets} materialName={materialName} idHasNoPrice={idHasNoPrice} />
+            <CabinetsTable cabinets={assemblyCabinets} frontLabel={frontLabel} idHasNoPrice={idHasNoPrice} />
           </div>
         );
       })}
@@ -115,7 +129,7 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
       {unassigned.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-sm font-semibold">Alte corpuri</h2>
-          <CabinetsTable cabinets={unassigned} materialName={materialName} idHasNoPrice={idHasNoPrice} />
+          <CabinetsTable cabinets={unassigned} frontLabel={frontLabel} idHasNoPrice={idHasNoPrice} />
         </div>
       )}
 
@@ -132,7 +146,7 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
   );
 }
 
-function CabinetsTable({ cabinets, materialName, idHasNoPrice }: { cabinets: LoadedCabinet[]; materialName: (mid: string | null) => string; idHasNoPrice: (mid: string | null | undefined) => boolean }) {
+function CabinetsTable({ cabinets, frontLabel, idHasNoPrice }: { cabinets: LoadedCabinet[]; frontLabel: (c: LoadedCabinet) => string; idHasNoPrice: (mid: string | null | undefined) => boolean }) {
   return (
     <table className="w-full text-sm">
       <thead>
@@ -148,7 +162,7 @@ function CabinetsTable({ cabinets, materialName, idHasNoPrice }: { cabinets: Loa
             <td>{c.input.widthMm} × {c.input.heightMm} × {c.input.depthMm}</td>
             <td>
               <span className="inline-flex items-center gap-1">
-                {materialName(c.input.frontMaterialId)}
+                {frontLabel(c)}
                 {idHasNoPrice(c.input.frontMaterialId) && <NoPriceBadge />}
               </span>
             </td>
