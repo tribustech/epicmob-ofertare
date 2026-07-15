@@ -30,7 +30,10 @@ export function buildIsoModel(input: CabinetInput, cc: ConstructionConstants): C
   const golaBars: IsoRect[] = [];
 
   const drawerCount = input.drawers?.count ?? 0;
-  const hasFronts = input.frontMaterialId !== null && (input.doors > 0 || drawerCount > 0);
+  // MDF vopsit: frontMaterialId e null (frontul se cotează per m², nu din catalogul de plăci),
+  // dar corpul are fronturi — la fel ca în expandFronts.
+  const isVopsit = input.frontKind === 'MDF_VOPSIT' && !!input.mdfFront;
+  const hasFronts = (input.frontMaterialId !== null || isVopsit) && (input.doors > 0 || drawerCount > 0);
 
   const blindW = input.type === 'COLT' && hasFronts ? (input.blindPanelWidthMm ?? cc.blindPanelDefaultWidthMm) : 0;
   const frontX0 = g + blindW;
