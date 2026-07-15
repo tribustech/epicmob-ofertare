@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { cabinetFormSchema, toCabinetInput } from '@/lib/quote/cabinet-form';
 import type { ExtraPart } from '@/lib/quote/cabinet-form';
@@ -12,7 +12,7 @@ import { expandCabinet } from '@/lib/engine';
 import type { HandleType, HardwareLine, Part, Warning } from '@/lib/engine';
 import { parseConstruction, toCostCatalogs } from '@/lib/catalog/convert';
 import type { FormState } from '@/lib/forms/form-action';
-import { fmtLei, fmtNum } from '@/lib/format';
+import { fmtNum } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { SectionAccordion } from '@/components/ui/section-accordion';
 import { SegmentedControl } from '@/components/ui/segmented-control';
@@ -211,21 +211,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     return { input, parts, warnings, expandError, estimate };
   }, [parsed, catalogs, cc, hardwareOverrides, extraParts, snapshot, laborPct, yieldFactor, legHeightMm, projectHandle]);
 
-  const [lastPrice, setLastPrice] = useState<{ cost: number; sell: number } | null>(() =>
-    live && !live.expandError && !live.estimate.error ? { cost: live.estimate.cost, sell: live.estimate.sell } : null,
-  );
-
-  useEffect(() => {
-    if (live && !live.expandError && !live.estimate.error) {
-      setLastPrice({ cost: live.estimate.cost, sell: live.estimate.sell });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [live]);
-
   const invalid = !parsed.success;
-  const displayPrice = live && !live.expandError && !live.estimate.error
-    ? { cost: live.estimate.cost, sell: live.estimate.sell }
-    : lastPrice;
 
   const materialName = (mid: string) => snapshot.materials.find((m) => m.id === mid)?.name ?? mid;
   const bandName = (bid?: string) => (bid ? (snapshot.edgeBands.find((e) => e.id === bid)?.name ?? bid) : '');
@@ -286,11 +272,28 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
         .filter(Boolean).join(' · ')
     : 'Fără spate';
 
+  // indicator „completat" per secțiune (bulină verde)
+  const numV = (s: string) => Number(s) || 0;
+  const frontCovered =
+    frontType === 'FARA' ? true
+      : values.frontKind === 'MDF_VOPSIT'
+        ? !!(values.mdfSupplierId && values.mdfModelId && values.mdfRalCode)
+        : !!values.frontMaterialId;
+  const sectionComplete = {
+    dimensiuni: !!values.type && numV(values.widthMm) > 0 && numV(values.heightMm) > 0 && numV(values.depthMm) > 0,
+    materiale: !!values.carcassMaterialId && frontCovered,
+    fronturi: frontType === 'USI' ? numV(values.doors) >= 1
+      : frontType === 'SERTARE' ? drawersCount >= 1
+        : true,
+    spate: !backEnabled || !!values.backMaterialId,
+    feronerie: true,
+  };
+
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_380px] lg:items-start">
       <div className="flex flex-col gap-3">
         <SectionAccordion title="Identificare și dimensiuni" summary={dimSummary}
-          open={openSections.has('dimensiuni')} onToggle={() => toggleSection('dimensiuni')}>
+          open={openSections.has('dimensiuni')} onToggle={() => toggleSection('dimensiuni')} complete={sectionComplete.dimensiuni}>
           <div className="space-y-4">
             <div className="grid gap-1.5">
               <Label htmlFor="label" className={fieldLabelCls}>Etichetă</Label>
@@ -317,7 +320,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
         </SectionAccordion>
 
         <SectionAccordion title="Materiale și canturi" summary={matSummary}
-          open={openSections.has('materiale')} onToggle={() => toggleSection('materiale')}>
+          open={openSections.has('materiale')} onToggle={() => toggleSection('materiale')} complete={sectionComplete.materiale}>
           <div className="space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <MaterialPicker label="Material carcasă" value={values.carcassMaterialId} onChange={(v) => set('carcassMaterialId', v)} materials={pickerMaterials} />
@@ -375,7 +378,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
         </SectionAccordion>
 
         <SectionAccordion title="Fronturi" summary={frontSummary}
-          open={openSections.has('fronturi')} onToggle={() => toggleSection('fronturi')}>
+          open={openSections.has('fronturi')} onToggle={() => toggleSection('fronturi')} complete={sectionComplete.fronturi}>
           <div className="space-y-4">
             <SegmentedControl
               value={frontType}
@@ -530,7 +533,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
         </SectionAccordion>
 
         <SectionAccordion title="Spate" summary={backSummary}
-          open={openSections.has('spate')} onToggle={() => toggleSection('spate')}>
+          open={openSections.has('spate')} onToggle={() => toggleSection('spate')} complete={sectionComplete.spate}>
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Checkbox
@@ -550,7 +553,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
         </SectionAccordion>
 
         <SectionAccordion title="Feronerie" summary={feronerieSummary}
-          open={openSections.has('feronerie')} onToggle={() => toggleSection('feronerie')}>
+          open={openSections.has('feronerie')} onToggle={() => toggleSection('feronerie')} complete={sectionComplete.feronerie}>
           {feronerieSlot}
         </SectionAccordion>
 
@@ -579,30 +582,12 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
       </div>
 
       <div className="space-y-4 lg:sticky lg:top-6">
-        <div className="rounded-xl bg-card p-5 ring-1 ring-border">
-          <div className="mb-4 flex items-center justify-between gap-2">
-            <div className="text-[15px] font-bold">Preț estimativ</div>
-            {invalid && <Badge variant="outline" className="border-amber-500 text-amber-700">valori invalide</Badge>}
+        {invalid && (
+          <div className="rounded-xl bg-card px-5 py-3 ring-1 ring-border">
+            <Badge variant="outline" className="border-amber-500 text-amber-700">valori invalide</Badge>
+            <span className="ml-2 text-sm text-muted-foreground">Corectează secțiunile marcate.</span>
           </div>
-          {displayPrice ? (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg border border-[#ececea] bg-[#fafaf8] px-4 py-3.5">
-                <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground/70">Cost</div>
-                <div className="font-mono text-[22px] font-semibold tracking-tight">{fmtLei(displayPrice.cost)}</div>
-              </div>
-              <div className="rounded-lg border border-accent-blue-border bg-accent-blue px-4 py-3.5">
-                <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-accent-blue-foreground">Preț vânzare</div>
-                <div className="font-mono text-[22px] font-semibold tracking-tight text-accent-blue-foreground">{fmtLei(displayPrice.sell)}</div>
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Fără preț disponibil încă.</p>
-          )}
-          <p className="mt-3 text-xs text-muted-foreground">Estimativ — prețul final rotunjește foile pe proiect.</p>
-          {live?.estimate.error && (
-            <Alert variant="destructive" className="mt-3"><AlertDescription>{live.estimate.error}</AlertDescription></Alert>
-          )}
-        </div>
+        )}
 
         {live?.expandError && (
           <Alert variant="destructive"><AlertDescription>{live.expandError}</AlertDescription></Alert>

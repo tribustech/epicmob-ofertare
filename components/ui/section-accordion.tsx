@@ -3,12 +3,14 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-export function SectionAccordion({ title, summary, open, onToggle, children }: {
+export function SectionAccordion({ title, summary, open, onToggle, children, complete }: {
   title: string;
   summary?: string;
   open: boolean;
   onToggle: () => void;
   children: ReactNode;
+  /** undefined = fără indicator; true = verde (completat); false = gol (incomplet) */
+  complete?: boolean;
 }) {
   return (
     <div className="overflow-hidden rounded-xl bg-card ring-1 ring-border">
@@ -16,8 +18,18 @@ export function SectionAccordion({ title, summary, open, onToggle, children }: {
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="flex w-full cursor-pointer items-center gap-4 px-5 py-4 text-left"
+        className="flex w-full cursor-pointer items-center gap-3 px-5 py-4 text-left"
       >
+        {complete !== undefined && (
+          <span
+            aria-hidden
+            title={complete ? 'Completat' : 'Incomplet'}
+            className={cn(
+              'size-2.5 shrink-0 rounded-full transition-colors',
+              complete ? 'bg-emerald-500' : 'border border-muted-foreground/30',
+            )}
+          />
+        )}
         <div className="min-w-0 flex-1">
           <div className="text-[15px] font-bold text-foreground">{title}</div>
           {summary && <div className="mt-0.5 truncate text-[12.5px] text-muted-foreground/80">{summary}</div>}
