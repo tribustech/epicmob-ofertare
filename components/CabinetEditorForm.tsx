@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { cabinetFormSchema, toCabinetInput } from '@/lib/quote/cabinet-form';
@@ -13,8 +14,9 @@ import { parseConstruction, toCostCatalogs } from '@/lib/catalog/convert';
 import type { FormState } from '@/lib/forms/form-action';
 import { fmtLei, fmtNum } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { SectionAccordion } from '@/components/ui/section-accordion';
+import { SegmentedControl } from '@/components/ui/segmented-control';
+import { fieldLabelCls } from '@/components/forms';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -71,6 +73,10 @@ export interface CabinetEditorFormProps {
   };
   hardwareOverrides: HardwareLine[] | null;
   extraParts: ExtraPart[];
+  feronerieSlot: ReactNode;
+  feronerieSummary: string;
+  extraPartsSlot: ReactNode;
+  extraPartsSummary: string;
   projectHandle: { type: string; itemId: string | null; label: string };
   hardwareSelOptions: {
     hinges: FieldOption[];
@@ -87,6 +93,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const {
     initial, snapshot, laborPct, yieldFactor, legHeightMm,
     bandOptions, hardwareOverrides, extraParts,
+    feronerieSlot, feronerieSummary, extraPartsSlot, extraPartsSummary,
     projectHandle, hardwareSelOptions, save,
   } = props;
   const router = useRouter();
@@ -217,29 +224,49 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const isColt = type === 'COLT';
   const backEnabled = values.backEnabled === 'true';
 
+  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set(['dimensiuni']));
+  const toggleSection = (id: string) => setOpenSections((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+
+  const typeLabel = TYPE_OPTIONS.find((o) => o.value === type)?.label ?? type;
+  const dimSummary = `${values.label} · ${typeLabel} · ${values.widthMm} × ${values.heightMm} × ${values.depthMm}`;
+  const matSummary = [materialName(values.carcassMaterialId), bandName(values.carcassFrontEdgeId)]
+    .filter(Boolean).join(' · ') || '—';
+  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+  const handleSummary = values.handleMode === 'PROIECT' ? 'mâner ca proiectul' : 'mâner pe corp';
+  const frontSummary =
+    frontType === 'USI'
+      ? [
+          `Uși · ${plural(Number(values.doors) || 0, 'ușă', 'uși')}`,
+          withShelves ? plural(Number(values.shelves) || 0, 'poliță', 'polițe') : null,
+          handleSummary,
+        ].filter(Boolean).join(' · ')
+      : frontType === 'SERTARE'
+        ? `Sertare · ${plural(drawersCount, 'sertar', 'sertare')} · ${handleSummary}`
+        : `Fără front · ${plural(Number(values.shelves) || 0, 'poliță', 'polițe')}`;
+  const backSummary = backEnabled
+    ? ['Cu spate', values.backMaterialId ? materialName(values.backMaterialId) : null,
+       BACK_MOUNT_OPTIONS.find((o) => o.value === values.backMount)?.label.toLowerCase() ?? null]
+        .filter(Boolean).join(' · ')
+    : 'Fără spate';
+
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <div className="space-y-6">
-        <Card>
-          <CardHeader><CardTitle>Identificare și dimensiuni</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-1">
-              <Label htmlFor="label">Etichetă</Label>
+    <div className="grid gap-6 lg:grid-cols-[1fr_380px] lg:items-start">
+      <div className="flex flex-col gap-3">
+        <SectionAccordion title="Identificare și dimensiuni" summary={dimSummary}
+          open={openSections.has('dimensiuni')} onToggle={() => toggleSection('dimensiuni')}>
+          <div className="space-y-4">
+            <div className="grid gap-1.5">
+              <Label htmlFor="label" className={fieldLabelCls}>Etichetă</Label>
               <Input id="label" value={values.label} onChange={(e) => set('label', e.target.value)} />
             </div>
-
             <div className="grid gap-2">
-              <Label>Tip corp</Label>
-              <RadioGroup value={type} onValueChange={(v) => set('type', v)} className="flex flex-wrap gap-4">
-                {TYPE_OPTIONS.map((o) => (
-                  <div key={o.value} className="flex items-center gap-2">
-                    <RadioGroupItem value={o.value} id={`type-${o.value}`} />
-                    <Label htmlFor={`type-${o.value}`} className="font-normal">{o.label}</Label>
-                  </div>
-                ))}
-              </RadioGroup>
+              <Label className={fieldLabelCls}>Tip corp</Label>
+              <SegmentedControl value={type} onChange={(v) => set('type', v)} options={TYPE_OPTIONS} />
             </div>
-
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <NumField label="Lățime L (mm)" value={values.widthMm} onChange={onWidthChange} />
               <NumField label="Înălțime H (mm)" value={values.heightMm} onChange={(v) => set('heightMm', v)} />
@@ -253,12 +280,12 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
               <SelectField label="Blat corp (sus)" value={values.mountTop} onChange={(v) => set('mountTop', v)} options={MOUNT_OPTIONS} />
               <SelectField label="Fund corp (jos)" value={values.mountBottom} onChange={(v) => set('mountBottom', v)} options={MOUNT_OPTIONS} />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </SectionAccordion>
 
-        <Card>
-          <CardHeader><CardTitle>Materiale și canturi</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
+        <SectionAccordion title="Materiale și canturi" summary={matSummary}
+          open={openSections.has('materiale')} onToggle={() => toggleSection('materiale')}>
+          <div className="space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <MaterialPicker label="Material carcasă" value={values.carcassMaterialId} onChange={(v) => set('carcassMaterialId', v)} materials={pickerMaterials} />
               <MaterialPicker label="Material fronturi" value={values.frontMaterialId} onChange={(v) => set('frontMaterialId', v)} materials={pickerMaterials} allowEmpty />
@@ -270,31 +297,23 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                 Materiale fără preț: {noPriceMaterials.join(', ')} — apar cu 0 lei în ofertă.
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </SectionAccordion>
 
-        <Card>
-          <CardHeader><CardTitle>Fronturi</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <RadioGroup
+        <SectionAccordion title="Fronturi" summary={frontSummary}
+          open={openSections.has('fronturi')} onToggle={() => toggleSection('fronturi')}>
+          <div className="space-y-4">
+            <SegmentedControl
               value={frontType}
-              onValueChange={(v) => setValues((prev) => ({
+              onChange={(v) => setValues((prev) => ({
                 ...prev, frontType: v,
                 ...(v === 'USI' && !doorsTouched ? { doors: String(autoDoors(Number(prev.widthMm))) } : {}),
                 ...(v === 'SERTARE' && drawersCount === 0
                   ? { drawersCount: '3', drawerFrontHeightsMm: equalHeights(Number(prev.heightMm), 3).join(', ') }
                   : {}),
               }))}
-              className="flex flex-wrap gap-4"
-            >
-              {FRONT_TYPE_OPTIONS.map((o) => (
-                <div key={o.value} className="flex items-center gap-2">
-                  <RadioGroupItem value={o.value} id={`front-${o.value}`} />
-                  <Label htmlFor={`front-${o.value}`} className="font-normal">{o.label}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-
+              options={FRONT_TYPE_OPTIONS}
+            />
             {frontType === 'USI' && (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
@@ -345,7 +364,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                   <div className="space-y-1">
                     <div className="grid grid-cols-2 gap-3">
                       <div className="grid gap-1">
-                        <Label>Înălțime laterală (mm)</Label>
+                        <Label className={fieldLabelCls}>Înălțime laterală (mm)</Label>
                         <select className={selectCls} value={values.tandemboxHeightMm ?? ''} onChange={(e) => set('tandemboxHeightMm', e.target.value)}>
                           <option value="">— alege —</option>
                           {hardwareSelOptions.tandemboxHeights.map((h) => {
@@ -396,7 +415,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
 
             {frontType !== 'FARA' && (
               <div className="space-y-2 border-t pt-3">
-                <Label>Mâner</Label>
+                <Label className={fieldLabelCls}>Mâner</Label>
                 <div className="grid grid-cols-2 gap-3">
                   <SelectField
                     label="Tip"
@@ -433,12 +452,12 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                 )}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </SectionAccordion>
 
-        <Card>
-          <CardHeader><CardTitle>Spate</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
+        <SectionAccordion title="Spate" summary={backSummary}
+          open={openSections.has('spate')} onToggle={() => toggleSection('spate')}>
+          <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Checkbox
                 id="backEnabled"
@@ -453,11 +472,21 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                 <SelectField label="Montaj spate" value={values.backMount} onChange={(v) => set('backMount', v)} options={BACK_MOUNT_OPTIONS} />
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </SectionAccordion>
 
-        <div className="space-y-2">
-          <Button onClick={handleSave} disabled={isPending}>
+        <SectionAccordion title="Feronerie" summary={feronerieSummary}
+          open={openSections.has('feronerie')} onToggle={() => toggleSection('feronerie')}>
+          {feronerieSlot}
+        </SectionAccordion>
+
+        <SectionAccordion title="Piese suplimentare" summary={extraPartsSummary}
+          open={openSections.has('suplimentare')} onToggle={() => toggleSection('suplimentare')}>
+          {extraPartsSlot}
+        </SectionAccordion>
+
+        <div className="mt-1.5 space-y-2">
+          <Button onClick={handleSave} disabled={isPending} size="lg">
             {isPending ? 'Se salvează…' : 'Salvează corpul'}
           </Button>
           {formState.error && (
@@ -475,41 +504,31 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
         </div>
       </div>
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between gap-2">
-              <CardTitle>Preț estimativ</CardTitle>
-              {invalid && <Badge variant="outline" className="border-amber-500 text-amber-700">valori invalide</Badge>}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {displayPrice ? (
-              <div className="grid grid-cols-2 gap-2">
-                <Card size="sm">
-                  <CardContent>
-                    <div className="text-xs text-muted-foreground">Cost</div>
-                    <div className="text-2xl font-bold">{fmtLei(displayPrice.cost)}</div>
-                  </CardContent>
-                </Card>
-                <Card size="sm">
-                  <CardContent>
-                    <div className="text-xs text-muted-foreground">Preț vânzare</div>
-                    <div className="text-2xl font-bold">{fmtLei(displayPrice.sell)}</div>
-                  </CardContent>
-                </Card>
+      <div className="space-y-4 lg:sticky lg:top-6">
+        <div className="rounded-xl bg-card p-5 ring-1 ring-border">
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <div className="text-[15px] font-bold">Preț estimativ</div>
+            {invalid && <Badge variant="outline" className="border-amber-500 text-amber-700">valori invalide</Badge>}
+          </div>
+          {displayPrice ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg border border-[#ececea] bg-[#fafaf8] px-4 py-3.5">
+                <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground/70">Cost</div>
+                <div className="font-mono text-[22px] font-semibold tracking-tight">{fmtLei(displayPrice.cost)}</div>
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Fără preț disponibil încă.</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Estimativ — prețul final rotunjește foile pe proiect.
-            </p>
-            {live?.estimate.error && (
-              <Alert variant="destructive"><AlertDescription>{live.estimate.error}</AlertDescription></Alert>
-            )}
-          </CardContent>
-        </Card>
+              <div className="rounded-lg border border-accent-blue-border bg-accent-blue px-4 py-3.5">
+                <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-accent-blue-foreground">Preț vânzare</div>
+                <div className="font-mono text-[22px] font-semibold tracking-tight text-accent-blue-foreground">{fmtLei(displayPrice.sell)}</div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Fără preț disponibil încă.</p>
+          )}
+          <p className="mt-3 text-xs text-muted-foreground">Estimativ — prețul final rotunjește foile pe proiect.</p>
+          {live?.estimate.error && (
+            <Alert variant="destructive" className="mt-3"><AlertDescription>{live.estimate.error}</AlertDescription></Alert>
+          )}
+        </div>
 
         {live?.expandError && (
           <Alert variant="destructive"><AlertDescription>{live.expandError}</AlertDescription></Alert>
@@ -523,52 +542,48 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
           </ul>
         )}
 
-        <Card>
-          <CardHeader><CardTitle>Piese generate</CardTitle></CardHeader>
-          <CardContent>
-            {live && !live.expandError ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Piesă</TableHead>
-                    <TableHead>Dimensiuni (mm)</TableHead>
-                    <TableHead>Buc</TableHead>
-                    <TableHead>Material</TableHead>
-                    <TableHead>Canturi</TableHead>
+        <div className="rounded-xl bg-card p-5 ring-1 ring-border">
+          <div className="mb-3 text-[15px] font-bold">Piese generate</div>
+          {live && !live.expandError ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Piesă</TableHead>
+                  <TableHead>Dim. (mm)</TableHead>
+                  <TableHead>Buc</TableHead>
+                  <TableHead>Material</TableHead>
+                  <TableHead>Canturi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {live.parts.map((p, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="font-medium">{p.name}</TableCell>
+                    <TableCell className="font-mono text-xs">{fmtNum(p.lengthMm, 1)}×{fmtNum(p.widthMm, 1)}</TableCell>
+                    <TableCell className="font-mono">{p.qty}</TableCell>
+                    <TableCell>{materialName(p.materialId)}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {[p.edges.l1, p.edges.l2, p.edges.w1, p.edges.w2].filter(Boolean).map((b) => bandName(b)).join(', ') || '—'}
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {live.parts.map((p, i) => (
-                    <TableRow key={i}>
-                      <TableCell>{p.name}</TableCell>
-                      <TableCell>{fmtNum(p.lengthMm, 1)} × {fmtNum(p.widthMm, 1)}</TableCell>
-                      <TableCell>{p.qty}</TableCell>
-                      <TableCell>{materialName(p.materialId)}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {[p.edges.l1, p.edges.l2, p.edges.w1, p.edges.w2].filter(Boolean).map((b) => bandName(b)).join(', ') || '—'}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {live.parts.length === 0 && (
-                    <TableRow><TableCell colSpan={5} className="text-muted-foreground">Nicio piesă.</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {invalid ? 'Corectează formularul pentru a vedea piesele.' : 'Nu se pot genera piese.'}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+                ))}
+                {live.parts.length === 0 && (
+                  <TableRow><TableCell colSpan={5} className="text-muted-foreground">Nicio piesă.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {invalid ? 'Corectează formularul pentru a vedea piesele.' : 'Nu se pot genera piese.'}
+            </p>
+          )}
+        </div>
 
         {live && !live.expandError && (
-          <Card>
-            <CardHeader><CardTitle>Previzualizare</CardTitle></CardHeader>
-            <CardContent>
-              <CabinetIsoSvg input={live.input} cc={cc} />
-            </CardContent>
-          </Card>
+          <div className="rounded-xl bg-card p-5 ring-1 ring-border">
+            <div className="mb-1 text-[15px] font-bold">Previzualizare</div>
+            <CabinetIsoSvg input={live.input} cc={cc} />
+          </div>
         )}
       </div>
     </div>
@@ -577,9 +592,9 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
 
 function NumField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
-    <div className="grid gap-1">
-      <Label>{label}</Label>
-      <Input type="number" step="1" value={value ?? ''} onChange={(e) => onChange(e.target.value)} />
+    <div className="grid gap-1.5">
+      <Label className={fieldLabelCls}>{label}</Label>
+      <Input type="number" step="1" value={value ?? ''} onChange={(e) => onChange(e.target.value)} className="font-mono" />
     </div>
   );
 }
@@ -595,8 +610,8 @@ function SelectField({ label, value, onChange, options, allowEmpty }: {
   options: FieldOption[]; allowEmpty?: boolean;
 }) {
   return (
-    <div className="grid gap-1">
-      <Label>{label}</Label>
+    <div className="grid gap-1.5">
+      <Label className={fieldLabelCls}>{label}</Label>
       <select className={selectCls} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
         {allowEmpty && <option value="">—</option>}
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}

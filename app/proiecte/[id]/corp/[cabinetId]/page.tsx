@@ -16,7 +16,6 @@ import { CabinetEditorForm, type FieldOption } from '@/components/CabinetEditorF
 import { ActionForm } from '@/components/ActionForm';
 import { DeleteButton } from '@/components/DeleteButton';
 import { NumberInput, Select, SubmitButton, TextInput } from '@/components/forms';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { fmtNum } from '@/lib/format';
 
@@ -174,11 +173,118 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
 
   const overridesStale = overrides !== null && !sameHardwareMultiset(overrides, suggestedLines);
 
+  const feronerieSummary = overrides !== null
+    ? 'Editată manual'
+    : suggestedLines.length + unresolvedSuggestions.length === 0
+      ? 'Nicio sugestie'
+      : `${suggestedLines.length + unresolvedSuggestions.length} sugestii automate`;
+  const extraPartsSummary = extraParts.length === 0
+    ? 'Nicio piesă suplimentară'
+    : `${extraParts.length} ${extraParts.length === 1 ? 'piesă' : 'piese'}`;
+
+  const feronerieSlot = (
+    <>
+      {overrides === null ? (
+        <>
+          <p className="mb-2 text-sm text-muted-foreground">
+            Sugestii automate (se recalculează la fiecare salvare a corpului). Preia-le în editor doar dacă vrei să le modifici.
+          </p>
+          <ul className="mb-3 space-y-1 text-sm">
+            {suggestedLines.map((l) => (
+              <li key={l.hardwareId}>{l.qty} × {hardwareName(l.hardwareId)}</li>
+            ))}
+            {unresolvedSuggestions.map((s, i) => (
+              <li key={`unresolved-${i}`} className="text-amber-800">⚠ {s.qty} × {s.name} — fără produs implicit (setează în Setări)</li>
+            ))}
+            {suggestedLines.length === 0 && unresolvedSuggestions.length === 0 && (
+              <li className="text-muted-foreground">Nicio sugestie (corp fără fronturi/sertare).</li>
+            )}
+          </ul>
+          <ActionForm action={saveCabinetHardware.bind(null, cabinetId)}>
+            {suggestedLines.map((l) => (
+              <span key={l.hardwareId}>
+                <input type="hidden" name="hardwareId" value={l.hardwareId} />
+                <input type="hidden" name="qty" value={l.qty} />
+              </span>
+            ))}
+            <SubmitButton>Preia în editor</SubmitButton>
+          </ActionForm>
+        </>
+      ) : (
+        <>
+          <p className="mb-2 text-sm text-muted-foreground">
+            Feronerie editată manual — sugestiile automate nu se mai aplică acestui corp. Cantitate 0 = rândul dispare la salvare.
+          </p>
+          {overridesStale && (
+            <Alert className="mb-2 border-amber-300 bg-amber-50 text-amber-800">
+              <AlertDescription>
+                ⚠ Sugestiile automate pentru dimensiunile curente diferă de feroneria editată — verifică (ex. număr balamale).
+              </AlertDescription>
+            </Alert>
+          )}
+          <ActionForm action={saveCabinetHardware.bind(null, cabinetId)} className="space-y-2">
+            {overrides.map((l, i) => (
+              <div key={i} className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                <div className="col-span-2">
+                  <Select name="hardwareId" label="Produs" options={optionsWithCurrent(hardwareItems, l.hardwareId, hardwareLabel)} defaultValue={l.hardwareId} />
+                </div>
+                <NumberInput name="qty" label="Buc" defaultValue={l.qty} step="1" />
+              </div>
+            ))}
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+              <div className="col-span-2">
+                <Select name="hardwareId" label="Adaugă produs" options={hardwareOptions} allowEmpty />
+              </div>
+              <NumberInput name="qty" label="Buc" defaultValue={0} required={false} step="1" />
+            </div>
+            <div className="flex gap-2">
+              <SubmitButton>Salvează feroneria</SubmitButton>
+            </div>
+          </ActionForm>
+          <div className="mt-2">
+            <ActionForm action={resetCabinetHardware.bind(null, cabinetId)}>
+              <button type="submit" className="rounded-lg border px-3 py-1.5 text-sm hover:bg-muted">
+                Revino la sugestiile automate
+              </button>
+            </ActionForm>
+          </div>
+        </>
+      )}
+    </>
+  );
+  const extraPartsSlot = (
+    <>
+      <ul className="mb-3 space-y-2">
+        {extraParts.map((p, i) => (
+          <li key={i} className="flex items-center gap-3 text-sm">
+            <span className="grow">{p.name} — {fmtNum(p.lengthMm, 1)} × {fmtNum(p.widthMm, 1)} mm × {p.qty} buc ({materialName(p.materialId)})</span>
+            <DeleteButton action={removeExtraPart.bind(null, cabinetId, i)} label="Șterge" />
+          </li>
+        ))}
+        {extraParts.length === 0 && <li className="text-sm text-muted-foreground">Nicio piesă suplimentară.</li>}
+      </ul>
+      <ActionForm action={addExtraPart.bind(null, cabinetId)} className="grid grid-cols-2 items-end gap-2 md:grid-cols-6">
+        <TextInput name="name" label="Denumire" />
+        <NumberInput name="lengthMm" label="Lungime (mm)" step="1" />
+        <NumberInput name="widthMm" label="Lățime (mm)" step="1" />
+        <NumberInput name="qty" label="Buc" defaultValue={1} step="1" />
+        <Select name="materialId" label="Material" options={activeMaterials
+          .filter((m) => m.category !== 'BLAT')
+          .map((m) => ({ value: m.id, label: m.decorCode ? `${m.decorCode} · ${m.name}` : m.name }))} />
+        <div><SubmitButton>Adaugă</SubmitButton></div>
+      </ActionForm>
+    </>
+  );
+
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Corp: {input.label}</h1>
-        <Link href={`/proiecte/${id}`} className="text-sm text-muted-foreground hover:underline">← Înapoi la proiect</Link>
+    <div className="space-y-5">
+      <div className="flex items-baseline justify-between">
+        <h1 className="text-2xl font-bold tracking-tight">
+          Corp: <span className="font-mono text-xl">{input.label}</span>
+        </h1>
+        <Link href={`/proiecte/${id}`} className="text-[13px] font-medium text-accent-blue-foreground hover:underline">
+          ← Înapoi la proiect
+        </Link>
       </div>
 
       {hasInactiveRefs && (
@@ -202,6 +308,10 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
         }}
         hardwareOverrides={overrides}
         extraParts={extraParts}
+        feronerieSlot={feronerieSlot}
+        feronerieSummary={feronerieSummary}
+        extraPartsSlot={extraPartsSlot}
+        extraPartsSummary={extraPartsSummary}
         projectHandle={{
           type: project.handleType, itemId: project.handleItemId,
           label: HANDLE_TYPE_OPTIONS.find((o) => o.value === project.handleType)?.label ?? project.handleType,
@@ -216,103 +326,6 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
         }}
         save={updateCabinetData.bind(null, cabinetId)}
       />
-
-      <Card>
-        <CardHeader><CardTitle>Feronerie</CardTitle></CardHeader>
-        <CardContent>
-          {overrides === null ? (
-            <>
-              <p className="mb-2 text-sm text-muted-foreground">
-                Sugestii automate (se recalculează la fiecare salvare a corpului). Preia-le în editor doar dacă vrei să le modifici.
-              </p>
-              <ul className="mb-3 space-y-1 text-sm">
-                {suggestedLines.map((l) => (
-                  <li key={l.hardwareId}>{l.qty} × {hardwareName(l.hardwareId)}</li>
-                ))}
-                {unresolvedSuggestions.map((s, i) => (
-                  <li key={`unresolved-${i}`} className="text-amber-800">⚠ {s.qty} × {s.name} — fără produs implicit (setează în Setări)</li>
-                ))}
-                {suggestedLines.length === 0 && unresolvedSuggestions.length === 0 && (
-                  <li className="text-muted-foreground">Nicio sugestie (corp fără fronturi/sertare).</li>
-                )}
-              </ul>
-              <ActionForm action={saveCabinetHardware.bind(null, cabinetId)}>
-                {suggestedLines.map((l) => (
-                  <span key={l.hardwareId}>
-                    <input type="hidden" name="hardwareId" value={l.hardwareId} />
-                    <input type="hidden" name="qty" value={l.qty} />
-                  </span>
-                ))}
-                <SubmitButton>Preia în editor</SubmitButton>
-              </ActionForm>
-            </>
-          ) : (
-            <>
-              <p className="mb-2 text-sm text-muted-foreground">
-                Feronerie editată manual — sugestiile automate nu se mai aplică acestui corp. Cantitate 0 = rândul dispare la salvare.
-              </p>
-              {overridesStale && (
-                <Alert className="mb-2 border-amber-300 bg-amber-50 text-amber-800">
-                  <AlertDescription>
-                    ⚠ Sugestiile automate pentru dimensiunile curente diferă de feroneria editată — verifică (ex. număr balamale).
-                  </AlertDescription>
-                </Alert>
-              )}
-              <ActionForm action={saveCabinetHardware.bind(null, cabinetId)} className="space-y-2">
-                {overrides.map((l, i) => (
-                  <div key={i} className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                    <div className="col-span-2">
-                      <Select name="hardwareId" label="Produs" options={optionsWithCurrent(hardwareItems, l.hardwareId, hardwareLabel)} defaultValue={l.hardwareId} />
-                    </div>
-                    <NumberInput name="qty" label="Buc" defaultValue={l.qty} step="1" />
-                  </div>
-                ))}
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                  <div className="col-span-2">
-                    <Select name="hardwareId" label="Adaugă produs" options={hardwareOptions} allowEmpty />
-                  </div>
-                  <NumberInput name="qty" label="Buc" defaultValue={0} required={false} step="1" />
-                </div>
-                <div className="flex gap-2">
-                  <SubmitButton>Salvează feroneria</SubmitButton>
-                </div>
-              </ActionForm>
-              <div className="mt-2">
-                <ActionForm action={resetCabinetHardware.bind(null, cabinetId)}>
-                  <button type="submit" className="rounded-lg border px-3 py-1.5 text-sm hover:bg-muted">
-                    Revino la sugestiile automate
-                  </button>
-                </ActionForm>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader><CardTitle>Piese suplimentare</CardTitle></CardHeader>
-        <CardContent>
-          <ul className="mb-3 space-y-2">
-            {extraParts.map((p, i) => (
-              <li key={i} className="flex items-center gap-3 text-sm">
-                <span className="grow">{p.name} — {fmtNum(p.lengthMm, 1)} × {fmtNum(p.widthMm, 1)} mm × {p.qty} buc ({materialName(p.materialId)})</span>
-                <DeleteButton action={removeExtraPart.bind(null, cabinetId, i)} label="Șterge" />
-              </li>
-            ))}
-            {extraParts.length === 0 && <li className="text-sm text-muted-foreground">Nicio piesă suplimentară.</li>}
-          </ul>
-          <ActionForm action={addExtraPart.bind(null, cabinetId)} className="grid grid-cols-2 items-end gap-2 md:grid-cols-6">
-            <TextInput name="name" label="Denumire" />
-            <NumberInput name="lengthMm" label="Lungime (mm)" step="1" />
-            <NumberInput name="widthMm" label="Lățime (mm)" step="1" />
-            <NumberInput name="qty" label="Buc" defaultValue={1} step="1" />
-            <Select name="materialId" label="Material" options={activeMaterials
-              .filter((m) => m.category !== 'BLAT')
-              .map((m) => ({ value: m.id, label: m.decorCode ? `${m.decorCode} · ${m.name}` : m.name }))} />
-            <div><SubmitButton>Adaugă</SubmitButton></div>
-          </ActionForm>
-        </CardContent>
-      </Card>
     </div>
   );
 }
