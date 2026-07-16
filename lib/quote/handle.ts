@@ -12,10 +12,16 @@ export const HANDLE_TYPE_OPTIONS: { value: HandleType; label: string }[] = [
   { value: 'FARA', label: 'Fără mâner (front prelungit)' },
 ];
 
-/** Moștenirea: corpul fără excepție primește mânerul proiectului. */
+/** Moștenirea: corpul fără excepție primește mânerul proiectului; excepția de TIP
+ *  fără produs ales moștenește produsul proiectului când tipul coincide. */
 export function withResolvedHandle(input: CabinetInput, project: ProjectHandle): CabinetInput {
-  if (input.handle) return input;
-  return { ...input, handle: { type: project.type, itemId: project.itemId ?? undefined } };
+  if (!input.handle) {
+    return { ...input, handle: { type: project.type, itemId: project.itemId ?? undefined } };
+  }
+  if (input.handle.itemId === undefined && input.handle.type === project.type && project.itemId) {
+    return { ...input, handle: { ...input.handle, itemId: project.itemId } };
+  }
+  return input;
 }
 
 /** Costurile atipice de mâner — intră în bucket-ul de feronerie (primesc manopera %). */

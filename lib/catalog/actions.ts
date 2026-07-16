@@ -72,7 +72,10 @@ export const deactivateHardware = formAction(async (id: string) => {
     (id === settings.defaultHingeId ||
       id === settings.defaultHandleId ||
       id === settings.defaultLegId ||
-      id === settings.defaultRailId)
+      id === settings.defaultRailId ||
+      id === settings.defaultShelfSupportId ||
+      id === settings.defaultPlinthClipId ||
+      id === settings.defaultAventosId)
   ) {
     throw new Error('Feroneria este setată ca implicită în Setări — schimbă întâi setarea, apoi dezactiveaz-o.');
   }
@@ -105,6 +108,9 @@ export const updateSettings = formAction(async (fd: FormData) => {
       profilJPerFront: d.profilJPerFront, golaPricePerMl: d.golaPricePerMl,
       defaultHingeId: d.defaultHingeId ?? null, defaultHandleId: d.defaultHandleId ?? null,
       defaultLegId: d.defaultLegId ?? null, defaultRailId: d.defaultRailId ?? null,
+      defaultShelfSupportId: d.defaultShelfSupportId ?? null,
+      defaultPlinthClipId: d.defaultPlinthClipId ?? null,
+      defaultAventosId: d.defaultAventosId ?? null,
     },
   });
   revalidatePath('/setari');

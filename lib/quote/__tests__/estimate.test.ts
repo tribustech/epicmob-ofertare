@@ -8,7 +8,7 @@ import { makeSnapshot, refCabinet } from './fixtures';
 describe('estimateCabinetCost', () => {
   it('corpul de referință: estimare fără rotunjire la foi, cu adaos de manoperă procentual și feronerie auto', () => {
     const r = estimateCabinetCost(
-      { input: refCabinet(), hardwareOverrides: null, extraParts: [] },
+      { input: refCabinet(), hardwareAdjustments: null, extraParts: [] },
       makeSnapshot(), { laborPct: 30, yieldFactor: 0.8, legHeightMm: null, projectHandle: { type: 'APLICAT', itemId: null } },
     );
     // plăci fracționar: PAL 1.737/(5.796×0.8)=0.3746 foi ×260=97.40 + debitare 0.3746×50=18.73
@@ -21,7 +21,7 @@ describe('estimateCabinetCost', () => {
   it('dimensiuni imposibile → error, nu throw', () => {
     const bad = refCabinet(); bad.widthMm = 10;
     const r = estimateCabinetCost(
-      { input: bad, hardwareOverrides: null, extraParts: [] },
+      { input: bad, hardwareAdjustments: null, extraParts: [] },
       makeSnapshot(), { laborPct: 30, yieldFactor: 0.8, legHeightMm: null, projectHandle: { type: 'APLICAT', itemId: null } },
     );
     expect(r.error).toBeTruthy();
@@ -66,7 +66,7 @@ describe('estimateCabinetCost — fronturi MDF vopsit cotate per m² (EUR × cur
   });
 
   const estimate = (input: CabinetInput) =>
-    estimateCabinetCost({ input, hardwareOverrides: null, extraParts: [] }, snap, OPTS);
+    estimateCabinetCost({ input, hardwareAdjustments: null, extraParts: [] }, snap, OPTS);
 
   // Referință „placă": refCabinet fără frontKind → frontul rămâne placă mdf-vopsit PER_SQM (450/m²).
   const board = estimate(refCabinet());

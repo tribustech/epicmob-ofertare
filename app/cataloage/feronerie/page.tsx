@@ -13,6 +13,9 @@ const CATEGORY_OPTIONS = [
   { value: 'MANER', label: 'Mâner' },
   { value: 'PICIOR', label: 'Picior' },
   { value: 'SINA_SUSPENDARE', label: 'Șină suspendare' },
+  { value: 'SUPORT_POLITA', label: 'Suport poliță' },
+  { value: 'CLEMA_SOCLU', label: 'Clemă soclu' },
+  { value: 'PISTON_AVENTOS', label: 'Aventos / piston' },
   { value: 'ACCESORIU', label: 'Accesoriu' },
 ];
 

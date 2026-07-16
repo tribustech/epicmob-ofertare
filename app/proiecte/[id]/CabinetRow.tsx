@@ -3,20 +3,21 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { HoverCard } from 'radix-ui';
 import { TableCell, TableRow } from '@/components/ui/table';
 
 export function CabinetRow({
-  href, label, typeLabel, dims, problemCount, problemTitle, actions,
+  href, label, typeLabel, dims, problems, actions,
 }: {
   href: string;
   label: string;
   typeLabel: string;
   dims: string;
-  problemCount: number;
-  problemTitle?: string;
+  problems: { label: string; qty: number }[];
   actions: ReactNode;
 }) {
   const router = useRouter();
+  const total = problems.reduce((sum, p) => sum + p.qty, 0);
   return (
     <TableRow className="cursor-pointer" onClick={() => router.push(href)}>
       <TableCell>
@@ -27,12 +28,30 @@ export function CabinetRow({
       <TableCell>{typeLabel}</TableCell>
       <TableCell>{dims}</TableCell>
       <TableCell>
-        {problemCount === 0 ? (
+        {total === 0 ? (
           <span className="text-xs font-medium text-green-600">Complet</span>
         ) : (
-          <span className="text-xs font-medium text-red-600" title={problemTitle}>
-            {problemCount} {problemCount === 1 ? 'problemă' : 'probleme'}
-          </span>
+          <HoverCard.Root openDelay={80} closeDelay={80}>
+            <HoverCard.Trigger asChild>
+              <span className="cursor-default text-xs font-medium text-red-600 underline decoration-dotted underline-offset-2">
+                {total} {total === 1 ? 'problemă' : 'probleme'}
+              </span>
+            </HoverCard.Trigger>
+            <HoverCard.Portal>
+              <HoverCard.Content
+                side="top" align="start" sideOffset={6}
+                className="z-50 max-w-64 rounded-md border bg-popover p-2 text-xs text-popover-foreground shadow-md"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ul className="space-y-0.5">
+                  {problems.map((p, i) => (
+                    <li key={i}>{p.label}{p.qty > 1 ? ` × ${p.qty}` : ''}</li>
+                  ))}
+                </ul>
+                <HoverCard.Arrow className="fill-border" />
+              </HoverCard.Content>
+            </HoverCard.Portal>
+          </HoverCard.Root>
         )}
       </TableCell>
       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>

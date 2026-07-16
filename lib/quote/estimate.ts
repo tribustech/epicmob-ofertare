@@ -111,8 +111,8 @@ export function estimateCabinetCost(
       }
     }
 
-    const lines: HardwareLine[] = cabinet.hardwareOverrides
-      ?? resolveSuggestions(expanded.hardware, defaults, catalogs.hardware).lines;
+    const lines: HardwareLine[] =
+      resolveSuggestions(expanded.hardware, cabinet.hardwareAdjustments, defaults, catalogs.hardware).lines;
     let hardware = 0;
     for (const line of lines) {
       const item = catalogs.hardware.find((h) => h.id === line.hardwareId);

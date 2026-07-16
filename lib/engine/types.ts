@@ -29,6 +29,9 @@ export type HardwareCategory =
   | 'MANER'
   | 'PICIOR'
   | 'SINA_SUSPENDARE'
+  | 'SUPORT_POLITA'
+  | 'CLEMA_SOCLU'
+  | 'PISTON_AVENTOS'
   | 'ACCESORIU';
 
 export interface HardwareItem {
@@ -109,12 +112,16 @@ export interface CabinetInput {
     frontPerimeterId: string | null; // cant fronturi PAL (uzual ABS 1); MDF vopsit = fără
   };
   blindPanelWidthMm?: number;      // doar COLT; implicit cc.blindPanelDefaultWidthMm
+  /** uși pe corp suspendat: ridicabilă = set Aventos în loc de balamale; lipsă = balamale */
+  doorOpening?: 'BALAMALE' | 'RIDICABILA';
   hardwareSel?: {
-    hingeId?: string;           // uși: model balama; lipsă = default global
-    hingeCount?: number;        // total balamale pe corp; lipsă = calcul automat (înălțime/greutate ușă)
-    slideId?: string;           // PAL_BOX: model glisiere Tandem; lipsă = cel mai ieftin la nominală
-    tandemboxHeightMm?: number; // TANDEMBOX: înălțimea lateralei alese (M/K/C/D)
-    handleCount?: number;       // total mânere/mecanisme push pe corp; lipsă = 1 per front
+    /** câmpuri LEGACY (pre-feronerie v4) — migrate în HardwareAdjustments.slots; motorul
+     *  le mai citește doar ca fallback pentru inputJson-uri nemigrate */
+    hingeId?: string;
+    hingeCount?: number;
+    slideId?: string;
+    tandemboxHeightMm?: number; // TANDEMBOX: înălțimea lateralei alese (M/K/C/D) — rămâne configurație
+    handleCount?: number;
   };
   handle?: HandleConfig;        // rezolvat (excepția corpului sau moștenirea proiectului); lipsă = APLICAT + produs implicit
 }
@@ -142,7 +149,19 @@ export interface FrontInfo {
   heightMm: number;
 }
 
+/** Identitatea stabilă a unui rând auto de feronerie — cheia override-urilor per rând. */
+export type HardwareSlot =
+  | 'balamale'
+  | 'maner'
+  | 'sertare'
+  | 'picioare'
+  | 'suspendare'
+  | 'suporti-polita'
+  | 'cleme-soclu'
+  | 'aventos';
+
 export interface HardwareSuggestion {
+  slot: HardwareSlot;
   category: HardwareCategory;
   name: string;
   qty: number;
@@ -150,6 +169,24 @@ export interface HardwareSuggestion {
   preferredId?: string;  // produs ales explicit pe corp — are prioritate la rezolvare
   boxHeightMm?: number;  // set Tandembox: potrivire pe înălțimea lateralei
   requiresBox?: boolean; // set Tandembox: nu se rezolvă pe glisiere simple
+}
+
+/** Abaterile utilizatorului de la sugestiile automate — doar ce s-a atins. */
+export interface HardwareAdjustments {
+  slots?: Partial<Record<HardwareSlot, { itemId?: string; qty?: number }>>;
+  extra?: HardwareLine[]; // produse adăugate manual, peste rândurile auto
+}
+
+/** Un rând auto rezolvat, cu tot ce trebuie afișat/editat în tabelul de feronerie. */
+export interface ResolvedSlot {
+  slot: HardwareSlot;
+  category: HardwareCategory;
+  name: string;      // eticheta sugestiei (ex. „Balama + plăcuță (2 uși)")
+  autoQty: number;   // cantitatea calculată automat
+  qty: number;       // cantitatea finală (override sau auto)
+  itemId: string | null; // produsul final; null = nerezolvat
+  itemAdjusted: boolean;
+  qtyAdjusted: boolean;
 }
 
 export interface Warning {
@@ -175,6 +212,9 @@ export interface HardwareDefaults {
   slideIdsByNominal: Record<number, string>;
   legId: string | null;
   railId: string | null;
+  shelfSupportId: string | null;
+  plinthClipId: string | null;
+  aventosId: string | null;
 }
 
 export interface HardwareLine {

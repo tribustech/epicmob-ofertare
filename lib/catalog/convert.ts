@@ -27,10 +27,16 @@ export interface SettingsRow {
   eurToRon?: number | null; // curs EUR→RON pentru fronturile MDF vopsit
   defaultHingeId: string | null; defaultHandleId: string | null;
   defaultLegId: string | null; defaultRailId: string | null;
+  // opționale: snapshot-urile dinainte de feronerie v4 nu le au
+  defaultShelfSupportId?: string | null; defaultPlinthClipId?: string | null;
+  defaultAventosId?: string | null;
 }
 
 const MATERIAL_KINDS: MaterialKind[] = ['PAL', 'MDF_VOPSIT', 'MDF_MELAMINAT', 'MDF_INFOLIAT', 'PFL'];
-const HARDWARE_CATEGORIES: HardwareCategory[] = ['BALAMA', 'SERTAR', 'MANER', 'PICIOR', 'SINA_SUSPENDARE', 'ACCESORIU'];
+const HARDWARE_CATEGORIES: HardwareCategory[] = [
+  'BALAMA', 'SERTAR', 'MANER', 'PICIOR', 'SINA_SUSPENDARE',
+  'SUPORT_POLITA', 'CLEMA_SOCLU', 'PISTON_AVENTOS', 'ACCESORIU',
+];
 
 export function toBoardMaterial(row: MaterialRow): BoardMaterial {
   if (!MATERIAL_KINDS.includes(row.kind as MaterialKind)) {
@@ -117,6 +123,9 @@ export function buildHardwareDefaults(hardware: HardwareRow[], settings: Setting
     slideIdsByNominal,
     legId: settings.defaultLegId,
     railId: settings.defaultRailId,
+    shelfSupportId: settings.defaultShelfSupportId ?? null,
+    plinthClipId: settings.defaultPlinthClipId ?? null,
+    aventosId: settings.defaultAventosId ?? null,
   };
 }
 

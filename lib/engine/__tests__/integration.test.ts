@@ -8,6 +8,8 @@ const CATALOGS: ProjectCatalogs = {
     { id: 'blum-cliptop', name: 'Balama Blum ClipTop', category: 'BALAMA', pricePerUnit: 15 },
     { id: 'maner-std', name: 'Mâner standard', category: 'MANER', pricePerUnit: 10 },
     { id: 'picior-std', name: 'Picior reglabil', category: 'PICIOR', pricePerUnit: 2 },
+    { id: 'suport-std', name: 'Suport poliță', category: 'SUPORT_POLITA', pricePerUnit: 0 },
+    { id: 'clema-std', name: 'Clemă soclu', category: 'CLEMA_SOCLU', pricePerUnit: 0 },
   ],
   cuttingRates: [
     { maxThicknessMm: 10, pricePerSheet: 33 },
@@ -16,6 +18,9 @@ const CATALOGS: ProjectCatalogs = {
   hardwareDefaults: {
     hingeId: 'blum-cliptop',
     slideIdsByNominal: {},
+    shelfSupportId: 'suport-std',
+    plinthClipId: 'clema-std',
+    aventosId: null,
     legId: 'picior-std',
     railId: null,
   },

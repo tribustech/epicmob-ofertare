@@ -5,10 +5,17 @@ import { makeSnapshot, refCabinet } from './fixtures';
 function baseQuote(overrides: Partial<QuoteInput> = {}): QuoteInput {
   return {
     laborPct: 30, freeLines: [],
-    cabinets: [{ input: refCabinet(), hardwareOverrides: null, extraParts: [] }],
+    cabinets: [{ input: refCabinet(), hardwareAdjustments: null, extraParts: [] }],
     projectHandle: { type: 'APLICAT', itemId: null },
     ...overrides,
   };
+}
+
+// echivalentul override-ului total din v3: sloturile auto pe 0 + liniile ca extra
+import type { HardwareAdjustments, HardwareLine } from '@/lib/engine';
+import { HARDWARE_SLOTS } from '@/lib/quote/hardware-adjustments';
+function zeroAllSlots(extra: HardwareLine[]): HardwareAdjustments {
+  return { slots: Object.fromEntries(HARDWARE_SLOTS.map((s) => [s, { qty: 0 }])), extra };
 }
 
 describe('computeQuote — corpul de referință (aceleași cifre ca motorul)', () => {
@@ -30,7 +37,7 @@ describe('computeQuote — corpul de referință (aceleași cifre ca motorul)', 
 describe('computeQuote — override-uri și piese suplimentare', () => {
   it('override-ul înlocuiește complet feroneria corpului', () => {
     const q = baseQuote();
-    q.cabinets[0].hardwareOverrides = [{ hardwareId: 'maner-std', qty: 10 }];
+    q.cabinets[0].hardwareAdjustments = zeroAllSlots([{ hardwareId: 'maner-std', qty: 10 }]);
     const r = computeQuote(q, makeSnapshot());
     expect(r.costs.breakdown.hardware).toBeCloseTo(100, 5);   // 10 × 10, nu 48
     expect(r.costs.totalCost).toBeCloseTo(738.16, 1);          // 686.16 − 48 + 100
@@ -49,7 +56,7 @@ describe('computeQuote — override-uri și piese suplimentare', () => {
     const snap = makeSnapshot();
     snap.hardware.find((h) => h.id === 'maner-std')!.active = false;
     const q = baseQuote();
-    q.cabinets[0].hardwareOverrides = [{ hardwareId: 'maner-std', qty: 2 }];
+    q.cabinets[0].hardwareAdjustments = zeroAllSlots([{ hardwareId: 'maner-std', qty: 2 }]);
     const r = computeQuote(q, snap);
     expect(r.costs.breakdown.hardware).toBeCloseTo(20, 5);
   });

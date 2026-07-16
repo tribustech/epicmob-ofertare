@@ -30,7 +30,7 @@ async function main() {
     const snapshot = await buildSnapshot();
     const quote = computeQuote(
       {
-        laborPct: 120, freeLines: [], cabinets: [{ input, hardwareOverrides: null, extraParts: [] }],
+        laborPct: 120, freeLines: [], cabinets: [{ input, hardwareAdjustments: null, extraParts: [] }],
         projectHandle: { type: 'APLICAT', itemId: null },
       },
       snapshot,

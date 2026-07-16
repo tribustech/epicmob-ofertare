@@ -11,6 +11,9 @@ const DEFAULTS: HardwareDefaults = {
   slideIdsByNominal: { 450: 'tbx-450', 500: 'tbx-500' },
   legId: 'picior-std',
   railId: 'sina-std',
+  shelfSupportId: 'suport-std',
+  plinthClipId: 'clema-std',
+  aventosId: null,
 };
 
 describe('suggestHardware — corp bază cu o ușă', () => {
@@ -60,11 +63,12 @@ describe('resolveSuggestions', () => {
   it('mapează pe id-uri și agregă', () => {
     const { lines, unresolved } = resolveSuggestions(
       [
-        { category: 'BALAMA', name: 'Balama ușă', qty: 2 },
-        { category: 'BALAMA', name: 'Balama ușă 2', qty: 2 },
-        { category: 'SERTAR', name: 'Glisiere', qty: 3, nominalLengthMm: 500 },
-        { category: 'MANER', name: 'Mâner', qty: 4, preferredId: 'maner-std' },
+        { slot: 'balamale', category: 'BALAMA', name: 'Balama ușă', qty: 2 },
+        { slot: 'balamale', category: 'BALAMA', name: 'Balama ușă 2', qty: 2 },
+        { slot: 'sertare', category: 'SERTAR', name: 'Glisiere', qty: 3, nominalLengthMm: 500 },
+        { slot: 'maner', category: 'MANER', name: 'Mâner', qty: 4, preferredId: 'maner-std' },
       ],
+      null,
       DEFAULTS,
       [],
     );
@@ -76,7 +80,8 @@ describe('resolveSuggestions', () => {
 
   it('glisieră fără nominală exactă → cea mai apropiată din map', () => {
     const { lines } = resolveSuggestions(
-      [{ category: 'SERTAR', name: 'Glisiere', qty: 1, nominalLengthMm: 400 }],
+      [{ slot: 'sertare', category: 'SERTAR', name: 'Glisiere', qty: 1, nominalLengthMm: 400 }],
+      null,
       DEFAULTS,
       [],
     );
@@ -85,7 +90,8 @@ describe('resolveSuggestions', () => {
 
   it('mâner fără produs ales (fără preferredId) → unresolved, nu defaultul global', () => {
     const { lines, unresolved } = resolveSuggestions(
-      [{ category: 'MANER', name: 'Mâner', qty: 2 }],
+      [{ slot: 'maner', category: 'MANER', name: 'Mâner', qty: 2 }],
+      null,
       DEFAULTS,
       [],
     );

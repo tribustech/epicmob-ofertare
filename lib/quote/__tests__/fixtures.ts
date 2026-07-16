@@ -16,6 +16,8 @@ export function makeSnapshot(overrides: Partial<SnapshotData> = {}): SnapshotDat
     hardware: [
       { id: 'blum-cliptop', name: 'Balama Blum', category: 'BALAMA', pricePerUnit: 15, nominalLengthMm: null, loadClassKg: null, boxHeightMm: null, active: true },
       { id: 'maner-std', name: 'Mâner standard', category: 'MANER', pricePerUnit: 10, nominalLengthMm: null, loadClassKg: null, boxHeightMm: null, active: true },
+      { id: 'suport-std', name: 'Suport poliță', category: 'SUPORT_POLITA', pricePerUnit: 0, nominalLengthMm: null, loadClassKg: null, boxHeightMm: null, active: true },
+      { id: 'clema-std', name: 'Clemă soclu', category: 'CLEMA_SOCLU', pricePerUnit: 0, nominalLengthMm: null, loadClassKg: null, boxHeightMm: null, active: true },
       { id: 'picior-std', name: 'Picior reglabil', category: 'PICIOR', pricePerUnit: 2, nominalLengthMm: null, loadClassKg: null, boxHeightMm: null, active: true },
     ],
     // deliberat nesortate — computeCosts le sortează
@@ -31,6 +33,7 @@ export function makeSnapshot(overrides: Partial<SnapshotData> = {}): SnapshotDat
       cutKerfMm: 4, cutTrimMm: 10, eurToRon: 5,
       defaultHingeId: 'blum-cliptop', defaultHandleId: 'maner-std',
       defaultLegId: 'picior-std', defaultRailId: null,
+      defaultShelfSupportId: 'suport-std', defaultPlinthClipId: 'clema-std', defaultAventosId: null,
     },
     ...overrides,
   };

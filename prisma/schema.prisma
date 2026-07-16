@@ -110,6 +110,9 @@ model AppSettings {
   defaultHandleId  String?
   defaultLegId     String?
   defaultRailId    String?
+  defaultShelfSupportId String?
+  defaultPlinthClipId   String?
+  defaultAventosId      String?
   eurToRon         Float   @default(4.97)
 }
 

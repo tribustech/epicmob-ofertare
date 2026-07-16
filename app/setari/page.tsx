@@ -59,6 +59,9 @@ export default async function SetariPage() {
               <Select name="defaultHingeId" label="Balama implicită" options={byCategory('BALAMA')} defaultValue={settings.defaultHingeId} allowEmpty />
               <Select name="defaultLegId" label="Picior implicit" options={byCategory('PICIOR')} defaultValue={settings.defaultLegId} allowEmpty />
               <Select name="defaultRailId" label="Șină implicită" options={byCategory('SINA_SUSPENDARE')} defaultValue={settings.defaultRailId} allowEmpty />
+              <Select name="defaultShelfSupportId" label="Suport poliță implicit" options={byCategory('SUPORT_POLITA')} defaultValue={settings.defaultShelfSupportId} allowEmpty />
+              <Select name="defaultPlinthClipId" label="Clemă soclu implicită" options={byCategory('CLEMA_SOCLU')} defaultValue={settings.defaultPlinthClipId} allowEmpty />
+              <Select name="defaultAventosId" label="Set Aventos implicit" options={byCategory('PISTON_AVENTOS')} defaultValue={settings.defaultAventosId} allowEmpty />
             </div>
             <SubmitButton>Salvează setările</SubmitButton>
           </ActionForm>

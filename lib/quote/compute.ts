@@ -8,7 +8,7 @@ import {
 } from '@/lib/engine';
 import type {
   CabinetInput, CostResult, CutListFile, ExpandedCabinet, FreeLine,
-  FrontModel, FrontPrice, FrontSupplier,
+  FrontModel, FrontPrice, FrontSupplier, HardwareAdjustments,
   HardwareLine, HardwareSuggestion, HardwareSummaryRow, NestParams, Part, Warning,
 } from '@/lib/engine';
 import { isCabinetInputComplete, type ExtraPart } from './cabinet-form';
@@ -42,7 +42,7 @@ export function frontCatalogsFromSnapshot(snap: SnapshotData) {
 export interface QuoteCabinet {
   id?: string;
   input: CabinetInput;
-  hardwareOverrides: HardwareLine[] | null;
+  hardwareAdjustments: HardwareAdjustments | null;
   extraParts: ExtraPart[];
   legHeightMm?: number | null;
 }
@@ -111,21 +111,14 @@ export function computeQuote(qAll: QuoteInput, snap: SnapshotData): QuoteResult 
   const unresolvedHardware: HardwareSuggestion[] = [];
   const unresolvedByCabinet: HardwareSuggestion[][] = expanded.map(() => []);
   expanded.forEach((e, i) => {
-    let lines: HardwareLine[];
-    const overrides = q.cabinets[i].hardwareOverrides;
-    if (overrides) {
-      lines = overrides;
-    } else {
-      const legHeightMm = q.cabinets[i].legHeightMm;
-      const cabinetDefaults = legHeightMm != null
-        ? { ...defaults, legId: pickLegId(snap.hardware, legHeightMm, defaults.legId) }
-        : defaults;
-      const r = resolveSuggestions(e.hardware, cabinetDefaults, catalogs.hardware);
-      unresolvedHardware.push(...r.unresolved);
-      unresolvedByCabinet[i] = r.unresolved;
-      lines = r.lines;
-    }
-    for (const line of lines) byId.set(line.hardwareId, (byId.get(line.hardwareId) ?? 0) + line.qty);
+    const legHeightMm = q.cabinets[i].legHeightMm;
+    const cabinetDefaults = legHeightMm != null
+      ? { ...defaults, legId: pickLegId(snap.hardware, legHeightMm, defaults.legId) }
+      : defaults;
+    const r = resolveSuggestions(e.hardware, q.cabinets[i].hardwareAdjustments, cabinetDefaults, catalogs.hardware);
+    unresolvedHardware.push(...r.unresolved);
+    unresolvedByCabinet[i] = r.unresolved;
+    for (const line of r.lines) byId.set(line.hardwareId, (byId.get(line.hardwareId) ?? 0) + line.qty);
   });
   const hardwareLines: HardwareLine[] = [...byId.entries()].map(([hardwareId, qty]) => ({ hardwareId, qty }));
 

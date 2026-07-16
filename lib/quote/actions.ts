@@ -7,6 +7,7 @@ import { prisma } from '@/lib/db';
 import { formDataToObject } from '@/lib/catalog/schemas';
 import { formAction } from '@/lib/forms/form-action';
 import { cabinetFormSchema, extraPartSchema, toCabinetInput } from './cabinet-form';
+import { hardwareAdjustmentsSchema, pruneAdjustments } from './hardware-adjustments';
 import { buildSnapshot } from './snapshot';
 import { isFrozenStatus } from './basis';
 import { ASSEMBLY_LEG_HEIGHT_PRESETS, ASSEMBLY_NAME_PRESETS } from './assembly-presets';
@@ -222,7 +223,17 @@ export const addCabinet = formAction(async (projectId: string, assemblyId: strin
 export const updateCabinetData = formAction(async (cabinetId: string, data: Record<string, string>) => {
   const d = cabinetFormSchema.parse(data);
   const input = toCabinetInput(d);
-  const cab = await prisma.cabinet.update({ where: { id: cabinetId }, data: { inputJson: JSON.stringify(input) } });
+  // feronerie v4: abaterile per rând (tabelul de feronerie) vin în același submit
+  const adjustments = data.hardwareAdjustmentsJson !== undefined
+    ? pruneAdjustments(hardwareAdjustmentsSchema.parse(JSON.parse(data.hardwareAdjustmentsJson || '{}')))
+    : undefined;
+  const cab = await prisma.cabinet.update({
+    where: { id: cabinetId },
+    data: {
+      inputJson: JSON.stringify(input),
+      ...(adjustments !== undefined ? { hardwareJson: adjustments ? JSON.stringify(adjustments) : null } : {}),
+    },
+  });
   revalidatePath(`/proiecte/${cab.projectId}/corp/${cabinetId}`);
   revalidatePath(`/proiecte/${cab.projectId}`);
 });
@@ -247,26 +258,6 @@ export const duplicateCabinet = formAction(async (cabinetId: string) => {
       extraPartsJson: cab.extraPartsJson,
     },
   });
-  revalidatePath(`/proiecte/${cab.projectId}`);
-});
-
-export const saveCabinetHardware = formAction(async (cabinetId: string, fd: FormData) => {
-  const ids = fd.getAll('hardwareId').map(String);
-  const qtys = fd.getAll('qty').map((v) => Number(v));
-  const lines = ids
-    .map((hardwareId, i) => ({ hardwareId, qty: qtys[i] }))
-    .filter((l) => l.hardwareId !== '' && Number.isFinite(l.qty) && l.qty > 0);
-  const cab = await prisma.cabinet.update({
-    where: { id: cabinetId },
-    data: { hardwareJson: JSON.stringify(lines) },
-  });
-  revalidatePath(`/proiecte/${cab.projectId}/corp/${cabinetId}`);
-  revalidatePath(`/proiecte/${cab.projectId}`);
-});
-
-export const resetCabinetHardware = formAction(async (cabinetId: string) => {
-  const cab = await prisma.cabinet.update({ where: { id: cabinetId }, data: { hardwareJson: null } });
-  revalidatePath(`/proiecte/${cab.projectId}/corp/${cabinetId}`);
   revalidatePath(`/proiecte/${cab.projectId}`);
 });
 

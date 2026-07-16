@@ -9,6 +9,7 @@
     "test:watch": "vitest",
     "db:migrate": "prisma migrate dev",
     "db:migrate-inputs": "tsx scripts/migrate-inputs.ts",
+    "db:migrate-hardware": "tsx scripts/migrate-hardware.ts",
     "db:seed": "prisma db seed",
     "db:seed-decoruri": "tsx scripts/seed-decoruri.ts",
     "db:seed-fronturi": "tsx scripts/seed-fronturi.ts",

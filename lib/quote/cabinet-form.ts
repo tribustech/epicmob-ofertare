@@ -42,14 +42,10 @@ export const cabinetFormSchema = z
     drawersSystem: z.enum(['PAL_BOX', 'TANDEMBOX']).default('TANDEMBOX'),
     drawersBottomMaterialId: optStr,
     drawerFrontHeightsMm: z.preprocess(emptyToUndefined, z.string().optional()),
-    hingeId: optStr,
-    hingeCount: z.preprocess(emptyToUndefined, intNonNeg.optional()),
-    slideId: optStr,
     tandemboxHeightMm: z.preprocess(emptyToUndefined, posNum.optional()),
-    handleCount: z.preprocess(emptyToUndefined, intNonNeg.optional()),
+    doorOpening: z.enum(['BALAMALE', 'RIDICABILA']).default('BALAMALE'),
     handleMode: z.enum(['PROIECT', 'CUSTOM']).default('PROIECT'),
     handleType: z.enum(['APLICAT', 'BUTON', 'INGROPAT', 'PROFIL_J', 'GOLA', 'PUSH', 'FARA']).default('APLICAT'),
-    handleItemId: optStr,
     frontExtensionMm: z.preprocess(emptyToUndefined, posNum.optional()),
   })
   .refine((d) => d.frontType !== 'USI' || d.doors >= 1, {
@@ -141,22 +137,18 @@ export function toCabinetInput(d: CabinetFormData): CabinetInput {
       frontPerimeterId: d.frontPerimeterId ?? null,
     },
     blindPanelWidthMm: d.type === 'COLT' ? d.blindPanelWidthMm : undefined,
-    hardwareSel: (() => {
-      const sel = {
-        hingeId: d.frontType === 'USI' ? d.hingeId : undefined,
-        hingeCount: d.frontType === 'USI' ? d.hingeCount : undefined,
-        slideId: d.frontType === 'SERTARE' && d.drawersSystem === 'PAL_BOX' ? d.slideId : undefined,
-        tandemboxHeightMm: d.frontType === 'SERTARE' && d.drawersSystem === 'TANDEMBOX' ? d.tandemboxHeightMm : undefined,
-        handleCount: d.frontType !== 'FARA' ? d.handleCount : undefined,
-      };
-      const any = sel.hingeId || sel.slideId
-        || sel.hingeCount !== undefined || sel.tandemboxHeightMm !== undefined || sel.handleCount !== undefined;
-      return any ? sel : undefined;
-    })(),
+    // uși ridicabile doar la suspendat (set Aventos în loc de balamale)
+    doorOpening: d.frontType === 'USI' && d.type === 'SUSPENDAT' && d.doorOpening === 'RIDICABILA'
+      ? 'RIDICABILA'
+      : undefined,
+    // v4: produsele de feronerie (balamale/mâner/glisiere) se aleg în tabelul de feronerie
+    // (HardwareAdjustments) — aici rămâne doar configurația care decide setul Tandembox
+    hardwareSel: d.frontType === 'SERTARE' && d.drawersSystem === 'TANDEMBOX' && d.tandemboxHeightMm !== undefined
+      ? { tandemboxHeightMm: d.tandemboxHeightMm }
+      : undefined,
     handle: d.handleMode === 'CUSTOM'
       ? {
           type: d.handleType,
-          itemId: d.handleItemId,
           frontExtensionMm: d.handleType === 'FARA' ? d.frontExtensionMm : undefined,
         }
       : undefined,

@@ -53,6 +53,17 @@ function cabinetReasons(issue: CabinetIssue | undefined, incomplete: boolean): s
   return reasons;
 }
 
+/** Detaliul problemelor unui corp, cu cantități — pentru numărul roșu + popover pe rând. */
+function cabinetProblems(issue: CabinetIssue | undefined, incomplete: boolean): { label: string; qty: number }[] {
+  if (incomplete) return [{ label: 'Corp incomplet — completează dimensiunile', qty: 1 }];
+  if (!issue) return [];
+  const byName = new Map<string, number>();
+  for (const s of issue.unresolvedHardware) byName.set(s.name, (byName.get(s.name) ?? 0) + s.qty);
+  const items = [...byName.entries()].map(([label, qty]) => ({ label, qty }));
+  for (const w of issue.warnings) items.push({ label: w.message, qty: 1 });
+  return items;
+}
+
 export default async function ProiectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const data = await loadProject(id);
@@ -387,7 +398,6 @@ function CabinetsTable({ projectId, cabinets, issues }: {
       <TableBody>
         {cabinets.map((c) => {
           const incomplete = !isCabinetInputComplete(c.input);
-          const reasons = cabinetReasons(issues.get(c.id), incomplete);
           return (
           <CabinetRow
             key={c.id}
@@ -395,8 +405,7 @@ function CabinetsTable({ projectId, cabinets, issues }: {
             label={c.input.label}
             typeLabel={TYPE_LABELS[c.input.type] ?? c.input.type}
             dims={incomplete ? '—' : `${c.input.widthMm}×${c.input.heightMm}×${c.input.depthMm}`}
-            problemCount={reasons.length}
-            problemTitle={reasons.join(' · ')}
+            problems={cabinetProblems(issues.get(c.id), incomplete)}
             actions={
               <>
                 <ActionForm action={duplicateCabinet.bind(null, c.id)} confirm="Sigur duplici acest corp?">

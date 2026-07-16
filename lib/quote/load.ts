@@ -1,8 +1,9 @@
 import { prisma } from '@/lib/db';
 import type { Assembly, Project } from '@prisma/client';
-import type { CabinetInput, HandleType, HardwareLine } from '@/lib/engine';
+import type { CabinetInput, HandleType, HardwareAdjustments } from '@/lib/engine';
 import type { ExtraPart } from './cabinet-form';
 import { computeQuote, type QuoteInput, type QuoteResult, type SnapshotData } from './compute';
+import { normalizeHardwareJson } from './hardware-adjustments';
 import { normalizeCabinetInput } from './normalize-input';
 
 export interface LoadedCabinet {
@@ -10,7 +11,7 @@ export interface LoadedCabinet {
   sortOrder: number;
   assemblyId: string | null;
   input: CabinetInput;
-  hardwareOverrides: HardwareLine[] | null;
+  hardwareAdjustments: HardwareAdjustments | null;
   extraParts: ExtraPart[];
 }
 
@@ -32,7 +33,7 @@ export async function loadProject(id: string): Promise<{
     sortOrder: c.sortOrder,
     assemblyId: c.assemblyId,
     input: normalizeCabinetInput(JSON.parse(c.inputJson)),
-    hardwareOverrides: c.hardwareJson ? (JSON.parse(c.hardwareJson) as HardwareLine[]) : null,
+    hardwareAdjustments: normalizeHardwareJson(c.hardwareJson),
     extraParts: JSON.parse(c.extraPartsJson) as ExtraPart[],
   }));
   return { project, assemblies: project.assemblies, cabinets };
@@ -61,7 +62,7 @@ export function toQuoteInput(
     cabinets: cabinets.map((c) => ({
       id: c.id,
       input: c.input,
-      hardwareOverrides: c.hardwareOverrides,
+      hardwareAdjustments: c.hardwareAdjustments,
       extraParts: c.extraParts,
       legHeightMm: legHeightMap.get(c.id) ?? null,
     })),

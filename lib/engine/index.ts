@@ -37,7 +37,7 @@ export function computeProject(
   const cabinets = project.cabinets.map((c) => expandCabinet(c, catalogs, cc));
   const parts = cabinets.flatMap((c) => c.parts);
   const suggestions = cabinets.flatMap((c) => c.hardware);
-  const { lines, unresolved } = resolveSuggestions(suggestions, catalogs.hardwareDefaults, catalogs.hardware);
+  const { lines, unresolved } = resolveSuggestions(suggestions, null, catalogs.hardwareDefaults, catalogs.hardware);
 
   const costs = computeCosts({
     parts,
@@ -70,7 +70,7 @@ export {
   FRONT_PART_NAMES, HANDLE_FRONT_PART_NAMES, FRONT_THICKNESS_MM,
 } from './costing';
 export { cutListCsv, aggregateHardware, type CutListFile, type HardwareSummaryRow } from './cutlist';
-export { suggestHardware, resolveSuggestions } from './hardware';
+export { suggestHardware, resolveSuggestions, resolveSlots } from './hardware';
 export { suggestHingeCount, doorWeightKg } from './hinges';
 export { pickSlideNominal } from './drawers';
 export { nestParts, DEFAULT_NEST_PARAMS } from './nesting';
