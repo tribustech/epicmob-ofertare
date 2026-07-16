@@ -43,8 +43,10 @@ export const cabinetFormSchema = z
     drawersBottomMaterialId: optStr,
     drawerFrontHeightsMm: z.preprocess(emptyToUndefined, z.string().optional()),
     hingeId: optStr,
+    hingeCount: z.preprocess(emptyToUndefined, intNonNeg.optional()),
     slideId: optStr,
     tandemboxHeightMm: z.preprocess(emptyToUndefined, posNum.optional()),
+    handleCount: z.preprocess(emptyToUndefined, intNonNeg.optional()),
     handleMode: z.enum(['PROIECT', 'CUSTOM']).default('PROIECT'),
     handleType: z.enum(['APLICAT', 'BUTON', 'INGROPAT', 'PROFIL_J', 'GOLA', 'PUSH', 'FARA']).default('APLICAT'),
     handleItemId: optStr,
@@ -142,10 +144,14 @@ export function toCabinetInput(d: CabinetFormData): CabinetInput {
     hardwareSel: (() => {
       const sel = {
         hingeId: d.frontType === 'USI' ? d.hingeId : undefined,
+        hingeCount: d.frontType === 'USI' ? d.hingeCount : undefined,
         slideId: d.frontType === 'SERTARE' && d.drawersSystem === 'PAL_BOX' ? d.slideId : undefined,
         tandemboxHeightMm: d.frontType === 'SERTARE' && d.drawersSystem === 'TANDEMBOX' ? d.tandemboxHeightMm : undefined,
+        handleCount: d.frontType !== 'FARA' ? d.handleCount : undefined,
       };
-      return sel.hingeId || sel.slideId || sel.tandemboxHeightMm !== undefined ? sel : undefined;
+      const any = sel.hingeId || sel.slideId
+        || sel.hingeCount !== undefined || sel.tandemboxHeightMm !== undefined || sel.handleCount !== undefined;
+      return any ? sel : undefined;
     })(),
     handle: d.handleMode === 'CUSTOM'
       ? {

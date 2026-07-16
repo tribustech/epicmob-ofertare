@@ -8,9 +8,10 @@ import type { ExtraPart } from '@/lib/quote/cabinet-form';
 import { estimateCabinetCost } from '@/lib/quote/estimate';
 import { frontCatalogsFromSnapshot, type SnapshotData } from '@/lib/quote/compute';
 import { HANDLE_TYPE_OPTIONS, withResolvedHandle } from '@/lib/quote/handle';
-import { expandCabinet } from '@/lib/engine';
-import type { HandleType, HardwareLine, Part, Warning } from '@/lib/engine';
-import { parseConstruction, toCostCatalogs } from '@/lib/catalog/convert';
+import { expandCabinet, resolveSuggestions } from '@/lib/engine';
+import type { HandleType, HardwareLine, HardwareSuggestion, Part, Warning } from '@/lib/engine';
+import { buildHardwareDefaults, parseConstruction, toCostCatalogs } from '@/lib/catalog/convert';
+import { pickLegId } from '@/lib/quote/legs';
 import type { FormState } from '@/lib/forms/form-action';
 import { fmtNum } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -244,10 +245,23 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     let parts: Part[] = [];
     let warnings: Warning[] = [];
     let expandError: string | null = null;
+    // feroneria necesară corpului, calculată live (override-urile manuale au prioritate)
+    let hardwareLines: HardwareLine[] = hardwareOverrides ?? [];
+    let unresolvedHardware: HardwareSuggestion[] = [];
     try {
       const expanded = expandCabinet(input, catalogs, cc);
       parts = expanded.parts;
       warnings = expanded.warnings;
+      if (!hardwareOverrides) {
+        const defaults = buildHardwareDefaults(
+          snapshot.hardware.filter((h) => h.active),
+          snapshot.settings,
+        );
+        if (legHeightMm != null) defaults.legId = pickLegId(snapshot.hardware, legHeightMm, defaults.legId);
+        const resolved = resolveSuggestions(expanded.hardware, defaults, catalogs.hardware);
+        hardwareLines = resolved.lines;
+        unresolvedHardware = resolved.unresolved;
+      }
     } catch (e) {
       expandError = e instanceof Error ? e.message : 'Eroare la generarea pieselor';
     }
@@ -255,13 +269,26 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
       laborPct, yieldFactor, legHeightMm,
       projectHandle: { type: projectHandle.type as HandleType, itemId: projectHandle.itemId },
     });
-    return { input, parts, warnings, expandError, estimate };
+    return { input, parts, warnings, expandError, estimate, hardwareLines, unresolvedHardware };
   }, [parsed, catalogs, cc, hardwareOverrides, extraParts, snapshot, laborPct, yieldFactor, legHeightMm, projectHandle]);
 
   const invalid = !parsed.success;
 
   const materialName = (mid: string) => snapshot.materials.find((m) => m.id === mid)?.name ?? mid;
   const bandName = (bid?: string) => (bid ? (snapshot.edgeBands.find((e) => e.id === bid)?.name ?? bid) : '');
+  const hardwareItemName = (hid: string) => snapshot.hardware.find((h) => h.id === hid)?.name ?? hid;
+
+  // sugestii pentru numărul de balamale (2/ușă, mai multe la uși înalte) și mânere (1/front);
+  // câmpul gol = automat, orice valoare tastată se salvează pe corp
+  const hingesPerDoor = (h: number) => (h <= 900 ? 2 : h <= 1500 ? 3 : h <= 2100 ? 4 : 5);
+  const hingeAuto = Math.max(Number(values.doors) || 0, 0) * hingesPerDoor(Number(values.heightMm) || 0);
+  const effHandleType = values.handleMode === 'PROIECT' ? projectHandle.type : values.handleType;
+  const handleAuto = effHandleType === 'PUSH'
+    ? (frontType === 'USI' ? Number(values.doors) || 0 : 0) // push separat doar la uși (la Tandembox e în set)
+    : frontType === 'USI' ? Number(values.doors) || 0
+      : frontType === 'SERTARE' ? drawersCount : 0;
+  const handleCountApplies =
+    frontType !== 'FARA' && ['APLICAT', 'BUTON', 'INGROPAT', 'PUSH'].includes(effHandleType) && handleAuto > 0;
 
   const pickerMaterials = useMemo(() => snapshot.materials.filter((m) => m.category !== 'BLAT'), [snapshot]);
 
@@ -352,7 +379,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     frontType: 'fronturi', doors: 'fronturi', withShelves: 'fronturi', shelves: 'fronturi',
     shelfMaterialId: 'fronturi', shelfDecorMatters: 'fronturi', shelfDecorAxis: 'fronturi',
     drawersCount: 'fronturi', drawersSystem: 'fronturi', drawersBottomMaterialId: 'fronturi', drawerFrontHeightsMm: 'fronturi',
-    hingeId: 'fronturi', slideId: 'fronturi', tandemboxHeightMm: 'fronturi',
+    hingeId: 'fronturi', hingeCount: 'fronturi', slideId: 'fronturi', tandemboxHeightMm: 'fronturi', handleCount: 'fronturi',
     handleMode: 'fronturi', handleType: 'fronturi', handleItemId: 'fronturi', frontExtensionMm: 'fronturi',
     backEnabled: 'spate', backMaterialId: 'spate', backMount: 'spate',
   };
@@ -522,11 +549,18 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <SelectField label="Model balamale" value={values.hingeId} onChange={(v) => set('hingeId', v)} options={hardwareSelOptions.hinges} allowEmpty />
+                  <NumField
+                    label="Nr. balamale (total corp)"
+                    value={values.hingeCount || String(hingeAuto)}
+                    onChange={(v) => set('hingeCount', v)}
+                    error={showError('hingeCount')}
+                  />
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {values.hingeId
-                    ? 'Balamale alese pe corp; numărul rămâne calculat automat.'
-                    : `Balamale: ${hardwareSelOptions.defaultHingeName ?? 'default global nesetat'} — default din Setări; numărul se calculează automat.`}
+                    ? 'Balamale alese pe corp. '
+                    : `Balamale: ${hardwareSelOptions.defaultHingeName ?? 'default global nesetat'} — default din Setări. `}
+                  Sugestie: 2/ușă (mai multe la uși înalte sau grele){values.hingeCount ? ' — număr ales pe corp; șterge câmpul pentru automat.' : '.'}
                 </p>
               </div>
             )}
@@ -629,7 +663,21 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                   {values.handleMode === 'CUSTOM' && values.handleType === 'FARA' && (
                     <NumField label="Prelungire front (mm)" value={values.frontExtensionMm} onChange={(v) => set('frontExtensionMm', v)} />
                   )}
+                  {handleCountApplies && (
+                    <NumField
+                      label={effHandleType === 'PUSH' ? 'Nr. mecanisme push' : 'Nr. mânere'}
+                      value={values.handleCount || String(handleAuto)}
+                      onChange={(v) => set('handleCount', v)}
+                      error={showError('handleCount')}
+                    />
+                  )}
                 </div>
+                {handleCountApplies && (
+                  <p className="text-xs text-muted-foreground">
+                    Sugestie: 1 per {frontType === 'USI' ? 'ușă' : 'sertar'}
+                    {values.handleCount ? ' — număr ales pe corp; șterge câmpul pentru automat.' : '.'}
+                  </p>
+                )}
                 {values.handleMode === 'CUSTOM' && values.handleType === 'GOLA' && (
                   <p className="text-xs text-muted-foreground">
                     GOLA: fiecare front se scurtează cu {fmtNum(cc.golaFrontDeductMm, 0)}mm,
@@ -748,6 +796,28 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             </p>
           )}
         </div>
+
+        {live && !live.expandError && (
+          <div className="rounded-xl bg-card p-5 ring-1 ring-border">
+            <div className="mb-3 text-[15px] font-bold">Feronerie necesară</div>
+            <ul className="space-y-1 text-sm">
+              {live.hardwareLines.map((l) => (
+                <li key={l.hardwareId}>
+                  <span className="font-mono">{l.qty}</span> × {hardwareItemName(l.hardwareId)}
+                </li>
+              ))}
+              {live.unresolvedHardware.map((s, i) => (
+                <li key={`u-${i}`} className="text-amber-800">⚠ {s.qty} × {s.name} — de ales</li>
+              ))}
+              {live.hardwareLines.length === 0 && live.unresolvedHardware.length === 0 && (
+                <li className="text-muted-foreground">Nicio feronerie necesară.</li>
+              )}
+            </ul>
+            {hardwareOverrides && (
+              <p className="mt-2 text-xs text-muted-foreground">Feronerie editată manual — lista vine din secțiunea Feronerie.</p>
+            )}
+          </div>
+        )}
 
         {live && !live.expandError && (
           <div className="rounded-xl bg-card p-5 ring-1 ring-border">

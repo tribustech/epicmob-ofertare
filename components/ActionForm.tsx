@@ -9,13 +9,18 @@ export function ActionForm(props: {
   action: (fd: FormData) => Promise<FormState>;
   children: ReactNode;
   className?: string;
+  confirm?: string;
 }) {
   const [state, dispatch] = useActionState(
     async (_prev: FormState, fd: FormData) => props.action(fd),
     {} as FormState,
   );
   return (
-    <form action={dispatch} className={props.className}>
+    <form
+      action={dispatch}
+      className={props.className}
+      onSubmit={props.confirm ? (e) => { if (!confirm(props.confirm)) e.preventDefault(); } : undefined}
+    >
       {state.error && (
         <Alert variant="destructive" className="mb-2">
           <AlertDescription>{state.error}</AlertDescription>

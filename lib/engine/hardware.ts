@@ -29,12 +29,16 @@ export function suggestHardware(
       totalHinges += count;
       warnings.push(...hw.map((w) => ({ ...w, cabinetLabel: input.label })));
     }
-    suggestions.push({
-      category: 'BALAMA',
-      name: `Balama + plăcuță (${doors.length} ușă/uși)`,
-      qty: totalHinges,
-      preferredId: input.hardwareSel?.hingeId,
-    });
+    // numărul ales explicit pe corp bate calculul automat (avertismentele de greutate rămân)
+    const qty = input.hardwareSel?.hingeCount ?? totalHinges;
+    if (qty > 0) {
+      suggestions.push({
+        category: 'BALAMA',
+        name: `Balama + plăcuță (${doors.length} ușă/uși)`,
+        qty,
+        preferredId: input.hardwareSel?.hingeId,
+      });
+    }
   }
 
   if (drawerFronts.length > 0 && input.drawers) {
@@ -71,11 +75,15 @@ export function suggestHardware(
 
   const handle = input.handle ?? { type: 'APLICAT' as const };
   const HANDLE_WITH_ITEM: HandleType[] = ['APLICAT', 'BUTON', 'INGROPAT'];
+  // numărul de mânere ales explicit pe corp bate defaultul (1 per front)
+  const handleQty = (auto: number) => input.hardwareSel?.handleCount ?? auto;
   if (fronts.length > 0 && HANDLE_WITH_ITEM.includes(handle.type)) {
-    suggestions.push({ category: 'MANER', name: 'Mâner', qty: fronts.length, preferredId: handle.itemId });
+    const qty = handleQty(fronts.length);
+    if (qty > 0) suggestions.push({ category: 'MANER', name: 'Mâner', qty, preferredId: handle.itemId });
   } else if (handle.type === 'PUSH' && doors.length > 0) {
     // la sertare TANDEMBOX push-ul e în setul TIP-ON ales; mecanismul separat e doar pentru uși
-    suggestions.push({ category: 'ACCESORIU', name: 'Mecanism push (TIP-ON)', qty: doors.length, preferredId: handle.itemId });
+    const qty = handleQty(doors.length);
+    if (qty > 0) suggestions.push({ category: 'ACCESORIU', name: 'Mecanism push (TIP-ON)', qty, preferredId: handle.itemId });
   }
   // PROFIL_J, GOLA, FARA: fără produs per front — costul lor intră separat (stratul de calcul al proiectului)
 

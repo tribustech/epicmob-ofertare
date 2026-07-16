@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { Copy } from 'lucide-react';
 import type { Assembly } from '@prisma/client';
 import { legHeightByCabinet, loadProject, toQuoteInput, tryComputeQuote, type LoadedCabinet } from '@/lib/quote/load';
 import type { CabinetIssue } from '@/lib/quote/compute';
@@ -40,20 +41,16 @@ const CATEGORY_LABELS: [key: string, label: string][] = [
 const NAME_PRESET_OPTIONS = ASSEMBLY_NAME_PRESETS.map((v) => ({ value: v, label: v }));
 const LEG_HEIGHT_PRESET_OPTIONS = ASSEMBLY_LEG_HEIGHT_PRESETS.map((v) => ({ value: v, label: `${v} mm` }));
 
-/** Motiv scurt din feronerie nerezolvată / avertismente (fără cazul incomplet). */
-function hardwareReason(issue: CabinetIssue): string | null {
+/** Motivele problemelor unui corp (incomplet / feronerie nerezolvată / avertismente). */
+function cabinetReasons(issue: CabinetIssue | undefined, incomplete: boolean): string[] {
+  if (incomplete) return ['incomplet'];
+  if (!issue) return [];
   const cats = new Set(issue.unresolvedHardware.map((s) => s.category));
-  const parts: string[] = [];
-  if (cats.has('MANER')) parts.push('mâner neales');
-  if ([...cats].some((c) => c !== 'MANER')) parts.push('feronerie de configurat');
-  if (parts.length === 0 && issue.warnings.length > 0) parts.push('avertismente');
-  return parts.length ? parts.join(' · ') : null;
-}
-
-/** Motivul afișat lângă link-ul din Rezumat. */
-function issueReason(issue: CabinetIssue): string {
-  if (issue.incomplete) return 'incomplet';
-  return hardwareReason(issue) ?? 'necesită atenție';
+  const reasons: string[] = [];
+  if (cats.has('MANER')) reasons.push('mâner neales');
+  if ([...cats].some((c) => c !== 'MANER')) reasons.push('feronerie de configurat');
+  if (issue.warnings.length > 0) reasons.push('avertismente');
+  return reasons;
 }
 
 export default async function ProiectPage({ params }: { params: Promise<{ id: string }> }) {
@@ -250,7 +247,7 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                               href={`/proiecte/${project.id}/corp/${issue.cabinetId}`}
                               className="text-xs text-amber-900 hover:underline"
                             >
-                              → {issue.label} · {issueReason(issue)}
+                              → {issue.label} · {cabinetReasons(issue, issue.incomplete).join(' · ') || 'necesită atenție'}
                             </Link>
                           </li>
                         ))}
@@ -383,31 +380,31 @@ function CabinetsTable({ projectId, cabinets, issues }: {
           <TableHead>Corp</TableHead>
           <TableHead>Tip</TableHead>
           <TableHead>Dimensiuni (L×H×A mm)</TableHead>
-          <TableHead></TableHead>
+          <TableHead>Stare</TableHead>
           <TableHead className="text-right">Acțiuni</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {cabinets.map((c) => {
-          const issue = issues.get(c.id);
+          const incomplete = !isCabinetInputComplete(c.input);
+          const reasons = cabinetReasons(issues.get(c.id), incomplete);
           return (
           <CabinetRow
             key={c.id}
             href={`/proiecte/${projectId}/corp/${c.id}`}
             label={c.input.label}
             typeLabel={TYPE_LABELS[c.input.type] ?? c.input.type}
-            dims={isCabinetInputComplete(c.input)
-              ? `${c.input.widthMm}×${c.input.heightMm}×${c.input.depthMm}`
-              : '—'}
-            incomplete={!isCabinetInputComplete(c.input)}
-            hardwareIssue={issue && !issue.incomplete ? hardwareReason(issue) : null}
-            hardwareEdited={Boolean(c.hardwareOverrides)}
+            dims={incomplete ? '—' : `${c.input.widthMm}×${c.input.heightMm}×${c.input.depthMm}`}
+            problemCount={reasons.length}
+            problemTitle={reasons.join(' · ')}
             actions={
               <>
-                <ActionForm action={duplicateCabinet.bind(null, c.id)}>
-                  <Button type="submit" variant="outline" size="sm">Duplică</Button>
+                <ActionForm action={duplicateCabinet.bind(null, c.id)} confirm="Sigur duplici acest corp?">
+                  <Button type="submit" variant="ghost" size="icon-sm" title="Duplică" aria-label="Duplică">
+                    <Copy />
+                  </Button>
                 </ActionForm>
-                <DeleteButton action={deleteCabinet.bind(null, c.id)} />
+                <DeleteButton action={deleteCabinet.bind(null, c.id)} label="Șterge corpul" iconOnly />
               </>
             }
           />

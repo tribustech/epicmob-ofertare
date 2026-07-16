@@ -4,18 +4,16 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { TableCell, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 
 export function CabinetRow({
-  href, label, typeLabel, dims, incomplete, hardwareIssue, hardwareEdited, actions,
+  href, label, typeLabel, dims, problemCount, problemTitle, actions,
 }: {
   href: string;
   label: string;
   typeLabel: string;
   dims: string;
-  incomplete?: boolean;
-  hardwareIssue?: string | null;
-  hardwareEdited: boolean;
+  problemCount: number;
+  problemTitle?: string;
   actions: ReactNode;
 }) {
   const router = useRouter();
@@ -29,14 +27,16 @@ export function CabinetRow({
       <TableCell>{typeLabel}</TableCell>
       <TableCell>{dims}</TableCell>
       <TableCell>
-        <div className="flex flex-wrap gap-1.5">
-          {incomplete && <Badge className="bg-destructive text-white hover:bg-destructive">incomplet</Badge>}
-          {hardwareIssue && <Badge variant="outline" className="border-red-500 text-red-700">{hardwareIssue}</Badge>}
-          {hardwareEdited ? <Badge variant="secondary">feronerie editată</Badge> : null}
-        </div>
+        {problemCount === 0 ? (
+          <span className="text-xs font-medium text-green-600">Complet</span>
+        ) : (
+          <span className="text-xs font-medium text-red-600" title={problemTitle}>
+            {problemCount} {problemCount === 1 ? 'problemă' : 'probleme'}
+          </span>
+        )}
       </TableCell>
       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-end gap-2">{actions}</div>
+        <div className="flex justify-end gap-1">{actions}</div>
       </TableCell>
     </TableRow>
   );

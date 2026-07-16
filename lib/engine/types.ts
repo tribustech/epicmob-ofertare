@@ -111,8 +111,10 @@ export interface CabinetInput {
   blindPanelWidthMm?: number;      // doar COLT; implicit cc.blindPanelDefaultWidthMm
   hardwareSel?: {
     hingeId?: string;           // uși: model balama; lipsă = default global
+    hingeCount?: number;        // total balamale pe corp; lipsă = calcul automat (înălțime/greutate ușă)
     slideId?: string;           // PAL_BOX: model glisiere Tandem; lipsă = cel mai ieftin la nominală
     tandemboxHeightMm?: number; // TANDEMBOX: înălțimea lateralei alese (M/K/C/D)
+    handleCount?: number;       // total mânere/mecanisme push pe corp; lipsă = 1 per front
   };
   handle?: HandleConfig;        // rezolvat (excepția corpului sau moștenirea proiectului); lipsă = APLICAT + produs implicit
 }
