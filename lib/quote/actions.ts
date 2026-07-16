@@ -196,8 +196,11 @@ export const addCabinet = formAction(async (projectId: string, assemblyId: strin
   }
   // corpul se creează GOL (fără dimensiuni/materiale inventate) și e exclus din
   // calculul ofertei până e completat; precompletăm doar alegerile structurale
-  // și spatele PFL (singurul material cu un default care are sens)
-  const pfl = await prisma.material.findFirst({ where: { active: true, kind: 'PFL' }, orderBy: { name: 'asc' } });
+  // și default-urile care au sens: spate PFL + cant ABS 0,4mm
+  const [pfl, band04] = await Promise.all([
+    prisma.material.findFirst({ where: { active: true, kind: 'PFL' }, orderBy: { name: 'asc' } }),
+    prisma.edgeBand.findFirst({ where: { active: true, thicknessMm: 0.4 }, orderBy: { name: 'asc' } }),
+  ]);
   const count = await prisma.cabinet.count({ where: { projectId } });
   const input: CabinetInput = {
     label: `C${count + 1}`,
@@ -207,7 +210,7 @@ export const addCabinet = formAction(async (projectId: string, assemblyId: strin
     carcassMaterialId: '',
     frontMaterialId: null,
     back: { enabled: true, materialId: pfl?.id, mount: 'FALT' },
-    edgeBands: { carcassFrontEdgeId: '', frontPerimeterId: null },
+    edgeBands: { carcassFrontEdgeId: band04?.id ?? '', frontPerimeterId: band04?.id ?? null },
   };
   const cab = await prisma.cabinet.create({
     data: { projectId, assemblyId, sortOrder: count, inputJson: JSON.stringify(input) },

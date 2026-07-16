@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Assembly } from '@prisma/client';
 import { legHeightByCabinet, loadProject, toQuoteInput, tryComputeQuote, type LoadedCabinet } from '@/lib/quote/load';
+import type { CabinetIssue } from '@/lib/quote/compute';
 import { getQuoteBasis } from '@/lib/quote/basis';
 import { HANDLE_TYPE_OPTIONS } from '@/lib/quote/handle';
 import { prisma } from '@/lib/db';
@@ -39,6 +40,22 @@ const CATEGORY_LABELS: [key: string, label: string][] = [
 const NAME_PRESET_OPTIONS = ASSEMBLY_NAME_PRESETS.map((v) => ({ value: v, label: v }));
 const LEG_HEIGHT_PRESET_OPTIONS = ASSEMBLY_LEG_HEIGHT_PRESETS.map((v) => ({ value: v, label: `${v} mm` }));
 
+/** Motiv scurt din feronerie nerezolvată / avertismente (fără cazul incomplet). */
+function hardwareReason(issue: CabinetIssue): string | null {
+  const cats = new Set(issue.unresolvedHardware.map((s) => s.category));
+  const parts: string[] = [];
+  if (cats.has('MANER')) parts.push('mâner neales');
+  if ([...cats].some((c) => c !== 'MANER')) parts.push('feronerie de configurat');
+  if (parts.length === 0 && issue.warnings.length > 0) parts.push('avertismente');
+  return parts.length ? parts.join(' · ') : null;
+}
+
+/** Motivul afișat lângă link-ul din Rezumat. */
+function issueReason(issue: CabinetIssue): string {
+  if (issue.incomplete) return 'incomplet';
+  return hardwareReason(issue) ?? 'necesită atenție';
+}
+
 export default async function ProiectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const data = await loadProject(id);
@@ -71,6 +88,9 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
   }
   const unassigned = cabinets.filter((c) => !c.assemblyId);
 
+  const issueByCabinetId = new Map<string, CabinetIssue>();
+  for (const it of quote?.cabinetIssues ?? []) issueByCabinetId.set(it.cabinetId, it);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -93,6 +113,7 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                 projectId={project.id}
                 assembly={a}
                 cabinets={cabinetsByAssembly.get(a.id) ?? []}
+                issues={issueByCabinetId}
               />
             ))}
             {assemblies.length === 0 && (
@@ -126,7 +147,7 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                     Corpuri neasignate unui ansamblu (mutarea între ansambluri nu e încă disponibilă) —
                     le poți deschide, duplica sau șterge de aici.
                   </p>
-                  <CabinetsTable projectId={project.id} cabinets={unassigned} />
+                  <CabinetsTable projectId={project.id} cabinets={unassigned} issues={issueByCabinetId} />
                 </CardContent>
               </Card>
             </section>
@@ -217,34 +238,24 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
 
               {quote && snapshot && (
                 <div className="space-y-4">
-                  {quote.warnings.length > 0 && (
-                    <ul className="space-y-1">
-                      {quote.warnings.map((w, i) => (
-                        <li key={i} className="rounded bg-amber-50 px-2 py-1 text-xs text-amber-800">
-                          ⚠ {w.cabinetLabel ? `${w.cabinetLabel}: ` : ''}{w.message}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {quote.unresolvedHardware.length > 0 && (
-                    <ul className="space-y-1">
-                      {/* aceeași sugestie nerezolvată vine de la fiecare corp — o arătăm o dată, cu totalul */}
-                      {[...quote.unresolvedHardware
-                        .reduce((m, s) => {
-                          const k = `${s.category}:${s.name}`;
-                          const e = m.get(k);
-                          m.set(k, e ? { ...e, qty: e.qty + s.qty, corpuri: e.corpuri + 1 } : { ...s, corpuri: 1 });
-                          return m;
-                        }, new Map<string, { category: string; name: string; qty: number; corpuri: number }>())
-                        .values()].map((s, i) => (
-                          <li key={i} className="rounded bg-amber-50 px-2 py-1 text-xs text-amber-800">
-                            ⚠ Feronerie fără produs: {s.name} × {s.qty}
-                            {s.corpuri > 1 ? ` (${s.corpuri} corpuri)` : ''} — {s.category === 'MANER'
-                              ? 'alege produsul mânerului la corp (Fronturi) sau în setările proiectului.'
-                              : 'setează implicitul în Setări sau editează feroneria corpului.'}
+                  {quote.cabinetIssues.length > 0 && (
+                    <div className="rounded border border-amber-300 bg-amber-50 p-2">
+                      <p className="text-xs font-medium text-amber-800">
+                        ⚠ {quote.cabinetIssues.length} {quote.cabinetIssues.length === 1 ? 'corp necesită' : 'corpuri necesită'} atenție
+                      </p>
+                      <ul className="mt-1 space-y-0.5">
+                        {quote.cabinetIssues.map((issue) => (
+                          <li key={issue.cabinetId}>
+                            <Link
+                              href={`/proiecte/${project.id}/corp/${issue.cabinetId}`}
+                              className="text-xs text-amber-900 hover:underline"
+                            >
+                              → {issue.label} · {issueReason(issue)}
+                            </Link>
                           </li>
                         ))}
-                    </ul>
+                      </ul>
+                    </div>
                   )}
 
                   <div className="grid grid-cols-2 gap-2">
@@ -331,8 +342,8 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
   );
 }
 
-function AssemblyCard({ projectId, assembly, cabinets }: {
-  projectId: string; assembly: Assembly; cabinets: LoadedCabinet[];
+function AssemblyCard({ projectId, assembly, cabinets, issues }: {
+  projectId: string; assembly: Assembly; cabinets: LoadedCabinet[]; issues: Map<string, CabinetIssue>;
 }) {
   return (
     <Card>
@@ -349,7 +360,7 @@ function AssemblyCard({ projectId, assembly, cabinets }: {
           <div><SubmitButton>Salvează</SubmitButton></div>
         </ActionForm>
 
-        <CabinetsTable projectId={projectId} cabinets={cabinets} />
+        <CabinetsTable projectId={projectId} cabinets={cabinets} issues={issues} />
 
         <ActionForm action={addCabinet.bind(null, projectId, assembly.id)}>
           <SubmitButton>Adaugă corp</SubmitButton>
@@ -359,7 +370,9 @@ function AssemblyCard({ projectId, assembly, cabinets }: {
   );
 }
 
-function CabinetsTable({ projectId, cabinets }: { projectId: string; cabinets: LoadedCabinet[] }) {
+function CabinetsTable({ projectId, cabinets, issues }: {
+  projectId: string; cabinets: LoadedCabinet[]; issues: Map<string, CabinetIssue>;
+}) {
   if (cabinets.length === 0) {
     return <p className="text-sm text-muted-foreground">Niciun corp încă.</p>;
   }
@@ -375,7 +388,9 @@ function CabinetsTable({ projectId, cabinets }: { projectId: string; cabinets: L
         </TableRow>
       </TableHeader>
       <TableBody>
-        {cabinets.map((c) => (
+        {cabinets.map((c) => {
+          const issue = issues.get(c.id);
+          return (
           <CabinetRow
             key={c.id}
             href={`/proiecte/${projectId}/corp/${c.id}`}
@@ -385,6 +400,7 @@ function CabinetsTable({ projectId, cabinets }: { projectId: string; cabinets: L
               ? `${c.input.widthMm}×${c.input.heightMm}×${c.input.depthMm}`
               : '—'}
             incomplete={!isCabinetInputComplete(c.input)}
+            hardwareIssue={issue && !issue.incomplete ? hardwareReason(issue) : null}
             hardwareEdited={Boolean(c.hardwareOverrides)}
             actions={
               <>
@@ -395,7 +411,8 @@ function CabinetsTable({ projectId, cabinets }: { projectId: string; cabinets: L
               </>
             }
           />
-        ))}
+          );
+        })}
       </TableBody>
     </Table>
   );

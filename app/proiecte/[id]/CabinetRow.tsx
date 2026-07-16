@@ -7,13 +7,14 @@ import { TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 
 export function CabinetRow({
-  href, label, typeLabel, dims, incomplete, hardwareEdited, actions,
+  href, label, typeLabel, dims, incomplete, hardwareIssue, hardwareEdited, actions,
 }: {
   href: string;
   label: string;
   typeLabel: string;
   dims: string;
   incomplete?: boolean;
+  hardwareIssue?: string | null;
   hardwareEdited: boolean;
   actions: ReactNode;
 }) {
@@ -28,8 +29,9 @@ export function CabinetRow({
       <TableCell>{typeLabel}</TableCell>
       <TableCell>{dims}</TableCell>
       <TableCell>
-        <div className="flex gap-1.5">
-          {incomplete && <Badge variant="outline" className="border-amber-500 text-amber-700">incomplet</Badge>}
+        <div className="flex flex-wrap gap-1.5">
+          {incomplete && <Badge className="bg-destructive text-white hover:bg-destructive">incomplet</Badge>}
+          {hardwareIssue && <Badge variant="outline" className="border-red-500 text-red-700">{hardwareIssue}</Badge>}
           {hardwareEdited ? <Badge variant="secondary">feronerie editată</Badge> : null}
         </div>
       </TableCell>

@@ -165,11 +165,18 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
 
   const overridesStale = overrides !== null && !sameHardwareMultiset(overrides, suggestedLines);
 
+  // balamalele, mânerele și glisierele/tandembox-urile se aleg la Fronturi —
+  // nu le repetăm în Feronerie (rămân în calcul și în „Preia în editor")
+  const FRONT_HW_CATEGORIES = new Set(['BALAMA', 'MANER', 'SERTAR', 'ACCESORIU']);
+  const itemCategory = (hid: string) => hardwareItems.find((h) => h.id === hid)?.category ?? '';
+  const displayedSuggestions = suggestedLines.filter((l) => !FRONT_HW_CATEGORIES.has(itemCategory(l.hardwareId)));
+  const hiddenFrontLines = suggestedLines.length - displayedSuggestions.length;
+
   const feronerieSummary = overrides !== null
     ? 'Editată manual'
-    : suggestedLines.length + unresolvedSuggestions.length === 0
+    : displayedSuggestions.length + unresolvedSuggestions.length === 0
       ? 'Nicio sugestie'
-      : `${suggestedLines.length + unresolvedSuggestions.length} sugestii automate`;
+      : `${displayedSuggestions.length + unresolvedSuggestions.length} sugestii automate`;
   const extraPartsSummary = extraParts.length === 0
     ? 'Nicio piesă suplimentară'
     : `${extraParts.length} ${extraParts.length === 1 ? 'piesă' : 'piese'}`;
@@ -177,7 +184,7 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
   // comenzi rapide: un click adaugă produsul (cu liniile curente păstrate) și trece corpul pe feronerie editată manual
   const quickAddChips = (current: HardwareLine[]) => {
     const present = new Set(current.map((l) => l.hardwareId));
-    const items = activeHardwareItems.filter((h) => !present.has(h.id));
+    const items = activeHardwareItems.filter((h) => !present.has(h.id) && !FRONT_HW_CATEGORIES.has(h.category));
     if (items.length === 0) return null;
     return (
       <div className="mt-3 border-t pt-2">
@@ -211,24 +218,31 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
             Sugestii automate (se recalculează la fiecare salvare a corpului). Preia-le în editor doar dacă vrei să le modifici.
           </p>
           <ul className="mb-3 space-y-1 text-sm">
-            {suggestedLines.map((l) => (
+            {displayedSuggestions.map((l) => (
               <li key={l.hardwareId}>{l.qty} × {hardwareName(l.hardwareId)}</li>
             ))}
             {unresolvedSuggestions.map((s, i) => (
               <li key={`unresolved-${i}`} className="text-amber-800">
                 ⚠ {s.qty} × {s.name} — {s.category === 'MANER'
                   ? 'alege produsul mânerului la Fronturi sau în setările proiectului'
-                  : 'fără produs implicit (setează în Setări)'}
+                  : s.category === 'SERTAR'
+                    ? 'alege înălțimea/glisierele la Fronturi'
+                    : 'fără produs implicit (setează în Setări)'}
               </li>
             ))}
-            {suggestedLines.length === 0 && unresolvedSuggestions.length === 0 && (
+            {displayedSuggestions.length === 0 && unresolvedSuggestions.length === 0 && (
               <li className="text-muted-foreground">
                 {inputComplete
-                  ? 'Nicio sugestie (corp fără fronturi/sertare).'
+                  ? 'Nimic de adăugat aici (picioare/șine apar automat după tipul corpului).'
                   : 'Completează corpul (dimensiuni + materiale) și salvează — sugestiile apar apoi aici.'}
               </li>
             )}
           </ul>
+          {hiddenFrontLines > 0 && (
+            <p className="mb-3 text-xs text-muted-foreground">
+              Balamalele, mânerele și glisierele alese la Fronturi intră automat în calcul — nu se mai repetă aici.
+            </p>
+          )}
           <ActionForm action={saveCabinetHardware.bind(null, cabinetId)}>
             {suggestedLines.map((l) => (
               <span key={l.hardwareId}>

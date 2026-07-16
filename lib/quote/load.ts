@@ -59,6 +59,7 @@ export function toQuoteInput(
     laborPct: project.laborPct,
     freeLines: JSON.parse(project.freeLinesJson),
     cabinets: cabinets.map((c) => ({
+      id: c.id,
       input: c.input,
       hardwareOverrides: c.hardwareOverrides,
       extraParts: c.extraParts,

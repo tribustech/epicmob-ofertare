@@ -22,7 +22,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CabinetIsoSvg } from '@/components/CabinetIsoSvg';
 import { MaterialPicker } from '@/components/MaterialPicker';
@@ -192,15 +191,36 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   };
   const drawerHeights = (values.drawerFrontHeightsMm ?? '')
     .split(',').map((s) => Number(s.trim())).filter((n) => Number.isFinite(n));
+  // înălțimile se recalculează egal la schimbarea H cât timp utilizatorul nu le-a atins
+  const [heightsTouched, setHeightsTouched] = useState(() => {
+    const n = Math.max(0, Math.trunc(Number(initial.drawersCount) || 0));
+    if (initial.frontType !== 'SERTARE' || n === 0) return false;
+    const eq = equalHeights(Number(initial.heightMm), n);
+    const cur = (initial.drawerFrontHeightsMm ?? '').split(',').map((s) => Number(s.trim()));
+    return !(cur.length === n && cur.every((h, i) => Math.abs(h - eq[i]) < 0.15));
+  });
+  const onHeightChange = (v: string) => {
+    markTouched('heightMm');
+    setValues((prev) => {
+      const n = Math.max(0, Math.trunc(Number(prev.drawersCount) || 0));
+      const recalc = prev.frontType === 'SERTARE' && n > 0 && !heightsTouched;
+      return {
+        ...prev, heightMm: v,
+        ...(recalc ? { drawerFrontHeightsMm: equalHeights(Number(v), n).join(', ') } : {}),
+      };
+    });
+  };
   const onDrawersCountChange = (v: string) => {
     markTouched('drawersCount');
     const n = Math.max(0, Math.trunc(Number(v) || 0));
+    setHeightsTouched(false); // re-împărțim egal la schimbarea numărului
     setValues((prev) => ({
       ...prev, drawersCount: v,
       drawerFrontHeightsMm: n > 0 ? equalHeights(Number(prev.heightMm), n).join(', ') : '',
     }));
   };
   const setDrawerHeight = (i: number, v: string) => {
+    setHeightsTouched(true);
     const next = [...drawerHeights];
     next[i] = Number(v);
     set('drawerFrontHeightsMm', next.join(', '));
@@ -385,7 +405,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <NumField label="Lățime L (mm)" value={values.widthMm} onChange={onWidthChange} error={showError('widthMm')} />
-              <NumField label="Înălțime H (mm)" value={values.heightMm} onChange={(v) => set('heightMm', v)} error={showError('heightMm')} />
+              <NumField label="Înălțime H (mm)" value={values.heightMm} onChange={onHeightChange} error={showError('heightMm')} />
               <NumField label="Adâncime A (mm)" value={values.depthMm} onChange={(v) => set('depthMm', v)} error={showError('depthMm')} />
               {isColt && (
                 <NumField label="Panou orb (mm)" value={values.blindPanelWidthMm} onChange={(v) => set('blindPanelWidthMm', v)} error={showError('blindPanelWidthMm')} />
@@ -478,25 +498,28 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <NumField label="Uși" value={values.doors} onChange={(v) => { setDoorsTouched(true); set('doors', v); }} error={showError('doors')} />
                 </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="withShelves"
-                    checked={withShelves}
-                    onCheckedChange={(c) => set('withShelves', c === true ? 'true' : 'false')}
-                  />
-                  <Label htmlFor="withShelves" className="font-normal">Cu polițe (debifează la corpul de chiuvetă)</Label>
-                </div>
-                {withShelves && (
-                  <>
-                    <div className="grid grid-cols-2 gap-3">
-                      <NumField label="Număr polițe" value={values.shelves} onChange={(v) => set('shelves', v)} />
-                    </div>
-                    {shelfControls}
-                  </>
-                )}
                 <p className="text-xs text-muted-foreground">
                   Convenție atelier: până în 600mm lățime → 1 ușă; peste → 2 uși.
                 </p>
+                <div className="space-y-3 rounded-lg border p-3">
+                  <Label className={fieldLabelCls}>Polițe</Label>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="withShelves"
+                      checked={withShelves}
+                      onCheckedChange={(c) => set('withShelves', c === true ? 'true' : 'false')}
+                    />
+                    <Label htmlFor="withShelves" className="font-normal">Cu polițe (debifează la corpul de chiuvetă)</Label>
+                  </div>
+                  {withShelves && (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <NumField label="Număr polițe" value={values.shelves} onChange={(v) => set('shelves', v)} />
+                      </div>
+                      {shelfControls}
+                    </>
+                  )}
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <SelectField label="Model balamale" value={values.hingeId} onChange={(v) => set('hingeId', v)} options={hardwareSelOptions.hinges} allowEmpty />
                 </div>
@@ -571,7 +594,8 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             )}
 
             {frontType === 'FARA' && (
-              <div className="space-y-3">
+              <div className="space-y-3 rounded-lg border p-3">
+                <Label className={fieldLabelCls}>Polițe</Label>
                 <div className="grid grid-cols-2 gap-3">
                   <NumField label="Număr polițe" value={values.shelves} onChange={(v) => set('shelves', v)} />
                 </div>
@@ -672,22 +696,6 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
       </div>
 
       <div className="space-y-4 lg:sticky lg:top-6">
-        {invalid && (
-          <div className="rounded-xl bg-card px-5 py-3 ring-1 ring-border">
-            {anyVisibleError ? (
-              <>
-                <Badge variant="outline" className="border-destructive text-destructive">valori invalide</Badge>
-                <span className="ml-2 text-sm text-muted-foreground">Corectează secțiunile marcate cu roșu.</span>
-              </>
-            ) : (
-              <>
-                <Badge variant="outline" className="border-amber-500 text-amber-700">corp incomplet</Badge>
-                <span className="ml-2 text-sm text-muted-foreground">Completează secțiunile fără bulină verde.</span>
-              </>
-            )}
-          </div>
-        )}
-
         {live?.expandError && (
           <Alert variant="destructive"><AlertDescription>{live.expandError}</AlertDescription></Alert>
         )}

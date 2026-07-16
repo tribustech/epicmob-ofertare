@@ -40,10 +40,20 @@ export function frontCatalogsFromSnapshot(snap: SnapshotData) {
 }
 
 export interface QuoteCabinet {
+  id?: string;
   input: CabinetInput;
   hardwareOverrides: HardwareLine[] | null;
   extraParts: ExtraPart[];
   legHeightMm?: number | null;
+}
+
+/** Problemele unui corp, grupate pentru afișare (link în Rezumat + badge pe rând). */
+export interface CabinetIssue {
+  cabinetId: string;
+  label: string;
+  incomplete: boolean;                      // input needitat — nu intră în calcul
+  unresolvedHardware: HardwareSuggestion[]; // feronerie fără produs ales
+  warnings: Warning[];                      // alte avertismente de expansiune
 }
 
 export interface QuoteInput {
@@ -61,6 +71,7 @@ export interface QuoteResult {
   hardwareSummary: HardwareSummaryRow[];
   cutList: CutListFile[];
   warnings: Warning[];
+  cabinetIssues: CabinetIssue[];
   cabinets: ExpandedCabinet[];
 }
 
@@ -98,6 +109,7 @@ export function computeQuote(qAll: QuoteInput, snap: SnapshotData): QuoteResult 
 
   const byId = new Map<string, number>();
   const unresolvedHardware: HardwareSuggestion[] = [];
+  const unresolvedByCabinet: HardwareSuggestion[][] = expanded.map(() => []);
   expanded.forEach((e, i) => {
     let lines: HardwareLine[];
     const overrides = q.cabinets[i].hardwareOverrides;
@@ -110,11 +122,34 @@ export function computeQuote(qAll: QuoteInput, snap: SnapshotData): QuoteResult 
         : defaults;
       const r = resolveSuggestions(e.hardware, cabinetDefaults, catalogs.hardware);
       unresolvedHardware.push(...r.unresolved);
+      unresolvedByCabinet[i] = r.unresolved;
       lines = r.lines;
     }
     for (const line of lines) byId.set(line.hardwareId, (byId.get(line.hardwareId) ?? 0) + line.qty);
   });
   const hardwareLines: HardwareLine[] = [...byId.entries()].map(([hardwareId, qty]) => ({ hardwareId, qty }));
+
+  // probleme per corp: incomplete + feronerie nerezolvată + avertismente de expansiune,
+  // păstrând ordinea originală a corpurilor din proiect
+  const issueByCabinet = new Map<string, CabinetIssue>();
+  for (const c of incomplete) {
+    issueByCabinet.set(c.id ?? '', {
+      cabinetId: c.id ?? '', label: c.input.label,
+      incomplete: true, unresolvedHardware: [], warnings: [],
+    });
+  }
+  q.cabinets.forEach((c, i) => {
+    const uh = unresolvedByCabinet[i];
+    const ws = expanded[i].warnings;
+    if (uh.length === 0 && ws.length === 0) return;
+    issueByCabinet.set(c.id ?? '', {
+      cabinetId: c.id ?? '', label: c.input.label,
+      incomplete: false, unresolvedHardware: uh, warnings: ws,
+    });
+  });
+  const cabinetIssues = qAll.cabinets
+    .map((c) => issueByCabinet.get(c.id ?? ''))
+    .filter((x): x is CabinetIssue => x !== undefined);
 
   // snapshot-urile înghețate dinainte de nesting nu au kerf/trim — cad pe default-uri
   const nesting: NestParams = {
@@ -147,6 +182,7 @@ export function computeQuote(qAll: QuoteInput, snap: SnapshotData): QuoteResult 
     hardwareSummary: aggregateHardware(hardwareLines, catalogs.hardware),
     cutList: cutListCsv(parts, catalogs),
     warnings: [...incompleteWarnings, ...expanded.flatMap((e) => e.warnings)],
+    cabinetIssues,
     cabinets: expanded,
   };
 }

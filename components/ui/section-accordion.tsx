@@ -22,20 +22,22 @@ export function SectionAccordion({ title, summary, open, onToggle, children, com
         aria-expanded={open}
         className="flex w-full cursor-pointer items-center gap-3 px-5 py-4 text-left"
       >
-        {(complete !== undefined || error) && (
-          <span
-            aria-hidden
-            title={error ? 'Are erori' : complete ? 'Completat' : 'Incomplet'}
-            className={cn(
-              'size-2.5 shrink-0 rounded-full transition-colors',
-              error ? 'bg-destructive' : complete ? 'bg-emerald-500' : 'border border-muted-foreground/30',
-            )}
-          />
+        {complete === true && !error && (
+          <span aria-hidden title="Completat" className="size-2.5 shrink-0 rounded-full bg-emerald-500 transition-colors" />
         )}
         <div className="min-w-0 flex-1">
           <div className="text-[15px] font-bold text-foreground">{title}</div>
           {summary && <div className="mt-0.5 truncate text-[12.5px] text-muted-foreground/80">{summary}</div>}
         </div>
+        {error ? (
+          <span className="shrink-0 rounded-full bg-destructive px-2 py-0.5 text-[11px] font-semibold text-white">
+            corectează
+          </span>
+        ) : complete === false ? (
+          <span className="shrink-0 rounded-full bg-destructive px-2 py-0.5 text-[11px] font-semibold text-white">
+            incomplet
+          </span>
+        ) : null}
         <span
           aria-hidden
           className={cn('text-lg leading-none text-muted-foreground/70 transition-transform duration-200', open && 'rotate-90')}
