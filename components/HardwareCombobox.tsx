@@ -18,7 +18,8 @@ export interface HardwareComboItem {
 const CATEGORY_LABELS: Record<string, string> = {
   BALAMA: 'Balama', SERTAR: 'Sertar / glisiere', MANER: 'Mâner', PICIOR: 'Picior',
   SINA_SUSPENDARE: 'Șină suspendare', SUPORT_POLITA: 'Suport poliță',
-  CLEMA_SOCLU: 'Clemă soclu', PISTON_AVENTOS: 'Aventos / piston', ACCESORIU: 'Accesoriu',
+  CLEMA_SOCLU: 'Clemă soclu', PISTON_AVENTOS: 'Aventos / piston',
+  HOLTSURUB: 'Holtșurub', ACCESORIU: 'Accesoriu',
 };
 
 const triggerCls = cn(

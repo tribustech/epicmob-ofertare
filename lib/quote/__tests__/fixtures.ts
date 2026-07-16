@@ -19,6 +19,7 @@ export function makeSnapshot(overrides: Partial<SnapshotData> = {}): SnapshotDat
       { id: 'suport-std', name: 'Suport poliță', category: 'SUPORT_POLITA', pricePerUnit: 0, nominalLengthMm: null, loadClassKg: null, boxHeightMm: null, active: true },
       { id: 'clema-std', name: 'Clemă soclu', category: 'CLEMA_SOCLU', pricePerUnit: 0, nominalLengthMm: null, loadClassKg: null, boxHeightMm: null, active: true },
       { id: 'picior-std', name: 'Picior reglabil', category: 'PICIOR', pricePerUnit: 2, nominalLengthMm: null, loadClassKg: null, boxHeightMm: null, active: true },
+      { id: 'holtsurub-std', name: 'Holtșurub', category: 'HOLTSURUB', pricePerUnit: 0, nominalLengthMm: null, loadClassKg: null, boxHeightMm: null, active: true },
     ],
     // deliberat nesortate — computeCosts le sortează
     cuttingRates: [

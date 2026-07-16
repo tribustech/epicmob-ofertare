@@ -32,6 +32,7 @@ async function main() {
     { id: 'maner-standard', name: 'Mâner standard 128mm', category: 'MANER', pricePerUnit: 10, nominalLengthMm: null, loadClassKg: null },
     { id: 'picior-reglabil', name: 'Picior reglabil 100mm', category: 'PICIOR', pricePerUnit: 2.5, nominalLengthMm: null, loadClassKg: null },
     { id: 'sina-suspendare', name: 'Set suspendare corp (2 suporți + șină)', category: 'SINA_SUSPENDARE', pricePerUnit: 8, nominalLengthMm: null, loadClassKg: null },
+    { id: 'holtsurub-std', name: 'Holtșurub 3.5×16', category: 'HOLTSURUB', pricePerUnit: 0.1, nominalLengthMm: null, loadClassKg: null },
     { id: 'tandembox-m-500', name: 'Tandembox antaro M (83mm) 500mm', category: 'SERTAR', pricePerUnit: 120, nominalLengthMm: 500, boxHeightMm: 83 },
     { id: 'tandembox-k-500', name: 'Tandembox antaro K (115mm) 500mm', category: 'SERTAR', pricePerUnit: 135, nominalLengthMm: 500, boxHeightMm: 115 },
     { id: 'tandembox-c-500', name: 'Tandembox antaro C (192mm) 500mm', category: 'SERTAR', pricePerUnit: 155, nominalLengthMm: 500, boxHeightMm: 192 },

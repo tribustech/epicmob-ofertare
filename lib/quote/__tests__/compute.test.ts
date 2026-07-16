@@ -27,8 +27,10 @@ describe('computeQuote — corpul de referință (aceleași cifre ca motorul)', 
     expect(r.costs.leiPerMl).toBeCloseTo(1486.69, 0);
   });
 
-  it('feronerie auto: 2 balamale, 1 mâner, 4 picioare; cutList per material', () => {
+  it('feronerie auto: 2 balamale, 1 mâner, 4 picioare, holtșurub; cutList per material', () => {
     expect(r.hardwareLines).toContainEqual({ hardwareId: 'blum-cliptop', qty: 2 });
+    // spate PFL în falț → holtșurub auto (1/10cm pe perimetru)
+    expect(r.hardwareLines).toContainEqual({ hardwareId: 'holtsurub-std', qty: 27 });
     expect(r.unresolvedHardware).toEqual([]);
     expect(r.cutList.map((f) => f.materialId).sort()).toEqual(['mdf-vopsit', 'pal-alb', 'pfl-alb']);
   });

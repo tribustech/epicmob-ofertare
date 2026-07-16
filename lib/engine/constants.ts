@@ -15,6 +15,7 @@ export const DEFAULT_CONSTRUCTION: ConstructionConstants = {
   palBoxHeightDeductMm: 60,
   palBoxMinHeightMm: 80,
   legsPerCabinet: 4,
+  screwAllowanceMm: 2,
   shelfSpanWarnMm: 900,
   doorMaxWidthMm: 650,
   blindPanelDefaultWidthMm: 100,

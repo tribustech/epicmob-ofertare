@@ -10,6 +10,7 @@ const CATALOGS: ProjectCatalogs = {
     { id: 'picior-std', name: 'Picior reglabil', category: 'PICIOR', pricePerUnit: 2 },
     { id: 'suport-std', name: 'Suport poliță', category: 'SUPORT_POLITA', pricePerUnit: 0 },
     { id: 'clema-std', name: 'Clemă soclu', category: 'CLEMA_SOCLU', pricePerUnit: 0 },
+    { id: 'holtsurub-std', name: 'Holtșurub', category: 'HOLTSURUB', pricePerUnit: 0 },
   ],
   cuttingRates: [
     { maxThicknessMm: 10, pricePerSheet: 33 },
@@ -23,6 +24,7 @@ const CATALOGS: ProjectCatalogs = {
     aventosId: null,
     legId: 'picior-std',
     railId: null,
+    holtsurubId: 'holtsurub-std',
   },
   frontSuppliers: [],
   frontModels: [],
@@ -41,10 +43,12 @@ describe('computeProject — corp bază de referință (calcul de mână)', () =
     expect(result.parts).toHaveLength(5); // Laterală, Blat/Fund, Poliță, Spate, Ușă
   });
 
-  it('feronerie rezolvată automat: 2 balamale, 1 mâner, 4 picioare', () => {
+  it('feronerie rezolvată automat: 2 balamale, 1 mâner, 4 picioare, holtșurub', () => {
     expect(result.hardwareLines).toContainEqual({ hardwareId: 'blum-cliptop', qty: 2 });
     expect(result.hardwareLines).toContainEqual({ hardwareId: 'maner-std', qty: 1 });
     expect(result.hardwareLines).toContainEqual({ hardwareId: 'picior-std', qty: 4 });
+    // spate PFL în falț 600×720 → perimetru 2×(716+596)=2624mm → 27 holtșuruburi (1/10cm)
+    expect(result.hardwareLines).toContainEqual({ hardwareId: 'holtsurub-std', qty: 27 });
     expect(result.unresolvedHardware).toEqual([]);
   });
 

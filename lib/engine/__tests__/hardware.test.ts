@@ -14,6 +14,7 @@ const DEFAULTS: HardwareDefaults = {
   shelfSupportId: 'suport-std',
   plinthClipId: 'clema-std',
   aventosId: null,
+  holtsurubId: 'holtsurub-std',
 };
 
 describe('suggestHardware — corp bază cu o ușă', () => {
@@ -27,6 +28,24 @@ describe('suggestHardware — corp bază cu o ușă', () => {
     expect(byCat('PICIOR')[0].qty).toBe(4);
     expect(byCat('SINA_SUSPENDARE')).toHaveLength(0);
     expect(byCat('SERTAR')).toHaveLength(0);
+  });
+
+  it('spate PFL → holtșurub pe perimetru (1/10cm)', () => {
+    const { suggestions } = suggestHardware(bazaInput(), fronts, TEST_CATALOGS, cc);
+    // FALT: backH=720−4=716, backW=600−4=596 → 2×(716+596)=2624 → 27
+    expect(suggestions.find((s) => s.category === 'HOLTSURUB')!.qty).toBe(27);
+  });
+
+  it('holtșurubul ține cont de picior (perimetru mai mic)', () => {
+    const { suggestions } = suggestHardware(bazaInput(), fronts, TEST_CATALOGS, cc, 100);
+    // backH=720−4−100=616, backW=596 → 2×(616+596)=2424 → 25
+    expect(suggestions.find((s) => s.category === 'HOLTSURUB')!.qty).toBe(25);
+  });
+
+  it('fără spate PFL → fără holtșurub', () => {
+    const noPfl = bazaInput({ back: { enabled: true, materialId: 'pal-alb', mount: 'APLICAT' } });
+    const { suggestions } = suggestHardware(noPfl, fronts, TEST_CATALOGS, cc);
+    expect(suggestions.some((s) => s.category === 'HOLTSURUB')).toBe(false);
   });
 });
 

@@ -10,12 +10,14 @@ import type {
 
 const SHELF_SUPPORTS_PER_SHELF = 4;
 const PLINTH_CLIPS_PER_CABINET = 2;
+const HOLTSURUB_SPACING_MM = 100; // un holtșurub la fiecare 10 cm de perimetru al spatelui
 
 export function suggestHardware(
   input: CabinetInput,
   fronts: FrontInfo[],
   catalogs: Catalogs,
   cc: ConstructionConstants,
+  legHeightMm?: number,
 ): { suggestions: HardwareSuggestion[]; warnings: Warning[] } {
   const suggestions: HardwareSuggestion[] = [];
   const warnings: Warning[] = [];
@@ -120,6 +122,19 @@ export function suggestHardware(
     suggestions.push({ slot: 'suspendare', category: 'SINA_SUSPENDARE', name: 'Set suspendare corp', qty: 1 });
   }
 
+  // spate PFL → holtșurub pe perimetru: 1 la 10 cm din perimetrul plăcii de spate
+  if (input.back.enabled && input.back.materialId) {
+    const backMat = findMaterial(catalogs, input.back.materialId);
+    if (backMat.kind === 'PFL') {
+      const rebate = input.back.mount === 'FALT' ? cc.backRebateMm : 0;
+      const legDeduct = legHeightMm && LEGGED_TYPES.has(input.type) ? legHeightMm : 0;
+      const backH = input.heightMm - rebate - legDeduct;
+      const backW = input.widthMm - rebate;
+      const qty = Math.ceil((2 * (backH + backW)) / HOLTSURUB_SPACING_MM);
+      suggestions.push({ slot: 'holtsurub', category: 'HOLTSURUB', name: 'Holtșurub spate (PFL)', qty });
+    }
+  }
+
   return { suggestions, warnings };
 }
 
@@ -159,6 +174,7 @@ function defaultItemId(
     case 'SUPORT_POLITA': return defaults.shelfSupportId;
     case 'CLEMA_SOCLU': return defaults.plinthClipId;
     case 'PISTON_AVENTOS': return defaults.aventosId;
+    case 'HOLTSURUB': return defaults.holtsurubId;
     default: return null;
   }
 }

@@ -36,6 +36,12 @@ async function seedNewCategories() {
       console.log(`Setări: ${item.settingsKey} → ${item.name}`);
     }
   }
+  // holtșurubul se alege automat (cel mai ieftin HOLTSURUB activ) — fără cheie în Setări
+  await prisma.hardwareItem.upsert({
+    where: { id: 'holtsurub-std' },
+    update: {},
+    create: { id: 'holtsurub-std', name: 'Holtșurub 3.5×16', category: 'HOLTSURUB', pricePerUnit: 0.1, active: true },
+  });
 }
 
 async function migrateCabinets() {

@@ -32,6 +32,7 @@ export type HardwareCategory =
   | 'SUPORT_POLITA'
   | 'CLEMA_SOCLU'
   | 'PISTON_AVENTOS'
+  | 'HOLTSURUB'
   | 'ACCESORIU';
 
 export interface HardwareItem {
@@ -56,6 +57,7 @@ export interface ConstructionConstants {
   palBoxHeightDeductMm: number;    // înălțime cutie = front − această valoare
   palBoxMinHeightMm: number;       // înălțime minimă cutie
   legsPerCabinet: number;          // picioare per corp cu picioare
+  screwAllowanceMm: number;        // rezervă șurub (holtșurub) la corpurile cu spate PFL — se scade din adâncime
   shelfSpanWarnMm: number;         // avertizare poliță peste această deschidere
   doorMaxWidthMm: number;          // avertizare ușă peste această lățime
   blindPanelDefaultWidthMm: number; // lățime implicită panou orb la corpurile de colț
@@ -176,6 +178,7 @@ export type HardwareSlot =
   | 'suspendare'
   | 'suporti-polita'
   | 'cleme-soclu'
+  | 'holtsurub'
   | 'aventos';
 
 export interface HardwareSuggestion {
@@ -233,6 +236,7 @@ export interface HardwareDefaults {
   shelfSupportId: string | null;
   plinthClipId: string | null;
   aventosId: string | null;
+  holtsurubId: string | null;
 }
 
 export interface HardwareLine {

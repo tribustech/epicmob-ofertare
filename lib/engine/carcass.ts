@@ -39,6 +39,16 @@ export function expandCarcass(
   const grosime2x: DimTerm = { label: '2× grosime laterală', valueMm: -2 * t };
   const innerW = assertPositiveDim(W - 2 * t, 'lățime interioară corp', label);
 
+  // spatele se rezolvă din start: grosimea PFL + rezerva de holtșurub se scad din ADÂNCIMEA
+  // lateralelor și a blatului/fundului (spatele stă în spate, prins cu holtșurub)
+  if (input.back.enabled && !input.back.materialId) {
+    throw new Error(`Corpul ${label}: spate activat fără material`);
+  }
+  const backMat = input.back.enabled ? findMaterial(catalogs, input.back.materialId!) : null;
+  const hasPfl = backMat?.kind === 'PFL';
+  const pflThick = hasPfl ? backMat!.thicknessMm : 0;
+  const screw = hasPfl ? cc.screwAllowanceMm : 0;
+
   const mountTop: PanelMount = input.mount?.top ?? 'INCADRAT';
   const mountBottom: PanelMount = input.mount?.bottom ?? 'INCADRAT';
   // corpul stă pe picior: înălțimea totală H include piciorul, deci lateralele/spatele scad cu el
@@ -53,7 +63,13 @@ export function expandCarcass(
     { label: 'fund aplicat', valueMm: -aplicatBottom },
     { label: 'picior', valueMm: -legDeduct },
   ]);
-  const depthCalc = dim('Adâncime', [{ label: 'adâncime', valueMm: D }]);
+  // adâncimea pieselor orizontale/laterale: din D se scade PFL-ul + rezerva de șurub
+  const panelDepth = assertPositiveDim(D - pflThick - screw, 'adâncime piesă (după spate PFL)', label);
+  const depthCalc = dim('Adâncime', [
+    { label: 'adâncime', valueMm: D },
+    { label: 'PFL', valueMm: -pflThick },
+    { label: 'șurub', valueMm: -screw },
+  ]);
   const panelW = (m: PanelMount) => (m === 'APLICAT' ? W : innerW);
   const panelWCalc = (m: PanelMount): DimCalc =>
     m === 'APLICAT'
@@ -63,7 +79,7 @@ export function expandCarcass(
   const parts: Part[] = [
     {
       cabinetLabel: label, name: 'Laterală',
-      lengthMm: sideH, widthMm: D, qty: 2,
+      lengthMm: sideH, widthMm: panelDepth, qty: 2,
       materialId: carcass.id, edges: { l1: fe },
       calc: { length: sideHCalc, width: depthCalc },
     },
@@ -71,20 +87,20 @@ export function expandCarcass(
   if (mountTop === mountBottom) {
     parts.push({
       cabinetLabel: label, name: 'Blat corp / Fund corp',
-      lengthMm: panelW(mountTop), widthMm: D, qty: 2,
+      lengthMm: panelW(mountTop), widthMm: panelDepth, qty: 2,
       materialId: carcass.id, edges: { l1: fe },
       calc: { length: panelWCalc(mountTop), width: depthCalc },
     });
   } else {
     parts.push({
       cabinetLabel: label, name: 'Blat corp',
-      lengthMm: panelW(mountTop), widthMm: D, qty: 1,
+      lengthMm: panelW(mountTop), widthMm: panelDepth, qty: 1,
       materialId: carcass.id, edges: { l1: fe },
       calc: { length: panelWCalc(mountTop), width: depthCalc },
     });
     parts.push({
       cabinetLabel: label, name: 'Fund corp',
-      lengthMm: panelW(mountBottom), widthMm: D, qty: 1,
+      lengthMm: panelW(mountBottom), widthMm: panelDepth, qty: 1,
       materialId: carcass.id, edges: { l1: fe },
       calc: { length: panelWCalc(mountBottom), width: depthCalc },
     });
@@ -117,18 +133,14 @@ export function expandCarcass(
     }
   }
 
-  if (input.back.enabled) {
-    if (!input.back.materialId) {
-      throw new Error(`Corpul ${label}: spate activat fără material`);
-    }
-    const back = findMaterial(catalogs, input.back.materialId);
+  if (backMat) {
     const isFalt = input.back.mount === 'FALT';
     const faltRebate = isFalt ? cc.backRebateMm : 0;
     parts.push({
       cabinetLabel: label, name: 'Spate',
       lengthMm: assertPositiveDim(H - faltRebate - legDeduct, 'înălțime spate', label),
       widthMm: W - faltRebate,
-      qty: 1, materialId: back.id, edges: {},
+      qty: 1, materialId: backMat.id, edges: {},
       calc: {
         length: dim('Înălțime', [
           { label: 'înălțime corp', valueMm: H },

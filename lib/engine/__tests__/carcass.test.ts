@@ -9,13 +9,15 @@ describe('expandCarcass', () => {
 
     const byName = (n: string) => parts.find((p) => p.name === n)!;
 
+    // spate PFL 3mm → adâncimea lateralelor/blatului scade cu PFL 3 + șurub 2: 560 → 555
     expect(byName('Laterală')).toMatchObject({
-      lengthMm: 720, widthMm: 560, qty: 2, materialId: 'pal-alb',
+      lengthMm: 720, widthMm: 555, qty: 2, materialId: 'pal-alb',
       edges: { l1: 'abs-04' },
     });
     expect(byName('Blat corp / Fund corp')).toMatchObject({
-      lengthMm: 564, widthMm: 560, qty: 2, edges: { l1: 'abs-04' },
+      lengthMm: 564, widthMm: 555, qty: 2, edges: { l1: 'abs-04' },
     });
+    // polița nu e afectată de spate (stă în fața lui)
     expect(byName('Poliță')).toMatchObject({
       lengthMm: 564, widthMm: 530, qty: 1,
     });
@@ -62,32 +64,50 @@ describe('expandCarcass', () => {
   it('piciorul se scade din laterală și spate la corp cu picior (BAZA)', () => {
     const { parts } = expandCarcass(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION, 100);
     const byName = (n: string) => parts.find((p) => p.name === n)!;
-    // laterală: 720 − picior 100 = 620 (fără capete aplicate); adâncimea neschimbată
-    expect(byName('Laterală')).toMatchObject({ lengthMm: 620, widthMm: 560 });
-    // spate falț: (720 − 4 − 100) × (600 − 4) = 616 × 596
+    // laterală: înălțime 720 − picior 100 = 620; adâncime 560 − PFL 3 − șurub 2 = 555
+    expect(byName('Laterală')).toMatchObject({ lengthMm: 620, widthMm: 555 });
+    // spate falț: (720 − 4 − 100) × (600 − 4) = 616 × 596 (spatele nu-și scade propria grosime)
     expect(byName('Spate')).toMatchObject({ lengthMm: 616, widthMm: 596 });
-    // piesele orizontale rămân neschimbate
-    expect(byName('Blat corp / Fund corp')).toMatchObject({ lengthMm: 564, widthMm: 560 });
+    // orizontalele: lungimea neschimbată, adâncimea scade cu PFL + șurub
+    expect(byName('Blat corp / Fund corp')).toMatchObject({ lengthMm: 564, widthMm: 555 });
+    // polița e în fața spatelui — neschimbată
     expect(byName('Poliță')).toMatchObject({ lengthMm: 564, widthMm: 530 });
   });
 
-  it('tip fără picior (SUSPENDAT) nu scade nimic chiar cu legHeightMm', () => {
+  it('tip fără picior (SUSPENDAT) nu scade piciorul, dar scade PFL + șurub', () => {
     const input = bazaInput({ type: 'SUSPENDAT' });
     const { parts } = expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION, 100);
-    expect(parts.find((p) => p.name === 'Laterală')).toMatchObject({ lengthMm: 720 });
+    // fără picior pe înălțime, dar adâncimea tot scade cu PFL 3 + șurub 2
+    expect(parts.find((p) => p.name === 'Laterală')).toMatchObject({ lengthMm: 720, widthMm: 555 });
     expect(parts.find((p) => p.name === 'Spate')).toMatchObject({ lengthMm: 716 });
   });
 
-  it('urma de calcul pe laterală conține termenii înălțime − picior', () => {
+  it('spate non-PFL (ex. PAL) nu scade adâncimea', () => {
+    // material de spate PAL (18mm) — nu e PFL, deci fără scădere de adâncime
+    const input = bazaInput({ back: { enabled: true, materialId: 'pal-alb', mount: 'APLICAT' } });
+    const { parts } = expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    expect(parts.find((p) => p.name === 'Laterală')).toMatchObject({ lengthMm: 720, widthMm: 560 });
+  });
+
+  it('fără spate → nicio scădere de adâncime', () => {
+    const input = bazaInput({ back: { enabled: false, mount: 'FALT' } });
+    const { parts } = expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    expect(parts.find((p) => p.name === 'Laterală')).toMatchObject({ widthMm: 560 });
+  });
+
+  it('urma de calcul: înălțimea are picior, adâncimea are PFL + șurub', () => {
     const { parts } = expandCarcass(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION, 100);
     const lat = parts.find((p) => p.name === 'Laterală')!;
-    expect(lat.calc?.length).toMatchObject({ label: 'Înălțime', resultMm: 620 });
     expect(lat.calc?.length?.terms).toEqual([
       { label: 'înălțime corp', valueMm: 720 },
       { label: 'picior', valueMm: -100 },
     ]);
-    // adâncimea are un singur termen
-    expect(lat.calc?.width?.resultMm).toBe(560);
+    expect(lat.calc?.width).toMatchObject({ label: 'Adâncime', resultMm: 555 });
+    expect(lat.calc?.width?.terms).toEqual([
+      { label: 'adâncime', valueMm: 560 },
+      { label: 'PFL', valueMm: -3 },
+      { label: 'șurub', valueMm: -2 },
+    ]);
   });
 
   it('fără legHeightMm laterala rămâne pe înălțimea totală (compat)', () => {

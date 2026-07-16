@@ -49,7 +49,7 @@ export function expandCabinet(
   const boxes = drawerCount > 0
     ? expandDrawerBoxes(input, catalogs, cc)
     : { parts: [], warnings: [] };
-  const hardware = suggestHardware(input, fronts.fronts, catalogs, cc);
+  const hardware = suggestHardware(input, fronts.fronts, catalogs, cc, legHeightMm);
 
   return {
     input,

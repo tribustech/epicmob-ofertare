@@ -37,7 +37,7 @@ export const edgeBandSchema = z.object({
 
 export const hardwareSchema = z.object({
   name: z.string().trim().min(1),
-  category: z.enum(['BALAMA', 'SERTAR', 'MANER', 'PICIOR', 'SINA_SUSPENDARE', 'SUPORT_POLITA', 'CLEMA_SOCLU', 'PISTON_AVENTOS', 'ACCESORIU']),
+  category: z.enum(['BALAMA', 'SERTAR', 'MANER', 'PICIOR', 'SINA_SUSPENDARE', 'SUPORT_POLITA', 'CLEMA_SOCLU', 'PISTON_AVENTOS', 'HOLTSURUB', 'ACCESORIU']),
   pricePerUnit: posNum,
   nominalLengthMm: optPosNum,
   loadClassKg: optPosNum,

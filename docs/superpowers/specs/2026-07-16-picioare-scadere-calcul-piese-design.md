@@ -77,8 +77,33 @@ pentru piesele carcasei:
   `{label}: {t0} {|v0|} − {t1} {|v1|} … = {result}` (primul termen pozitiv, restul cu semn).
 - Piese fără `calc` → linie simplă `Lungime: … · Lățime: …`.
 
+## 4. Spate PFL: scădere adâncime + holtșurub (adăugat 2026-07-16)
+
+Când corpul are spate din **PFL** (`back.enabled && backMaterial.kind === 'PFL'`):
+
+**Geometrie** — din ADÂNCIME se scad grosimea PFL + rezerva de șurub (`screwAllowanceMm`, nou,
+implicit 2, editabil în Setări):
+- **Laterală**: adâncime `D − PFL − 2`; înălțimea scade doar cu piciorul (ca la §1).
+- **Blat/Fund corp**: adâncime `D − PFL − 2`; lungimea neschimbată.
+- **Poliță**: neschimbată (stă în fața spatelui).
+- **Spate**: neschimbat (e chiar PFL-ul).
+
+Grosimea PFL vine dinamic din materialul de spate. `backMat` se rezolvă la începutul
+`expandCarcass` (o singură căutare, reutilizată la piesa Spate).
+
+**Feronerie** — produs nou **holtșurub**:
+- Categorie `HOLTSURUB`, slot `holtsurub` (adăugate în toate enumerările: types, Zod schema,
+  `HARDWARE_CATEGORIES`, `HARDWARE_SLOTS`, UI catalog + combobox).
+- `suggestHardware` (primește acum și `legHeightMm`) adaugă holtșurub la corpurile cu spate PFL:
+  `qty = ceil(perimetru_spate / 100)` — 1 la 10 cm; perimetrul = `2×((H−falț−picior) + (W−falț))`.
+- Produs implicit: **auto-pick** (cel mai ieftin `HOLTSURUB` activ) în `buildHardwareDefaults` →
+  `HardwareDefaults.holtsurubId`. Fără coloană nouă în `AppSettings`, fără migrare de schemă.
+- Seed + `migrate-hardware.ts`: produs `holtsurub-std` (0.1 lei/buc, editabil).
+
 ## Teste
 
-- `carcass.test.ts`: laterală și spate scad cu `legHeightMm` doar pentru tipuri cu picior;
-  fără `legHeightMm` sau tip nelegat → neschimbat; `calc.terms` corecte pentru fiecare piesă.
-- Testele existente (fără al 4-lea param) rămân verzi.
+- `carcass.test.ts`: laterală/spate scad cu `legHeightMm` doar pt. tipuri cu picior; adâncimea
+  scade cu PFL + șurub doar la spate PFL (nu la PAL / fără spate); `calc.terms` corecte.
+- `hardware.test.ts`: holtșurub pe perimetru (27 fără picior, 25 cu picior 100), zero fără spate PFL.
+- Reference tests (`integration`, `compute`, `estimate`, `needs`) recalculate pentru adâncimea 555
+  și linia de holtșurub (produs de test la 0 lei ca să nu miște calculul de cost hand-made).

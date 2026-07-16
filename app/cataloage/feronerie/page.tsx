@@ -16,6 +16,7 @@ const CATEGORY_OPTIONS = [
   { value: 'SUPORT_POLITA', label: 'Suport poliță' },
   { value: 'CLEMA_SOCLU', label: 'Clemă soclu' },
   { value: 'PISTON_AVENTOS', label: 'Aventos / piston' },
+  { value: 'HOLTSURUB', label: 'Holtșurub' },
   { value: 'ACCESORIU', label: 'Accesoriu' },
 ];
 

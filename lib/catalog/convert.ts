@@ -36,7 +36,7 @@ export interface SettingsRow {
 const MATERIAL_KINDS: MaterialKind[] = ['PAL', 'MDF_VOPSIT', 'MDF_MELAMINAT', 'MDF_INFOLIAT', 'PFL'];
 const HARDWARE_CATEGORIES: HardwareCategory[] = [
   'BALAMA', 'SERTAR', 'MANER', 'PICIOR', 'SINA_SUSPENDARE',
-  'SUPORT_POLITA', 'CLEMA_SOCLU', 'PISTON_AVENTOS', 'ACCESORIU',
+  'SUPORT_POLITA', 'CLEMA_SOCLU', 'PISTON_AVENTOS', 'HOLTSURUB', 'ACCESORIU',
 ];
 
 export function toBoardMaterial(row: MaterialRow): BoardMaterial {
@@ -119,6 +119,10 @@ export function buildHardwareDefaults(hardware: HardwareRow[], settings: Setting
     }
   }
   if (!settings.defaultHingeId) throw new Error('Setările nu au o balama implicită configurată');
+  // holtșurubul nu are setare dedicată — se alege automat cel mai ieftin produs HOLTSURUB activ
+  const holtsurub = hardware
+    .filter((h) => h.category === 'HOLTSURUB')
+    .sort((a, b) => a.pricePerUnit - b.pricePerUnit)[0];
   return {
     hingeId: settings.defaultHingeId,
     slideIdsByNominal,
@@ -127,6 +131,7 @@ export function buildHardwareDefaults(hardware: HardwareRow[], settings: Setting
     shelfSupportId: settings.defaultShelfSupportId ?? null,
     plinthClipId: settings.defaultPlinthClipId ?? null,
     aventosId: settings.defaultAventosId ?? null,
+    holtsurubId: holtsurub?.id ?? null,
   };
 }
 

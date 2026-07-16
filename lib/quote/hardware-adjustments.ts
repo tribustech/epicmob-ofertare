@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { HardwareAdjustments, HardwareSlot } from '@/lib/engine';
 
 export const HARDWARE_SLOTS: HardwareSlot[] = [
-  'balamale', 'maner', 'sertare', 'picioare', 'suspendare', 'suporti-polita', 'cleme-soclu', 'aventos',
+  'balamale', 'maner', 'sertare', 'picioare', 'suspendare', 'suporti-polita', 'cleme-soclu', 'holtsurub', 'aventos',
 ];
 
 const slotAdjustmentSchema = z.object({

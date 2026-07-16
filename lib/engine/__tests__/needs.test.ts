@@ -12,8 +12,9 @@ describe('computeMaterialNeeds', () => {
     const { boards, edging } = computeMaterialNeeds(parts, TEST_CATALOGS, { kerfMm: 4, trimMm: 10 });
 
     const pal = boards.find((b) => b.materialId === 'pal-alb')!;
-    // 2×(0.72×0.56) + 2×(0.564×0.56) + 0.564×0.53 = 1.737 m²
-    expect(pal.totalAreaSqm).toBeCloseTo(1.737, 3);
+    // adâncimea lateralelor/blatului scade cu PFL 3 + șurub 2 (560→555):
+    // 2×(0.72×0.555) + 2×(0.564×0.555) + 0.564×0.53 = 1.72416 m²
+    expect(pal.totalAreaSqm).toBeCloseTo(1.72416, 3);
     // piesele unui corp bază de 600mm încap toate pe o singură foaie
     expect(pal.sheets).toBe(1);
 
