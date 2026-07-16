@@ -34,7 +34,7 @@ export function estimateCabinetCost(
     }
     const cc = parseConstruction(snap.settings.constructionJson);
     const input = withResolvedHandle(cabinet.input, opts.projectHandle);
-    const expanded = expandCabinet(input, catalogs, cc);
+    const expanded = expandCabinet(input, catalogs, cc, opts.legHeightMm ?? undefined);
 
     const parts = [...expanded.parts];
     for (const p of cabinet.extraParts) {

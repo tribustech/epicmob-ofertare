@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useMemo, useState, useTransition } from 'react';
+import { Fragment, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { cabinetFormSchema, toCabinetInput } from '@/lib/quote/cabinet-form';
 import type { ExtraPart } from '@/lib/quote/cabinet-form';
@@ -10,7 +10,7 @@ import { frontCatalogsFromSnapshot, type SnapshotData } from '@/lib/quote/comput
 import { HANDLE_TYPE_OPTIONS, withResolvedHandle } from '@/lib/quote/handle';
 import { expandCabinet, resolveSuggestions } from '@/lib/engine';
 import type {
-  HandleType, HardwareAdjustments, HardwareLine, HardwareSlot, HardwareSuggestion,
+  DimCalc, HandleType, HardwareAdjustments, HardwareLine, HardwareSlot, HardwareSuggestion,
   Part, ResolvedSlot, Warning,
 } from '@/lib/engine';
 import { buildHardwareDefaults, parseConstruction, toCostCatalogs } from '@/lib/catalog/convert';
@@ -35,6 +35,18 @@ import { RalPicker, type RalColor } from '@/components/RalPicker';
 import { materialHasNoPrice } from '@/lib/quote/material-price';
 
 export type FieldOption = { value: string; label: string };
+
+// „H 720 − picior 100 = 620"; un singur termen → doar „label: valoare"
+function fmtDimCalc(c: DimCalc): string {
+  if (c.terms.length <= 1) return `${c.label}: ${fmtNum(c.resultMm, 1)}`;
+  const body = c.terms
+    .map((term, i) => {
+      const sign = i === 0 ? '' : term.valueMm < 0 ? '− ' : '+ ';
+      return `${sign}${term.label} ${fmtNum(Math.abs(term.valueMm), 1)}`;
+    })
+    .join(' ');
+  return `${c.label}: ${body} = ${fmtNum(c.resultMm, 1)}`;
+}
 
 const FRONT_KIND_OPTIONS: FieldOption[] = [
   { value: 'PAL', label: 'PAL' },
@@ -137,6 +149,8 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const [createdHw, setCreatedHw] = useState<HardwareComboItem[]>([]);
   const [isPending, startTransition] = useTransition();
   const [formState, setFormState] = useState<FormState>({});
+  // rândul de piesă deschis (afișează derivarea dimensiunilor); null = niciunul
+  const [openPart, setOpenPart] = useState<number | null>(null);
 
   // erorile de validare apar doar pe câmpurile atinse sau după o încercare de salvare
   const [touched, setTouched] = useState<Set<string>>(() => new Set());
@@ -270,7 +284,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     let unresolvedHardware: HardwareSuggestion[] = [];
     let slots: ResolvedSlot[] = [];
     try {
-      const expanded = expandCabinet(input, catalogs, cc);
+      const expanded = expandCabinet(input, catalogs, cc, legHeightMm ?? undefined);
       parts = expanded.parts;
       warnings = expanded.warnings;
       const defaults = buildHardwareDefaults(
@@ -934,17 +948,45 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {live.parts.map((p, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="font-medium">{p.name}</TableCell>
-                    <TableCell className="font-mono text-xs">{fmtNum(p.lengthMm, 1)}×{fmtNum(p.widthMm, 1)}</TableCell>
-                    <TableCell className="font-mono">{p.qty}</TableCell>
-                    <TableCell>{materialName(p.materialId)}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {[p.edges.l1, p.edges.l2, p.edges.w1, p.edges.w2].filter(Boolean).map((b) => bandName(b)).join(', ') || '—'}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {live.parts.map((p, i) => {
+                  const open = openPart === i;
+                  return (
+                    <Fragment key={i}>
+                      <TableRow
+                        className="cursor-pointer select-none"
+                        onClick={() => setOpenPart(open ? null : i)}
+                        aria-expanded={open}
+                      >
+                        <TableCell className="font-medium">
+                          <span className="mr-1 inline-block text-muted-foreground">{open ? '▾' : '▸'}</span>
+                          {p.name}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">{fmtNum(p.lengthMm, 1)}×{fmtNum(p.widthMm, 1)}</TableCell>
+                        <TableCell className="font-mono">{p.qty}</TableCell>
+                        <TableCell>{materialName(p.materialId)}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {[p.edges.l1, p.edges.l2, p.edges.w1, p.edges.w2].filter(Boolean).map((b) => bandName(b)).join(', ') || '—'}
+                        </TableCell>
+                      </TableRow>
+                      {open && (
+                        <TableRow className="hover:bg-transparent">
+                          <TableCell colSpan={5} className="bg-muted/40 text-xs text-muted-foreground">
+                            {p.calc ? (
+                              <div className="space-y-0.5 font-mono">
+                                {p.calc.length && <div>{fmtDimCalc(p.calc.length)}</div>}
+                                {p.calc.width && <div>{fmtDimCalc(p.calc.width)}</div>}
+                              </div>
+                            ) : (
+                              <div className="font-mono">
+                                Lungime: {fmtNum(p.lengthMm, 1)} · Lățime: {fmtNum(p.widthMm, 1)}
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </Fragment>
+                  );
+                })}
                 {live.parts.length === 0 && (
                   <TableRow><TableCell colSpan={5} className="text-muted-foreground">Nicio piesă.</TableCell></TableRow>
                 )}

@@ -136,6 +136,19 @@ export interface PartEdges {
   w2?: string;
 }
 
+/** Un termen dintr-o formulă de dimensiune; valueMm semnat (negativ = scăzut). */
+export interface DimTerm {
+  label: string;
+  valueMm: number;
+}
+
+/** Derivarea unei dimensiuni: rezultatul și termenii din care provine (pentru afișare la click). */
+export interface DimCalc {
+  label: string;       // 'Înălțime' | 'Lățime' | 'Adâncime' | 'Lățime interioară' …
+  resultMm: number;
+  terms: DimTerm[];
+}
+
 export interface Part {
   cabinetLabel: string;
   name: string;
@@ -144,6 +157,8 @@ export interface Part {
   qty: number;
   materialId: string;
   edges: PartEdges;
+  /** derivarea dimensiunilor (opțional; completat doar pentru piesele de carcasă) */
+  calc?: { length?: DimCalc; width?: DimCalc };
 }
 
 export interface FrontInfo {

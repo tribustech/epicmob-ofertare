@@ -1,4 +1,7 @@
-import type { ConstructionConstants } from './types';
+import type { CabinetType, ConstructionConstants } from './types';
+
+/** Tipurile de corp care stau pe picioare reglabile (soclu) — piciorul se scade din înălțime. */
+export const LEGGED_TYPES = new Set<CabinetType>(['BAZA', 'INALT', 'COLT']);
 
 export const DEFAULT_CONSTRUCTION: ConstructionConstants = {
   frontGapMm: 3,

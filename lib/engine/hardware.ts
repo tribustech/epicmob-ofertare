@@ -1,4 +1,5 @@
 import { findMaterial } from './carcass';
+import { LEGGED_TYPES } from './constants';
 import { pickSlideNominal } from './drawers';
 import { doorWeightKg, suggestHingeCount } from './hinges';
 import type {
@@ -7,7 +8,6 @@ import type {
   HardwareSuggestion, ResolvedSlot, Warning,
 } from './types';
 
-const LEGGED_TYPES = new Set(['BAZA', 'INALT', 'COLT']);
 const SHELF_SUPPORTS_PER_SHELF = 4;
 const PLINTH_CLIPS_PER_CABINET = 2;
 

@@ -13,6 +13,7 @@ export function expandCabinet(
   input: CabinetInput,
   catalogs: Catalogs,
   cc: ConstructionConstants,
+  legHeightMm?: number,
 ): ExpandedCabinet {
   const drawerCount = input.drawers?.count ?? 0;
   if (input.drawers && drawerCount <= 0) {
@@ -43,7 +44,7 @@ export function expandCabinet(
     }
   }
 
-  const carcass = expandCarcass(input, catalogs, cc);
+  const carcass = expandCarcass(input, catalogs, cc, legHeightMm);
   const fronts = expandFronts(input, catalogs, cc);
   const boxes = drawerCount > 0
     ? expandDrawerBoxes(input, catalogs, cc)

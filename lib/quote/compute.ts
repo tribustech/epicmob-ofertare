@@ -115,7 +115,7 @@ export function computeQuote(qAll: QuoteInput, snap: SnapshotData): QuoteResult 
   const blatResults = blats.map((b) => b.result).filter((r): r is BlatResult => r !== null);
 
   const inputs = normal.map((c) => withResolvedHandle(c.input, q.projectHandle));
-  const expanded = inputs.map((input) => expandCabinet(input, catalogs, cc));
+  const expanded = inputs.map((input, i) => expandCabinet(input, catalogs, cc, normal[i].legHeightMm ?? undefined));
 
   const parts: Part[] = expanded.flatMap((e) => e.parts);
   for (const c of normal) {
