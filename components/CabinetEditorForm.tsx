@@ -94,6 +94,11 @@ const SHELF_AXIS_OPTIONS: FieldOption[] = [
   { value: 'FB', label: 'Față–spate' },
 ];
 
+const DOOR_OPENING_OPTIONS: FieldOption[] = [
+  { value: 'BALAMALE', label: 'Clasic' },
+  { value: 'RIDICABILA', label: 'Tip Aventos' },
+];
+
 export interface CabinetEditorFormProps {
   initial: Record<string, string>;
   snapshot: SnapshotData;
@@ -588,19 +593,19 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                   )}
                 </div>
                 {type === 'SUSPENDAT' && (
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="doorOpening"
-                      checked={values.doorOpening === 'RIDICABILA'}
-                      onCheckedChange={(c) => set('doorOpening', c === true ? 'RIDICABILA' : 'BALAMALE')}
+                  <div className="grid gap-2">
+                    <Label className={fieldLabelCls}>Tip deschidere</Label>
+                    <SegmentedControl
+                      value={values.doorOpening}
+                      onChange={(v) => set('doorOpening', v)}
+                      options={DOOR_OPENING_OPTIONS}
                     />
-                    <Label htmlFor="doorOpening" className="font-normal">
-                      Deschidere verticală (Aventos) — în loc de balamale
-                    </Label>
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Modelul și numărul balamalelor se aleg în secțiunea Feronerie.
+                  {values.doorOpening === 'RIDICABILA' && type === 'SUSPENDAT'
+                    ? 'Ușa se ridică pe set Aventos — fără balamale; setul se alege în secțiunea Feronerie.'
+                    : 'Modelul și numărul balamalelor se aleg în secțiunea Feronerie.'}
                 </p>
               </div>
             )}
