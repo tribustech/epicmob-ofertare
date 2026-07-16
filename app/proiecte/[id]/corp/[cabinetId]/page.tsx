@@ -7,15 +7,12 @@ import {
   type CabinetInput, type ExpandedCabinet, type HandleType, type HardwareCategory, type HardwareItem, type HardwareLine,
 } from '@/lib/engine';
 import { addExtraPart, removeExtraPart, resetCabinetHardware, saveCabinetHardware, updateCabinetData } from '@/lib/quote/actions';
-import { buildSnapshot } from '@/lib/quote/snapshot';
 import { pickLegId } from '@/lib/quote/legs';
 import { normalizeCabinetInput } from '@/lib/quote/normalize-input';
 import type { ExtraPart } from '@/lib/quote/cabinet-form';
 import { HANDLE_TYPE_OPTIONS, withResolvedHandle } from '@/lib/quote/handle';
-import { CabinetEditorForm, type FieldOption } from '@/components/CabinetEditorForm';
-import type { FrontModelOption } from '@/components/FrontModelPicker';
-import type { RalColor } from '@/components/RalPicker';
-import { getRalColors } from '@/lib/ral';
+import { buildHardwareSelOptions, hardwareLabel, loadCorpEditorData, optionsWithCurrent } from '@/lib/quote/corp-editor-data';
+import { CabinetEditorForm } from '@/components/CabinetEditorForm';
 import { ActionForm } from '@/components/ActionForm';
 import { DeleteButton } from '@/components/DeleteButton';
 import { NumberInput, Select, SubmitButton, TextInput } from '@/components/forms';
@@ -23,19 +20,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { fmtNum } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
-
-function optionsWithCurrent<T extends { id: string; name: string; active: boolean }>(
-  rows: T[],
-  currentId: string | null | undefined,
-  formatActive: (r: T) => string = (r) => r.name,
-): FieldOption[] {
-  const opts = rows.filter((r) => r.active).map((r) => ({ value: r.id, label: formatActive(r) }));
-  if (currentId && !opts.some((o) => o.value === currentId)) {
-    const row = rows.find((r) => r.id === currentId);
-    if (row) opts.push({ value: row.id, label: `${row.name} (dezactivat)` });
-  }
-  return opts;
-}
 
 function isInactiveId(rows: { id: string; active: boolean }[], id: string | null | undefined): boolean {
   return !!id && rows.some((r) => r.id === id && !r.active);
@@ -106,37 +90,25 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
   if (!cab || cab.projectId !== id) notFound();
   const input = normalizeCabinetInput(JSON.parse(cab.inputJson));
 
-  const [project, assembly, materials, edgeBands, settings, frontSuppliers, frontModels] = await Promise.all([
-    prisma.project.findUniqueOrThrow({ where: { id } }),
+  const [editorData, assembly] = await Promise.all([
+    loadCorpEditorData(id),
     cab.assemblyId ? prisma.assembly.findUnique({ where: { id: cab.assemblyId } }) : Promise.resolve(null),
-    prisma.material.findMany({ orderBy: { name: 'asc' } }),
-    prisma.edgeBand.findMany({ orderBy: { thicknessMm: 'asc' } }),
-    prisma.appSettings.findUnique({ where: { id: 1 } }),
-    prisma.frontSupplier.findMany({ orderBy: { name: 'asc' } }),
-    prisma.frontModel.findMany({ where: { active: true }, orderBy: [{ tier: 'asc' }, { code: 'asc' }] }),
   ]);
+  const {
+    project, materials, edgeBands, settings, hardwareItems, snapshot,
+    frontSupplierOptions, frontModelOptions, ralColors,
+  } = editorData;
   const legHeightMm = assembly?.legHeightMm ?? null;
   const activeMaterials = materials.filter((m) => m.active);
   const materialName = (mid: string) => materials.find((m) => m.id === mid)?.name ?? mid;
 
-  const hardwareItems = await prisma.hardwareItem.findMany({ orderBy: [{ category: 'asc' }, { name: 'asc' }] });
   const activeHardwareItems = hardwareItems.filter((h) => h.active);
-  const hardwareLabel = (h: (typeof hardwareItems)[number]) => `${h.name} (${h.pricePerUnit} lei)`;
   const hardwareOptions = optionsWithCurrent(activeHardwareItems, undefined, hardwareLabel);
   const hardwareName = (hid: string) => hardwareItems.find((h) => h.id === hid)?.name ?? hid;
   const overrides = cab.hardwareJson ? (JSON.parse(cab.hardwareJson) as HardwareLine[]) : null;
   const extraParts = JSON.parse(cab.extraPartsJson) as ExtraPart[];
 
-  const hinges = hardwareItems.filter((h) => h.active && h.category === 'BALAMA');
-  const slides = hardwareItems.filter((h) => h.active && h.category === 'SERTAR' && h.boxHeightMm == null && h.nominalLengthMm != null);
-  const tandemboxHeights = [...new Set(
-    hardwareItems.filter((h) => h.active && h.category === 'SERTAR' && h.boxHeightMm != null).map((h) => h.boxHeightMm as number),
-  )].sort((a, b) => a - b);
-  const handleItems = hardwareItems.filter((h) => h.active && h.category === 'MANER');
-  const pushItems = hardwareItems.filter((h) => h.active && h.category === 'ACCESORIU');
-  const defaultHinge = settings?.defaultHingeId ? hardwareItems.find((h) => h.id === settings.defaultHingeId) : null;
-
-  const snapshot = await buildSnapshot();
+  const hardwareSelOptions = buildHardwareSelOptions(hardwareItems, settings);
 
   let expanded: ExpandedCabinet | null = null;
   let expandError: string | null = null;
@@ -193,16 +165,6 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
   const extraPartsSummary = extraParts.length === 0
     ? 'Nicio piesă suplimentară'
     : `${extraParts.length} ${extraParts.length === 1 ? 'piesă' : 'piese'}`;
-
-  // Fronturi MDF vopsit: opțiuni pentru sub-formular (furnizor/model) + paleta RAL (plain data client-safe)
-  const frontSupplierOptions: FieldOption[] = frontSuppliers.map((s) => ({ value: s.id, label: s.name }));
-  const frontModelOptions: FrontModelOption[] = frontModels.map((m) => ({
-    id: m.id, code: m.code, name: m.name, tier: m.tier,
-    collection: m.collection, shapeFamily: m.shapeFamily, imageUrl: m.imageUrl,
-  }));
-  const ralColors: RalColor[] = getRalColors().map((c) => ({
-    code: c.code, num: c.num, name_en: c.name_en, hex: c.hex, vivid: c.vivid, black: c.black,
-  }));
 
   const feronerieSlot = (
     <>
@@ -318,7 +280,6 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
       )}
 
       <CabinetEditorForm
-        cabinetId={cabinetId}
         initial={cabinetInputToFormValues(input)}
         snapshot={snapshot}
         laborPct={project.laborPct}
@@ -341,14 +302,7 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
           type: project.handleType, itemId: project.handleItemId,
           label: HANDLE_TYPE_OPTIONS.find((o) => o.value === project.handleType)?.label ?? project.handleType,
         }}
-        hardwareSelOptions={{
-          hinges: hinges.map((h) => ({ value: h.id, label: hardwareLabel(h) })),
-          slides: slides.map((h) => ({ value: h.id, label: hardwareLabel(h) })),
-          tandemboxHeights,
-          handleItems: handleItems.map((h) => ({ value: h.id, label: hardwareLabel(h) })),
-          pushItems: pushItems.map((h) => ({ value: h.id, label: hardwareLabel(h) })),
-          defaultHingeName: defaultHinge?.name ?? null,
-        }}
+        hardwareSelOptions={hardwareSelOptions}
         save={updateCabinetData.bind(null, cabinetId)}
       />
     </div>

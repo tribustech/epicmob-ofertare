@@ -10,7 +10,6 @@ import { cabinetFormSchema, extraPartSchema, toCabinetInput } from './cabinet-fo
 import { buildSnapshot } from './snapshot';
 import { isFrozenStatus } from './basis';
 import { ASSEMBLY_LEG_HEIGHT_PRESETS, ASSEMBLY_NAME_PRESETS } from './assembly-presets';
-import type { CabinetInput } from '@/lib/engine';
 
 const optStr = z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().optional());
 
@@ -189,26 +188,14 @@ export const deleteAssembly = formAction(async (assemblyId: string) => {
   revalidatePath(`/proiecte/${a.projectId}`);
 });
 
-export const addCabinet = formAction(async (projectId: string, assemblyId: string) => {
+export const createCabinet = formAction(async (projectId: string, assemblyId: string, data: Record<string, string>) => {
   const assembly = await prisma.assembly.findUnique({ where: { id: assemblyId } });
   if (!assembly || assembly.projectId !== projectId) {
     throw new Error('Ansamblul nu aparține acestui proiect');
   }
-  const pal = await prisma.material.findFirst({ where: { active: true, kind: 'PAL' }, orderBy: { name: 'asc' } });
-  const pfl = await prisma.material.findFirst({ where: { active: true, kind: 'PFL' }, orderBy: { name: 'asc' } });
-  const band = await prisma.edgeBand.findFirst({ where: { active: true }, orderBy: { thicknessMm: 'asc' } });
-  if (!pal || !band) throw new Error('Adaugă întâi un material PAL și un cant în cataloage');
+  const d = cabinetFormSchema.parse(data);
+  const input = toCabinetInput(d);
   const count = await prisma.cabinet.count({ where: { projectId } });
-  const input: CabinetInput = {
-    label: `C${count + 1}`,
-    type: 'BAZA',
-    widthMm: 600, heightMm: 720, depthMm: 560,
-    shelves: 1, doors: 1,
-    carcassMaterialId: pal.id,
-    frontMaterialId: pal.id,
-    back: pfl ? { enabled: true, materialId: pfl.id, mount: 'FALT' } : { enabled: false, mount: 'FALT' },
-    edgeBands: { carcassFrontEdgeId: band.id, frontPerimeterId: band.id },
-  };
   const cab = await prisma.cabinet.create({
     data: { projectId, assemblyId, sortOrder: count, inputJson: JSON.stringify(input) },
   });

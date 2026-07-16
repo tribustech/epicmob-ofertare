@@ -6,7 +6,7 @@ import { getQuoteBasis } from '@/lib/quote/basis';
 import { HANDLE_TYPE_OPTIONS } from '@/lib/quote/handle';
 import { prisma } from '@/lib/db';
 import {
-  addAssembly, addCabinet, addFreeLine, deleteAssembly, deleteCabinet, deleteProject,
+  addAssembly, addFreeLine, deleteAssembly, deleteCabinet, deleteProject,
   duplicateCabinet, refreshFrozenPrices, removeFreeLine, updateAssembly, updateProjectSettings,
 } from '@/lib/quote/actions';
 import { ASSEMBLY_LEG_HEIGHT_PRESETS, ASSEMBLY_NAME_PRESETS } from '@/lib/quote/assembly-presets';
@@ -339,9 +339,9 @@ function AssemblyCard({ projectId, assembly, cabinets }: {
 
         <CabinetsTable projectId={projectId} cabinets={cabinets} />
 
-        <ActionForm action={addCabinet.bind(null, projectId, assembly.id)}>
-          <SubmitButton>Adaugă corp</SubmitButton>
-        </ActionForm>
+        <Button asChild>
+          <Link href={`/proiecte/${projectId}/corp/nou?ansamblu=${assembly.id}`}>Adaugă corp</Link>
+        </Button>
       </CardContent>
     </Card>
   );

@@ -86,7 +86,6 @@ const BACK_MOUNT_OPTIONS: FieldOption[] = [
 ];
 
 export interface CabinetEditorFormProps {
-  cabinetId: string;
   initial: Record<string, string>;
   snapshot: SnapshotData;
   laborPct: number;
@@ -673,6 +672,8 @@ function SelectField({ label, value, onChange, options, allowEmpty }: {
       <Label className={fieldLabelCls}>{label}</Label>
       <select className={selectCls} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
         {allowEmpty && <option value="">—</option>}
+        {/* fără valoare aleasă, un select nativ ar afișa prima opțiune ca și cum ar fi selectată */}
+        {!allowEmpty && !value && <option value="" disabled>Selectează…</option>}
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
     </div>
