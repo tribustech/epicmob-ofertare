@@ -10,6 +10,7 @@ import { cabinetFormSchema, extraPartSchema, toCabinetInput } from './cabinet-fo
 import { buildSnapshot } from './snapshot';
 import { isFrozenStatus } from './basis';
 import { ASSEMBLY_LEG_HEIGHT_PRESETS, ASSEMBLY_NAME_PRESETS } from './assembly-presets';
+import type { CabinetInput } from '@/lib/engine';
 
 const optStr = z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().optional());
 
@@ -188,14 +189,26 @@ export const deleteAssembly = formAction(async (assemblyId: string) => {
   revalidatePath(`/proiecte/${a.projectId}`);
 });
 
-export const createCabinet = formAction(async (projectId: string, assemblyId: string, data: Record<string, string>) => {
+export const addCabinet = formAction(async (projectId: string, assemblyId: string) => {
   const assembly = await prisma.assembly.findUnique({ where: { id: assemblyId } });
   if (!assembly || assembly.projectId !== projectId) {
     throw new Error('Ansamblul nu aparține acestui proiect');
   }
-  const d = cabinetFormSchema.parse(data);
-  const input = toCabinetInput(d);
+  // corpul se creează GOL (fără dimensiuni/materiale inventate) și e exclus din
+  // calculul ofertei până e completat; precompletăm doar alegerile structurale
+  // și spatele PFL (singurul material cu un default care are sens)
+  const pfl = await prisma.material.findFirst({ where: { active: true, kind: 'PFL' }, orderBy: { name: 'asc' } });
   const count = await prisma.cabinet.count({ where: { projectId } });
+  const input: CabinetInput = {
+    label: `C${count + 1}`,
+    type: 'BAZA',
+    widthMm: 0, heightMm: 0, depthMm: 0,
+    shelves: 1, doors: 1,
+    carcassMaterialId: '',
+    frontMaterialId: null,
+    back: { enabled: true, materialId: pfl?.id, mount: 'FALT' },
+    edgeBands: { carcassFrontEdgeId: '', frontPerimeterId: null },
+  };
   const cab = await prisma.cabinet.create({
     data: { projectId, assemblyId, sortOrder: count, inputJson: JSON.stringify(input) },
   });

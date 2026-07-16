@@ -89,6 +89,10 @@ export interface CabinetInput {
   depthMm: number;
   mount?: { top?: PanelMount; bottom?: PanelMount }; // lipsă = încadrat (comportamentul istoric)
   shelves: number;
+  /** materialul polițelor (lipsă = materialul carcasei) și axa decorului
+   *  ('LR' stânga–dreapta = istoric; 'FB' față–spate = piesa rotită la debitare);
+   *  decorAxis e prezent doar când direcția decorului contează */
+  shelf?: { materialId?: string; decorAxis?: 'LR' | 'FB' };
   doors: number;                   // 0 = fără uși; exclusiv cu drawers
   drawers?: DrawerOptions;         // sertare pe orice tip de corp; exclusiv cu doors
   carcassMaterialId: string;

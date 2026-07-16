@@ -1,15 +1,15 @@
 import { z } from 'zod';
 import type { CabinetInput } from '@/lib/engine';
 
-const posNum = z.coerce.number().finite().positive();
-const intNonNeg = z.coerce.number().int().min(0);
+const posNum = z.coerce.number({ invalid_type_error: 'Introdu un număr' }).finite().positive('Introdu o valoare mai mare ca 0');
+const intNonNeg = z.coerce.number({ invalid_type_error: 'Introdu un număr' }).int('Introdu un număr întreg').min(0, 'Nu poate fi negativ');
 const emptyToUndefined = (v: unknown) => (v === '' || v == null ? undefined : v);
 const optStr = z.preprocess(emptyToUndefined, z.string().optional());
 const checkbox = z.preprocess((v) => v === 'on' || v === 'true' || v === true, z.boolean());
 
 export const cabinetFormSchema = z
   .object({
-    label: z.string().trim().min(1),
+    label: z.string().trim().min(1, 'Completează eticheta'),
     type: z.enum(['BAZA', 'SUSPENDAT', 'INALT', 'COLT']),
     widthMm: posNum,
     heightMm: posNum,
@@ -19,8 +19,11 @@ export const cabinetFormSchema = z
     frontType: z.enum(['USI', 'SERTARE', 'FARA']),
     withShelves: checkbox,
     shelves: intNonNeg,
+    shelfMaterialId: optStr,
+    shelfDecorMatters: checkbox,
+    shelfDecorAxis: z.enum(['LR', 'FB']).default('LR'),
     doors: intNonNeg,
-    carcassMaterialId: z.string().min(1),
+    carcassMaterialId: z.string().min(1, 'Alege materialul carcasei'),
     frontKind: z.enum(['PAL', 'MDF_MELAMINAT', 'MDF_INFOLIAT', 'MDF_VOPSIT']).default('PAL'),
     frontMaterialId: optStr,
     mdfSupplierId: optStr,
@@ -32,7 +35,7 @@ export const cabinetFormSchema = z
     backEnabled: checkbox,
     backMaterialId: optStr,
     backMount: z.enum(['FALT', 'APLICAT']),
-    carcassFrontEdgeId: z.string().min(1),
+    carcassFrontEdgeId: z.string().min(1, 'Alege cantul carcasei'),
     frontPerimeterId: optStr,
     blindPanelWidthMm: z.preprocess(emptyToUndefined, posNum.optional()),
     drawersCount: intNonNeg.default(0),
@@ -49,30 +52,35 @@ export const cabinetFormSchema = z
   })
   .refine((d) => d.frontType !== 'USI' || d.doors >= 1, {
     message: 'Corpul cu uși are nevoie de cel puțin o ușă',
+    path: ['doors'],
   })
   .refine((d) => d.frontType !== 'SERTARE' || d.drawersCount >= 1, {
     message: 'Corpul cu sertare are nevoie de cel puțin un sertar',
+    path: ['drawersCount'],
   })
   .refine((d) => d.frontType !== 'SERTARE' || d.drawersSystem !== 'PAL_BOX' || !!d.drawersBottomMaterialId, {
     message: 'Alege materialul pentru fundul sertarelor (cutie PAL)',
+    path: ['drawersBottomMaterialId'],
   })
   .refine((d) => d.frontType === 'FARA' || d.frontKind === 'MDF_VOPSIT' || !!d.frontMaterialId, {
-    message: 'Fronturile cer un material de front',
+    message: 'Alege materialul fronturilor',
+    path: ['frontMaterialId'],
   })
   .refine(
     (d) =>
       d.frontType === 'FARA' ||
       d.frontKind !== 'MDF_VOPSIT' ||
       (!!d.mdfSupplierId && !!d.mdfModelId && !!d.mdfRalCode),
-    { message: 'MDF vopsit cere furnizor, model și culoare' },
+    { message: 'MDF vopsit cere furnizor, model și culoare', path: ['mdfSupplierId'] },
   )
   .refine((d) => {
     if (d.frontType !== 'SERTARE' || !d.drawerFrontHeightsMm) return true;
     const heights = parseDrawerHeights(d.drawerFrontHeightsMm);
     return heights.length === d.drawersCount && heights.every((h) => h > 0);
-  }, { message: 'Înălțimile sertarelor nu corespund cu numărul de sertare' })
+  }, { message: 'Înălțimile sertarelor nu corespund cu numărul de sertare', path: ['drawerFrontHeightsMm'] })
   .refine((d) => !d.backEnabled || !!d.backMaterialId, {
     message: 'Alege materialul pentru spate',
+    path: ['backMaterialId'],
   });
 
 export type CabinetFormData = z.infer<typeof cabinetFormSchema>;
@@ -87,6 +95,7 @@ export function parseDrawerHeights(s: string): number[] {
 export function toCabinetInput(d: CabinetFormData): CabinetInput {
   const heights = d.drawerFrontHeightsMm ? parseDrawerHeights(d.drawerFrontHeightsMm) : [];
   const isMdfVopsit = d.frontType !== 'FARA' && d.frontKind === 'MDF_VOPSIT';
+  const shelves = d.frontType === 'SERTARE' ? 0 : (d.frontType === 'USI' && !d.withShelves ? 0 : d.shelves);
   return {
     label: d.label,
     type: d.type,
@@ -94,7 +103,13 @@ export function toCabinetInput(d: CabinetFormData): CabinetInput {
     heightMm: d.heightMm,
     depthMm: d.depthMm,
     mount: { top: d.mountTop, bottom: d.mountBottom },
-    shelves: d.frontType === 'SERTARE' ? 0 : (d.frontType === 'USI' && !d.withShelves ? 0 : d.shelves),
+    shelves,
+    shelf: shelves > 0 && (d.shelfMaterialId || d.shelfDecorMatters)
+      ? {
+          materialId: d.shelfMaterialId,
+          decorAxis: d.shelfDecorMatters ? d.shelfDecorAxis : undefined,
+        }
+      : undefined,
     doors: d.frontType === 'USI' ? d.doors : 0,
     drawers:
       d.frontType === 'SERTARE'
@@ -140,6 +155,24 @@ export function toCabinetInput(d: CabinetFormData): CabinetInput {
         }
       : undefined,
   };
+}
+
+/**
+ * Corpurile se creează goale la „Adaugă corp" și se completează în editor.
+ * Un corp incomplet nu intră în calculul ofertei (e exclus cu avertisment) —
+ * oglindește cerințele minime din cabinetFormSchema la nivel de CabinetInput.
+ */
+export function isCabinetInputComplete(i: CabinetInput): boolean {
+  const isVopsit = i.frontKind === 'MDF_VOPSIT' && !!i.mdfFront;
+  const hasFronts = i.doors > 0 || (i.drawers?.count ?? 0) > 0;
+  return (
+    i.widthMm > 0 && i.heightMm > 0 && i.depthMm > 0 &&
+    !!i.carcassMaterialId &&
+    !!i.edgeBands.carcassFrontEdgeId &&
+    (!hasFronts || !!i.frontMaterialId || isVopsit) &&
+    (i.drawers?.system !== 'PAL_BOX' || !!i.drawers.bottomMaterialId) &&
+    (!i.back.enabled || !!i.back.materialId)
+  );
 }
 
 export const extraPartSchema = z.object({

@@ -54,13 +54,14 @@ function Thumb({ m, className }: { m: MaterialPickerItem; className?: string }) 
 }
 
 export function MaterialPicker({
-  label, value, onChange, materials, allowEmpty,
+  label, value, onChange, materials, allowEmpty, error,
 }: {
   label: string;
   value: string;
   onChange: (id: string) => void;
   materials: MaterialPickerItem[];
   allowEmpty?: boolean;
+  error?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
@@ -104,7 +105,7 @@ export function MaterialPicker({
       <Label className={fieldLabelCls}>{label}</Label>
       <Popover.Root open={open} onOpenChange={setOpen}>
         <Popover.Trigger asChild>
-          <button type="button" className={triggerCls}>
+          <button type="button" className={cn(triggerCls, error && 'border-destructive')}>
             {selected ? (
               <>
                 <Thumb m={selected} className="size-6" />
@@ -199,6 +200,7 @@ export function MaterialPicker({
           </Popover.Content>
         </Popover.Portal>
       </Popover.Root>
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 }

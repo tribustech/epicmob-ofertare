@@ -11,7 +11,7 @@ import type {
   FrontModel, FrontPrice, FrontSupplier,
   HardwareLine, HardwareSuggestion, HardwareSummaryRow, NestParams, Part, Warning,
 } from '@/lib/engine';
-import type { ExtraPart } from './cabinet-form';
+import { isCabinetInputComplete, type ExtraPart } from './cabinet-form';
 import { handleExtraCost, withResolvedHandle, type ProjectHandle } from './handle';
 import { pickLegId } from './legs';
 
@@ -64,7 +64,16 @@ export interface QuoteResult {
   cabinets: ExpandedCabinet[];
 }
 
-export function computeQuote(q: QuoteInput, snap: SnapshotData): QuoteResult {
+export function computeQuote(qAll: QuoteInput, snap: SnapshotData): QuoteResult {
+  // corpurile incomplete (abia create, needitate) NU intră în calcul — doar avertisment
+  const incomplete = qAll.cabinets.filter((c) => !isCabinetInputComplete(c.input));
+  const q: QuoteInput = { ...qAll, cabinets: qAll.cabinets.filter((c) => isCabinetInputComplete(c.input)) };
+  const incompleteWarnings: Warning[] = incomplete.map((c) => ({
+    code: 'INCOMPLETE_CABINET',
+    message: 'corp incomplet — nu intră în calcul; deschide-l și completează-l',
+    cabinetLabel: c.input.label,
+  }));
+
   // catalogul de cost include TOATE rândurile — snapshot-urile vechi nu aruncă la referințe dezactivate
   const catalogs = toCostCatalogs(
     snap.materials, snap.edgeBands, snap.hardware, snap.cuttingRates, frontCatalogsFromSnapshot(snap),
@@ -137,7 +146,7 @@ export function computeQuote(q: QuoteInput, snap: SnapshotData): QuoteResult {
     unresolvedHardware,
     hardwareSummary: aggregateHardware(hardwareLines, catalogs.hardware),
     cutList: cutListCsv(parts, catalogs),
-    warnings: expanded.flatMap((e) => e.warnings),
+    warnings: [...incompleteWarnings, ...expanded.flatMap((e) => e.warnings)],
     cabinets: expanded,
   };
 }

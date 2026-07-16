@@ -6,10 +6,11 @@ import { getQuoteBasis } from '@/lib/quote/basis';
 import { HANDLE_TYPE_OPTIONS } from '@/lib/quote/handle';
 import { prisma } from '@/lib/db';
 import {
-  addAssembly, addFreeLine, deleteAssembly, deleteCabinet, deleteProject,
+  addAssembly, addCabinet, addFreeLine, deleteAssembly, deleteCabinet, deleteProject,
   duplicateCabinet, refreshFrozenPrices, removeFreeLine, updateAssembly, updateProjectSettings,
 } from '@/lib/quote/actions';
 import { ASSEMBLY_LEG_HEIGHT_PRESETS, ASSEMBLY_NAME_PRESETS } from '@/lib/quote/assembly-presets';
+import { isCabinetInputComplete } from '@/lib/quote/cabinet-form';
 import { ActionForm } from '@/components/ActionForm';
 import { DeleteButton } from '@/components/DeleteButton';
 import { NumberInput, Select, SubmitButton, TextInput } from '@/components/forms';
@@ -19,6 +20,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { fmtLei, fmtNum } from '@/lib/format';
+import { CabinetRow } from './CabinetRow';
 
 export const dynamic = 'force-dynamic';
 
@@ -226,13 +228,22 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                   )}
                   {quote.unresolvedHardware.length > 0 && (
                     <ul className="space-y-1">
-                      {quote.unresolvedHardware.map((s, i) => (
-                        <li key={i} className="rounded bg-amber-50 px-2 py-1 text-xs text-amber-800">
-                          ⚠ Feronerie fără produs: {s.name} × {s.qty} — {s.category === 'MANER'
-                            ? 'alege produsul mânerului la corp (Fronturi) sau în setările proiectului.'
-                            : 'setează implicitul în Setări sau editează feroneria corpului.'}
-                        </li>
-                      ))}
+                      {/* aceeași sugestie nerezolvată vine de la fiecare corp — o arătăm o dată, cu totalul */}
+                      {[...quote.unresolvedHardware
+                        .reduce((m, s) => {
+                          const k = `${s.category}:${s.name}`;
+                          const e = m.get(k);
+                          m.set(k, e ? { ...e, qty: e.qty + s.qty, corpuri: e.corpuri + 1 } : { ...s, corpuri: 1 });
+                          return m;
+                        }, new Map<string, { category: string; name: string; qty: number; corpuri: number }>())
+                        .values()].map((s, i) => (
+                          <li key={i} className="rounded bg-amber-50 px-2 py-1 text-xs text-amber-800">
+                            ⚠ Feronerie fără produs: {s.name} × {s.qty}
+                            {s.corpuri > 1 ? ` (${s.corpuri} corpuri)` : ''} — {s.category === 'MANER'
+                              ? 'alege produsul mânerului la corp (Fronturi) sau în setările proiectului.'
+                              : 'setează implicitul în Setări sau editează feroneria corpului.'}
+                          </li>
+                        ))}
                     </ul>
                   )}
 
@@ -340,9 +351,9 @@ function AssemblyCard({ projectId, assembly, cabinets }: {
 
         <CabinetsTable projectId={projectId} cabinets={cabinets} />
 
-        <Button asChild>
-          <Link href={`/proiecte/${projectId}/corp/nou?ansamblu=${assembly.id}`}>Adaugă corp</Link>
-        </Button>
+        <ActionForm action={addCabinet.bind(null, projectId, assembly.id)}>
+          <SubmitButton>Adaugă corp</SubmitButton>
+        </ActionForm>
       </CardContent>
     </Card>
   );
@@ -365,24 +376,25 @@ function CabinetsTable({ projectId, cabinets }: { projectId: string; cabinets: L
       </TableHeader>
       <TableBody>
         {cabinets.map((c) => (
-          <TableRow key={c.id}>
-            <TableCell>
-              <Link href={`/proiecte/${projectId}/corp/${c.id}`} className="font-medium hover:underline">
-                {c.input.label}
-              </Link>
-            </TableCell>
-            <TableCell>{TYPE_LABELS[c.input.type] ?? c.input.type}</TableCell>
-            <TableCell>{c.input.widthMm}×{c.input.heightMm}×{c.input.depthMm}</TableCell>
-            <TableCell>{c.hardwareOverrides ? <Badge variant="secondary">feronerie editată</Badge> : null}</TableCell>
-            <TableCell className="text-right">
-              <div className="flex justify-end gap-2">
+          <CabinetRow
+            key={c.id}
+            href={`/proiecte/${projectId}/corp/${c.id}`}
+            label={c.input.label}
+            typeLabel={TYPE_LABELS[c.input.type] ?? c.input.type}
+            dims={isCabinetInputComplete(c.input)
+              ? `${c.input.widthMm}×${c.input.heightMm}×${c.input.depthMm}`
+              : '—'}
+            incomplete={!isCabinetInputComplete(c.input)}
+            hardwareEdited={Boolean(c.hardwareOverrides)}
+            actions={
+              <>
                 <ActionForm action={duplicateCabinet.bind(null, c.id)}>
                   <Button type="submit" variant="outline" size="sm">Duplică</Button>
                 </ActionForm>
                 <DeleteButton action={deleteCabinet.bind(null, c.id)} />
-              </div>
-            </TableCell>
-          </TableRow>
+              </>
+            }
+          />
         ))}
       </TableBody>
     </Table>

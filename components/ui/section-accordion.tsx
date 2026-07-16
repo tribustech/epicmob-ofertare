@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-export function SectionAccordion({ title, summary, open, onToggle, children, complete }: {
+export function SectionAccordion({ title, summary, open, onToggle, children, complete, error }: {
   title: string;
   summary?: string;
   open: boolean;
@@ -11,22 +11,24 @@ export function SectionAccordion({ title, summary, open, onToggle, children, com
   children: ReactNode;
   /** undefined = fără indicator; true = verde (completat); false = gol (incomplet) */
   complete?: boolean;
+  /** secțiunea conține erori vizibile de validare — bulină + contur roșu */
+  error?: boolean;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl bg-card ring-1 ring-border">
+    <div className={cn('overflow-hidden rounded-xl bg-card ring-1 ring-border', error && 'ring-destructive/60')}>
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
         className="flex w-full cursor-pointer items-center gap-3 px-5 py-4 text-left"
       >
-        {complete !== undefined && (
+        {(complete !== undefined || error) && (
           <span
             aria-hidden
-            title={complete ? 'Completat' : 'Incomplet'}
+            title={error ? 'Are erori' : complete ? 'Completat' : 'Incomplet'}
             className={cn(
               'size-2.5 shrink-0 rounded-full transition-colors',
-              complete ? 'bg-emerald-500' : 'border border-muted-foreground/30',
+              error ? 'bg-destructive' : complete ? 'bg-emerald-500' : 'border border-muted-foreground/30',
             )}
           />
         )}

@@ -9,7 +9,7 @@ import {
 import { addExtraPart, removeExtraPart, resetCabinetHardware, saveCabinetHardware, updateCabinetData } from '@/lib/quote/actions';
 import { pickLegId } from '@/lib/quote/legs';
 import { normalizeCabinetInput } from '@/lib/quote/normalize-input';
-import type { ExtraPart } from '@/lib/quote/cabinet-form';
+import { isCabinetInputComplete, type ExtraPart } from '@/lib/quote/cabinet-form';
 import { HANDLE_TYPE_OPTIONS, withResolvedHandle } from '@/lib/quote/handle';
 import { buildHardwareSelOptions, hardwareLabel, loadCorpEditorData, optionsWithCurrent } from '@/lib/quote/corp-editor-data';
 import { CabinetEditorForm } from '@/components/CabinetEditorForm';
@@ -46,12 +46,16 @@ function cabinetInputToFormValues(input: CabinetInput): Record<string, string> {
     type: input.type,
     frontType,
     withShelves: input.shelves > 0 ? 'true' : 'false',
-    widthMm: String(input.widthMm),
-    heightMm: String(input.heightMm),
-    depthMm: String(input.depthMm),
+    // corpul abia creat are dimensiuni 0 — câmpurile pornesc goale, nu cu „0"
+    widthMm: input.widthMm ? String(input.widthMm) : '',
+    heightMm: input.heightMm ? String(input.heightMm) : '',
+    depthMm: input.depthMm ? String(input.depthMm) : '',
     // chiuvetă (uși, 0 polițe): câmpul pornește de la 1 ca bifarea „Cu polițe" să aibă o valoare;
     // la FARA păstrăm 0 real (etajera fără polițe rămâne fără)
     shelves: String(input.shelves > 0 ? input.shelves : input.doors > 0 ? 1 : 0),
+    shelfMaterialId: input.shelf?.materialId ?? '',
+    shelfDecorMatters: input.shelf?.decorAxis ? 'true' : 'false',
+    shelfDecorAxis: input.shelf?.decorAxis ?? 'LR',
     doors: String(Math.max(input.doors, 1)),
     carcassMaterialId: input.carcassMaterialId,
     frontKind: input.frontKind ?? 'PAL',
@@ -110,20 +114,24 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
 
   const hardwareSelOptions = buildHardwareSelOptions(hardwareItems, settings);
 
+  // corpul abia creat e gol — nu încercăm să generăm piese/sugestii până nu e completat
+  const inputComplete = isCabinetInputComplete(input);
   let expanded: ExpandedCabinet | null = null;
   let expandError: string | null = null;
-  try {
-    const catalogs = toCostCatalogs(
-      materials.map((m) => m),
-      edgeBands.map((e) => e),
-      [],
-      [],
-    );
-    const cc = parseConstruction(settings?.constructionJson ?? '{}');
-    const expandInput = withResolvedHandle(input, { type: project.handleType as HandleType, itemId: project.handleItemId });
-    expanded = expandCabinet(expandInput, catalogs, cc);
-  } catch (e) {
-    expandError = e instanceof Error ? e.message : 'Eroare la generarea pieselor';
+  if (inputComplete) {
+    try {
+      const catalogs = toCostCatalogs(
+        materials.map((m) => m),
+        edgeBands.map((e) => e),
+        [],
+        [],
+      );
+      const cc = parseConstruction(settings?.constructionJson ?? '{}');
+      const expandInput = withResolvedHandle(input, { type: project.handleType as HandleType, itemId: project.handleItemId });
+      expanded = expandCabinet(expandInput, catalogs, cc);
+    } catch (e) {
+      expandError = e instanceof Error ? e.message : 'Eroare la generarea pieselor';
+    }
   }
 
   let suggestedLines: HardwareLine[] = [];
@@ -214,7 +222,11 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
               </li>
             ))}
             {suggestedLines.length === 0 && unresolvedSuggestions.length === 0 && (
-              <li className="text-muted-foreground">Nicio sugestie (corp fără fronturi/sertare).</li>
+              <li className="text-muted-foreground">
+                {inputComplete
+                  ? 'Nicio sugestie (corp fără fronturi/sertare).'
+                  : 'Completează corpul (dimensiuni + materiale) și salvează — sugestiile apar apoi aici.'}
+              </li>
             )}
           </ul>
           <ActionForm action={saveCabinetHardware.bind(null, cabinetId)}>

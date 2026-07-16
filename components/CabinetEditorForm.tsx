@@ -85,6 +85,11 @@ const BACK_MOUNT_OPTIONS: FieldOption[] = [
   { value: 'APLICAT', label: 'Aplicat' },
 ];
 
+const SHELF_AXIS_OPTIONS: FieldOption[] = [
+  { value: 'LR', label: 'Stânga–dreapta' },
+  { value: 'FB', label: 'Față–spate' },
+];
+
 export interface CabinetEditorFormProps {
   initial: Record<string, string>;
   snapshot: SnapshotData;
@@ -129,9 +134,30 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const [isPending, startTransition] = useTransition();
   const [formState, setFormState] = useState<FormState>({});
 
-  const set = (field: string, value: string) => setValues((v) => ({ ...v, [field]: value }));
+  // erorile de validare apar doar pe câmpurile atinse sau după o încercare de salvare
+  const [touched, setTouched] = useState<Set<string>>(() => new Set());
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const markTouched = (field: string) => setTouched((prev) => (prev.has(field) ? prev : new Set(prev).add(field)));
+
+  const set = (field: string, value: string) => {
+    markTouched(field);
+    setValues((v) => ({ ...v, [field]: value }));
+  };
 
   const parsed = useMemo(() => cabinetFormSchema.safeParse(values), [values]);
+
+  // prima eroare per câmp (schema are mesaje RO + path pe toate refine-urile)
+  const fieldErrors = useMemo(() => {
+    const m = new Map<string, string>();
+    if (parsed.success) return m;
+    for (const issue of parsed.error.issues) {
+      const field = String(issue.path[0] ?? '');
+      if (field && !m.has(field)) m.set(field, issue.message);
+    }
+    return m;
+  }, [parsed]);
+  const showError = (field: string) =>
+    submitAttempted || touched.has(field) ? fieldErrors.get(field) : undefined;
 
   const catalogs = useMemo(
     () => toCostCatalogs(
@@ -153,6 +179,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     () => initial.frontType === 'USI' && Number(initial.doors) !== autoDoors(Number(initial.widthMm)),
   );
   const onWidthChange = (v: string) => {
+    markTouched('widthMm');
     setValues((prev) => ({
       ...prev, widthMm: v,
       ...(prev.frontType === 'USI' && !doorsTouched ? { doors: String(autoDoors(Number(v))) } : {}),
@@ -166,6 +193,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const drawerHeights = (values.drawerFrontHeightsMm ?? '')
     .split(',').map((s) => Number(s.trim())).filter((n) => Number.isFinite(n));
   const onDrawersCountChange = (v: string) => {
+    markTouched('drawersCount');
     const n = Math.max(0, Math.trunc(Number(v) || 0));
     setValues((prev) => ({
       ...prev, drawersCount: v,
@@ -231,6 +259,11 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   }, [values.carcassMaterialId, values.frontMaterialId, values.backMaterialId, values.drawersBottomMaterialId, extraParts, snapshot]);
 
   function handleSave() {
+    if (!parsed.success) {
+      // nu trimitem un formular invalid — arătăm erorile pe secțiuni/câmpuri
+      setSubmitAttempted(true);
+      return;
+    }
     startTransition(async () => {
       const result = await save(values);
       setFormState(result);
@@ -280,34 +313,82 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
         : !!values.frontMaterialId;
   const sectionComplete = {
     dimensiuni: !!values.type && numV(values.widthMm) > 0 && numV(values.heightMm) > 0 && numV(values.depthMm) > 0,
-    materiale: !!values.carcassMaterialId && frontCovered,
-    fronturi: frontType === 'USI' ? numV(values.doors) >= 1
+    materiale: !!values.carcassMaterialId && !!values.carcassFrontEdgeId && frontCovered,
+    // la uși, „complet" cere și modelul de balamale ales explicit (defaultul din Setări nu e de ajuns)
+    fronturi: frontType === 'USI' ? numV(values.doors) >= 1 && !!values.hingeId
       : frontType === 'SERTARE' ? drawersCount >= 1
         : true,
     spate: !backEnabled || !!values.backMaterialId,
     feronerie: true,
   };
 
+  // secțiunea fiecărui câmp — pentru marcajul roșu din headerele accordion-ului
+  const FIELD_SECTION: Record<string, keyof typeof sectionComplete> = {
+    label: 'dimensiuni', type: 'dimensiuni', widthMm: 'dimensiuni', heightMm: 'dimensiuni', depthMm: 'dimensiuni',
+    blindPanelWidthMm: 'dimensiuni', mountTop: 'dimensiuni', mountBottom: 'dimensiuni',
+    carcassMaterialId: 'materiale', carcassFrontEdgeId: 'materiale', frontKind: 'materiale', frontMaterialId: 'materiale',
+    frontPerimeterId: 'materiale', mdfSupplierId: 'materiale', mdfModelId: 'materiale', mdfFinish: 'materiale',
+    mdfFaces: 'materiale', mdfRalCode: 'materiale', mdfColorCategory: 'materiale',
+    frontType: 'fronturi', doors: 'fronturi', withShelves: 'fronturi', shelves: 'fronturi',
+    shelfMaterialId: 'fronturi', shelfDecorMatters: 'fronturi', shelfDecorAxis: 'fronturi',
+    drawersCount: 'fronturi', drawersSystem: 'fronturi', drawersBottomMaterialId: 'fronturi', drawerFrontHeightsMm: 'fronturi',
+    hingeId: 'fronturi', slideId: 'fronturi', tandemboxHeightMm: 'fronturi',
+    handleMode: 'fronturi', handleType: 'fronturi', handleItemId: 'fronturi', frontExtensionMm: 'fronturi',
+    backEnabled: 'spate', backMaterialId: 'spate', backMount: 'spate',
+  };
+  const sectionError = (id: keyof typeof sectionComplete) =>
+    [...fieldErrors.keys()].some((f) => FIELD_SECTION[f] === id && (submitAttempted || touched.has(f)));
+  const anyVisibleError = (['dimensiuni', 'materiale', 'fronturi', 'spate'] as const).some(sectionError);
+
+  // polițe: material propriu (— = ca al carcasei) + direcția decorului doar când contează
+  const shelfControls = (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <MaterialPicker label="Material polițe" value={values.shelfMaterialId} onChange={(v) => set('shelfMaterialId', v)} materials={pickerMaterials} allowEmpty />
+      </div>
+      <p className="text-xs text-muted-foreground">Fără selecție, polițele se fac din materialul carcasei.</p>
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="shelfDecorMatters"
+          checked={values.shelfDecorMatters === 'true'}
+          onCheckedChange={(c) => set('shelfDecorMatters', c === true ? 'true' : 'false')}
+        />
+        <Label htmlFor="shelfDecorMatters" className="font-normal">Contează direcția decorului</Label>
+      </div>
+      {values.shelfDecorMatters === 'true' && (
+        <div className="grid gap-2">
+          <Label className={fieldLabelCls}>Axa decorului</Label>
+          <SegmentedControl value={values.shelfDecorAxis} onChange={(v) => set('shelfDecorAxis', v)} options={SHELF_AXIS_OPTIONS} />
+          <p className="text-xs text-muted-foreground">
+            Față–spate rotește piesa în lista de debitare (decorul curge pe lungimea plăcii).
+          </p>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_380px] lg:items-start">
       <div className="flex flex-col gap-3">
         <SectionAccordion title="Identificare și dimensiuni" summary={dimSummary}
-          open={openSections.has('dimensiuni')} onToggle={() => toggleSection('dimensiuni')} complete={sectionComplete.dimensiuni}>
+          open={openSections.has('dimensiuni')} onToggle={() => toggleSection('dimensiuni')}
+          complete={sectionComplete.dimensiuni} error={sectionError('dimensiuni')}>
           <div className="space-y-4">
             <div className="grid gap-1.5">
               <Label htmlFor="label" className={fieldLabelCls}>Etichetă</Label>
               <Input id="label" value={values.label} onChange={(e) => set('label', e.target.value)} />
+              <FieldError error={showError('label')} />
             </div>
             <div className="grid gap-2">
               <Label className={fieldLabelCls}>Tip corp</Label>
               <SegmentedControl value={type} onChange={(v) => set('type', v)} options={TYPE_OPTIONS} />
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <NumField label="Lățime L (mm)" value={values.widthMm} onChange={onWidthChange} />
-              <NumField label="Înălțime H (mm)" value={values.heightMm} onChange={(v) => set('heightMm', v)} />
-              <NumField label="Adâncime A (mm)" value={values.depthMm} onChange={(v) => set('depthMm', v)} />
+              <NumField label="Lățime L (mm)" value={values.widthMm} onChange={onWidthChange} error={showError('widthMm')} />
+              <NumField label="Înălțime H (mm)" value={values.heightMm} onChange={(v) => set('heightMm', v)} error={showError('heightMm')} />
+              <NumField label="Adâncime A (mm)" value={values.depthMm} onChange={(v) => set('depthMm', v)} error={showError('depthMm')} />
               {isColt && (
-                <NumField label="Panou orb (mm)" value={values.blindPanelWidthMm} onChange={(v) => set('blindPanelWidthMm', v)} />
+                <NumField label="Panou orb (mm)" value={values.blindPanelWidthMm} onChange={(v) => set('blindPanelWidthMm', v)} error={showError('blindPanelWidthMm')} />
               )}
             </div>
 
@@ -319,11 +400,12 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
         </SectionAccordion>
 
         <SectionAccordion title="Materiale și canturi" summary={matSummary}
-          open={openSections.has('materiale')} onToggle={() => toggleSection('materiale')} complete={sectionComplete.materiale}>
+          open={openSections.has('materiale')} onToggle={() => toggleSection('materiale')}
+          complete={sectionComplete.materiale} error={sectionError('materiale')}>
           <div className="space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <MaterialPicker label="Material carcasă" value={values.carcassMaterialId} onChange={(v) => set('carcassMaterialId', v)} materials={pickerMaterials} />
-              <SelectField label="Cant carcasă" value={values.carcassFrontEdgeId} onChange={(v) => set('carcassFrontEdgeId', v)} options={bandOptions.carcassFront} />
+              <MaterialPicker label="Material carcasă" value={values.carcassMaterialId} onChange={(v) => set('carcassMaterialId', v)} materials={pickerMaterials} error={showError('carcassMaterialId')} />
+              <SelectField label="Cant carcasă" value={values.carcassFrontEdgeId} onChange={(v) => set('carcassFrontEdgeId', v)} options={bandOptions.carcassFront} error={showError('carcassFrontEdgeId')} />
             </div>
 
             <div className="grid gap-2 border-t pt-3">
@@ -333,13 +415,13 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
 
             {frontKind !== 'MDF_VOPSIT' ? (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <MaterialPicker label="Material fronturi" value={values.frontMaterialId} onChange={(v) => set('frontMaterialId', v)} materials={pickerMaterials} allowEmpty />
+                <MaterialPicker label="Material fronturi" value={values.frontMaterialId} onChange={(v) => set('frontMaterialId', v)} materials={pickerMaterials} allowEmpty error={showError('frontMaterialId')} />
                 <SelectField label="Cant fronturi" value={values.frontPerimeterId} onChange={(v) => set('frontPerimeterId', v)} options={bandOptions.frontPerimeter} allowEmpty />
               </div>
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <SelectField label="Furnizor" value={values.mdfSupplierId} onChange={(v) => set('mdfSupplierId', v)} options={frontSupplierOptions} allowEmpty />
+                  <SelectField label="Furnizor" value={values.mdfSupplierId} onChange={(v) => set('mdfSupplierId', v)} options={frontSupplierOptions} allowEmpty error={showError('mdfSupplierId')} />
                   <FrontModelPicker label="Model" value={values.mdfModelId} onChange={(v) => set('mdfModelId', v)} models={frontModelOptions} allowEmpty />
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -377,7 +459,8 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
         </SectionAccordion>
 
         <SectionAccordion title="Fronturi" summary={frontSummary}
-          open={openSections.has('fronturi')} onToggle={() => toggleSection('fronturi')} complete={sectionComplete.fronturi}>
+          open={openSections.has('fronturi')} onToggle={() => toggleSection('fronturi')}
+          complete={sectionComplete.fronturi} error={sectionError('fronturi')}>
           <div className="space-y-4">
             <SegmentedControl
               value={frontType}
@@ -393,7 +476,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             {frontType === 'USI' && (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <NumField label="Uși" value={values.doors} onChange={(v) => { setDoorsTouched(true); set('doors', v); }} />
+                  <NumField label="Uși" value={values.doors} onChange={(v) => { setDoorsTouched(true); set('doors', v); }} error={showError('doors')} />
                 </div>
                 <div className="flex items-center gap-2">
                   <Checkbox
@@ -404,9 +487,12 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                   <Label htmlFor="withShelves" className="font-normal">Cu polițe (debifează la corpul de chiuvetă)</Label>
                 </div>
                 {withShelves && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <NumField label="Număr polițe" value={values.shelves} onChange={(v) => set('shelves', v)} />
-                  </div>
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <NumField label="Număr polițe" value={values.shelves} onChange={(v) => set('shelves', v)} />
+                    </div>
+                    {shelfControls}
+                  </>
                 )}
                 <p className="text-xs text-muted-foreground">
                   Convenție atelier: până în 600mm lățime → 1 ușă; peste → 2 uși.
@@ -425,10 +511,10 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             {frontType === 'SERTARE' && (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <NumField label="Nr. sertare" value={values.drawersCount} onChange={onDrawersCountChange} />
+                  <NumField label="Nr. sertare" value={values.drawersCount} onChange={onDrawersCountChange} error={showError('drawersCount')} />
                   <SelectField label="Sistem sertare" value={values.drawersSystem} onChange={(v) => set('drawersSystem', v)} options={DRAWER_SYSTEM_OPTIONS} />
                   {values.drawersSystem === 'PAL_BOX' && (
-                    <MaterialPicker label="Fund sertare" value={values.drawersBottomMaterialId} onChange={(v) => set('drawersBottomMaterialId', v)} materials={pickerMaterials} allowEmpty />
+                    <MaterialPicker label="Fund sertare" value={values.drawersBottomMaterialId} onChange={(v) => set('drawersBottomMaterialId', v)} materials={pickerMaterials} allowEmpty error={showError('drawersBottomMaterialId')} />
                   )}
                 </div>
                 {values.drawersSystem === 'PAL_BOX' && (
@@ -472,6 +558,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                         <NumField label="Înălțime front (mm)" value={String(drawerHeights[i] ?? '')} onChange={(v) => setDrawerHeight(i, v)} />
                       </div>
                     ))}
+                    <FieldError error={showError('drawerFrontHeightsMm')} />
                     {drawerSumMismatch && (
                       <p className="rounded bg-amber-50 px-2 py-1 text-sm text-amber-800">
                         ⚠ Suma fronturilor ({fmtNum(drawerSum, 1)}mm) nu se încadrează — util {fmtNum(usableDrawerH, 1)}mm
@@ -484,8 +571,11 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             )}
 
             {frontType === 'FARA' && (
-              <div className="grid grid-cols-2 gap-3">
-                <NumField label="Număr polițe" value={values.shelves} onChange={(v) => set('shelves', v)} />
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <NumField label="Număr polițe" value={values.shelves} onChange={(v) => set('shelves', v)} />
+                </div>
+                {Number(values.shelves) > 0 && shelfControls}
               </div>
             )}
 
@@ -496,13 +586,13 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                   <SelectField
                     label="Tip"
                     value={values.handleMode === 'PROIECT' ? '' : values.handleType}
-                    onChange={(v) => setValues((prev) => ({
+                    onChange={(v) => { markTouched('handleType'); setValues((prev) => ({
                       ...prev,
                       handleMode: v === '' ? 'PROIECT' : 'CUSTOM',
                       ...(v !== '' ? { handleType: v } : {}),
                       ...(v === 'FARA' && !prev.frontExtensionMm
                         ? { frontExtensionMm: String(cc.frontExtensionDefaultMm) } : {}),
-                    }))}
+                    })); }}
                     options={[{ value: '', label: `Ca proiectul (${projectHandle.label})` },
                       ...HANDLE_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))]}
                   />
@@ -534,7 +624,8 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
         </SectionAccordion>
 
         <SectionAccordion title="Spate" summary={backSummary}
-          open={openSections.has('spate')} onToggle={() => toggleSection('spate')} complete={sectionComplete.spate}>
+          open={openSections.has('spate')} onToggle={() => toggleSection('spate')}
+          complete={sectionComplete.spate} error={sectionError('spate')}>
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Checkbox
@@ -546,7 +637,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             </div>
             {backEnabled && (
               <div className="grid grid-cols-2 gap-3">
-                <MaterialPicker label="Material spate" value={values.backMaterialId} onChange={(v) => set('backMaterialId', v)} materials={pickerMaterials} allowEmpty />
+                <MaterialPicker label="Material spate" value={values.backMaterialId} onChange={(v) => set('backMaterialId', v)} materials={pickerMaterials} allowEmpty error={showError('backMaterialId')} />
                 <SelectField label="Montaj spate" value={values.backMount} onChange={(v) => set('backMount', v)} options={BACK_MOUNT_OPTIONS} />
               </div>
             )}
@@ -570,12 +661,10 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
           {formState.error && (
             <Alert variant="destructive"><AlertDescription>{formState.error}</AlertDescription></Alert>
           )}
-          {invalid && !parsed.success && (
+          {submitAttempted && invalid && (
             <Alert variant="destructive">
               <AlertDescription>
-                <ul className="list-disc pl-4">
-                  {parsed.error.issues.map((issue, i) => <li key={i}>{issue.message}</li>)}
-                </ul>
+                Corpul nu se poate salva încă — deschide secțiunile marcate cu roșu și corectează câmpurile.
               </AlertDescription>
             </Alert>
           )}
@@ -585,8 +674,17 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
       <div className="space-y-4 lg:sticky lg:top-6">
         {invalid && (
           <div className="rounded-xl bg-card px-5 py-3 ring-1 ring-border">
-            <Badge variant="outline" className="border-amber-500 text-amber-700">valori invalide</Badge>
-            <span className="ml-2 text-sm text-muted-foreground">Corectează secțiunile marcate.</span>
+            {anyVisibleError ? (
+              <>
+                <Badge variant="outline" className="border-destructive text-destructive">valori invalide</Badge>
+                <span className="ml-2 text-sm text-muted-foreground">Corectează secțiunile marcate cu roșu.</span>
+              </>
+            ) : (
+              <>
+                <Badge variant="outline" className="border-amber-500 text-amber-700">corp incomplet</Badge>
+                <span className="ml-2 text-sm text-muted-foreground">Completează secțiunile fără bulină verde.</span>
+              </>
+            )}
           </div>
         )}
 
@@ -634,7 +732,11 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             </Table>
           ) : (
             <p className="text-sm text-muted-foreground">
-              {invalid ? 'Corectează formularul pentru a vedea piesele.' : 'Nu se pot genera piese.'}
+              {invalid
+                ? anyVisibleError
+                  ? 'Corectează erorile pentru a vedea piesele.'
+                  : 'Completează formularul pentru a vedea piesele.'
+                : 'Nu se pot genera piese.'}
             </p>
           )}
         </div>
@@ -650,11 +752,22 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   );
 }
 
-function NumField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function FieldError({ error }: { error?: string }) {
+  if (!error) return null;
+  return <p className="text-xs text-destructive">{error}</p>;
+}
+
+function NumField({ label, value, onChange, error }: {
+  label: string; value: string; onChange: (v: string) => void; error?: string;
+}) {
   return (
     <div className="grid gap-1.5">
       <Label className={fieldLabelCls}>{label}</Label>
-      <Input type="number" step="1" value={value ?? ''} onChange={(e) => onChange(e.target.value)} className="font-mono" />
+      <Input
+        type="number" step="1" value={value ?? ''} onChange={(e) => onChange(e.target.value)}
+        className={cn('font-mono', error && 'border-destructive focus-visible:ring-destructive/30')}
+      />
+      <FieldError error={error} />
     </div>
   );
 }
@@ -665,19 +778,24 @@ const selectCls = cn(
   'md:text-sm dark:bg-input/30',
 );
 
-function SelectField({ label, value, onChange, options, allowEmpty }: {
+function SelectField({ label, value, onChange, options, allowEmpty, error }: {
   label: string; value: string; onChange: (v: string) => void;
-  options: FieldOption[]; allowEmpty?: boolean;
+  options: FieldOption[]; allowEmpty?: boolean; error?: string;
 }) {
   return (
     <div className="grid gap-1.5">
       <Label className={fieldLabelCls}>{label}</Label>
-      <select className={selectCls} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
+      <select
+        className={cn(selectCls, error && 'border-destructive')}
+        value={value ?? ''}
+        onChange={(e) => onChange(e.target.value)}
+      >
         {allowEmpty && <option value="">—</option>}
         {/* fără valoare aleasă, un select nativ ar afișa prima opțiune ca și cum ar fi selectată */}
         {!allowEmpty && !value && !options.some((o) => o.value === '') && <option value="" disabled>Selectează…</option>}
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
+      <FieldError error={error} />
     </div>
   );
 }

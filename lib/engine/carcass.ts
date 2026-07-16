@@ -64,11 +64,22 @@ export function expandCarcass(
 
   if (input.shelves > 0) {
     const shelfW = assertPositiveDim(D - cc.shelfSetbackMm, 'lățime poliță', label);
-    parts.push({
-      cabinetLabel: label, name: 'Poliță',
-      lengthMm: innerW, widthMm: shelfW, qty: input.shelves,
-      materialId: carcass.id, edges: { l1: fe },
-    });
+    const shelfMat = input.shelf?.materialId ? findMaterial(catalogs, input.shelf.materialId) : carcass;
+    // nesting-ul nu rotește piese (decorul curge pe lungime) — axa FAȚĂ–SPATE
+    // înseamnă piesa rotită în lista de debitare, cu cantul frontal pe latura scurtă
+    if (input.shelf?.decorAxis === 'FB') {
+      parts.push({
+        cabinetLabel: label, name: 'Poliță',
+        lengthMm: shelfW, widthMm: innerW, qty: input.shelves,
+        materialId: shelfMat.id, edges: { w1: fe },
+      });
+    } else {
+      parts.push({
+        cabinetLabel: label, name: 'Poliță',
+        lengthMm: innerW, widthMm: shelfW, qty: input.shelves,
+        materialId: shelfMat.id, edges: { l1: fe },
+      });
+    }
   }
 
   if (input.back.enabled) {
