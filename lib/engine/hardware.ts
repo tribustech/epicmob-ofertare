@@ -207,7 +207,8 @@ export function resolveSuggestions(
     else unresolved.push({ ...suggestions[i], qty: r.qty });
   });
   for (const line of adjustments?.extra ?? []) {
-    if (line.qty > 0) byId.set(line.hardwareId, (byId.get(line.hardwareId) ?? 0) + line.qty);
+    // rândurile extra abia adăugate pot fi încă fără produs ales — nu intră în calcul
+    if (line.hardwareId && line.qty > 0) byId.set(line.hardwareId, (byId.get(line.hardwareId) ?? 0) + line.qty);
   }
 
   return {

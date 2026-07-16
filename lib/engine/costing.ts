@@ -122,24 +122,26 @@ export function computeCosts(args: {
   // (materialele de blat nu apar în boardParts, deci nu se ciocnesc cu piesele normale).
   const blats = args.blats ?? [];
   if (blats.length > 0) {
-    const areaByMaterial = new Map<string, number>();
+    const usedByMaterial = new Map<string, number>();
+    const boughtByMaterial = new Map<string, number>();
     const sheetsByMaterial = new Map<string, number | null>();
     for (const b of blats) {
       boards += b.boardCost;
       cuttingService += b.cuttingCost;
-      areaByMaterial.set(b.materialId, (areaByMaterial.get(b.materialId) ?? 0) + b.totalAreaSqm);
+      usedByMaterial.set(b.materialId, (usedByMaterial.get(b.materialId) ?? 0) + b.totalAreaSqm);
+      boughtByMaterial.set(b.materialId, (boughtByMaterial.get(b.materialId) ?? 0) + b.boughtAreaSqm);
       if (b.sheets !== null) {
         sheetsByMaterial.set(b.materialId, (sheetsByMaterial.get(b.materialId) ?? 0) + b.sheets);
       } else if (!sheetsByMaterial.has(b.materialId)) {
         sheetsByMaterial.set(b.materialId, null);
       }
     }
-    for (const [materialId, totalAreaSqm] of areaByMaterial) {
-      needs.boards.push({
-        materialId, totalAreaSqm,
-        sheets: sheetsByMaterial.get(materialId) ?? null,
-        wastePct: null, layout: null,
-      });
+    for (const [materialId, used] of usedByMaterial) {
+      const bought = boughtByMaterial.get(materialId) ?? used;
+      const sheets = sheetsByMaterial.get(materialId) ?? null;
+      // pierderea = ce cumperi peste ce folosești (ca la PAL: placa întreagă, restul e pierdere)
+      const wastePct = sheets !== null && bought > 0 ? Math.max(0, (1 - used / bought) * 100) : null;
+      needs.boards.push({ materialId, totalAreaSqm: used, sheets, wastePct, layout: null });
     }
   }
 

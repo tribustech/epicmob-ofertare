@@ -124,6 +124,10 @@ export function BlatEditorForm(props: {
               <div className="text-lg font-semibold">{result.pieces} {result.pieces === 1 ? 'placă' : 'plăci'}</div>
             </div>
             <div>
+              <div className="text-xs text-muted-foreground">Pierdere</div>
+              <div className="text-lg font-semibold">{result.wastePct !== null ? `${fmtNum(result.wastePct, 0)}%` : '—'}</div>
+            </div>
+            <div>
               <div className="text-xs text-muted-foreground">Cost plăci</div>
               <div className="text-lg font-semibold">{fmtLei(result.boardCost)}</div>
             </div>

@@ -60,6 +60,24 @@ export const createHardware = formAction(async (fd: FormData) => {
   revalidatePath('/cataloage/feronerie');
   revalidatePath('/setari');
 });
+
+/** Creare rapidă din editorul de corp (combobox-ul de feronerie): doar denumire + preț. */
+export async function quickCreateHardware(
+  category: string,
+  name: string,
+  pricePerUnit: number,
+): Promise<{ id?: string; error?: string }> {
+  try {
+    const d = hardwareSchema.parse({ name, category, pricePerUnit });
+    const row = await prisma.hardwareItem.create({
+      data: { name: d.name, category: d.category, pricePerUnit: d.pricePerUnit, active: true },
+    });
+    revalidatePath('/cataloage/feronerie');
+    return { id: row.id };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Nu s-a putut crea produsul' };
+  }
+}
 export const updateHardware = formAction(async (id: string, fd: FormData) => {
   await prisma.hardwareItem.update({ where: { id }, data: hardwareData(fd) });
   revalidatePath('/cataloage/feronerie');

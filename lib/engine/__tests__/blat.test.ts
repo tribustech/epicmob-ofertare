@@ -56,15 +56,24 @@ describe('computeBlat', () => {
     expect(r.warnings).toHaveLength(1);
   });
 
-  it('material la m²: cost = aria folosită × preț/m² (fără plăcuțe)', () => {
+  it('material la m²: cost = aria folosită × preț/m² (fără plăcuțe, fără pierdere)', () => {
     const r = computeBlat({ label: 'BL1', lengthMm: 3000, depthMm: 600, material: blatSqm, cutPricePerPiece: 35 });
     expect(r.totalAreaSqm).toBeCloseTo(1.8, 5);
     expect(r.boardCost).toBeCloseTo(360, 5); // 1.8 × 200
     expect(r.sheets).toBeNull();
+    expect(r.wastePct).toBeNull();
+    expect(r.boughtAreaSqm).toBeCloseTo(1.8, 5);
   });
 
   it('PER_SHEET raportează sheets = pieces pentru necesar', () => {
     const r = computeBlat({ label: 'BL1', lengthMm: 5000, depthMm: 600, material: blatSheet, cutPricePerPiece: 35 });
     expect(r.sheets).toBe(2);
+  });
+
+  it('pierdere = placa întreagă cumpărată minus aria folosită', () => {
+    // 3000×600 pe placă 4100×600: cumpăr 1 placă = 2.46 m², folosesc 1.8 m² → 26.8% pierdere
+    const r = computeBlat({ label: 'BL1', lengthMm: 3000, depthMm: 600, material: blatSheet, cutPricePerPiece: 35 });
+    expect(r.boughtAreaSqm).toBeCloseTo(2.46, 5);
+    expect(r.wastePct).toBeCloseTo((1 - 1.8 / 2.46) * 100, 4);
   });
 });

@@ -212,10 +212,11 @@ describe('computeCosts — blaturi', () => {
   const NEST = { kerfMm: 4, trimMm: 10 };
   const blatResult = {
     materialId: 'blat-x', pieces: 2, fitsOnDepth: true,
-    totalAreaSqm: 3.0, sheets: 2, boardCost: 700, cuttingCost: 70, warnings: [],
+    totalAreaSqm: 3.0, boughtAreaSqm: 12.0, wastePct: 75, sheets: 2,
+    boardCost: 700, cuttingCost: 70, warnings: [],
   };
 
-  it('costul blatului intră la boards + cuttingService și în needs', () => {
+  it('costul blatului intră la boards + cuttingService și în needs (cu pierdere)', () => {
     const r = computeCosts({
       parts: [], hardwareLines: [], cabinets: [],
       freeLines: [], laborPct: 0, nesting: NEST, catalogs: COST_CATALOGS,
@@ -223,8 +224,9 @@ describe('computeCosts — blaturi', () => {
     });
     expect(r.breakdown.boards).toBe(700);
     expect(r.breakdown.cuttingService).toBe(70);
+    // folosit 3 m² din 12 m² cumpărați → 75% pierdere
     expect(r.needs.boards).toEqual([
-      expect.objectContaining({ materialId: 'blat-x', totalAreaSqm: 3.0, sheets: 2 }),
+      expect.objectContaining({ materialId: 'blat-x', totalAreaSqm: 3.0, sheets: 2, wastePct: 75 }),
     ]);
   });
 

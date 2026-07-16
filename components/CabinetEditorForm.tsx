@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CabinetIsoSvg } from '@/components/CabinetIsoSvg';
+import { HardwareCombobox, type HardwareComboItem } from '@/components/HardwareCombobox';
 import { MaterialPicker } from '@/components/MaterialPicker';
 import { FrontModelPicker, type FrontModelOption } from '@/components/FrontModelPicker';
 import { RalPicker, type RalColor } from '@/components/RalPicker';
@@ -127,6 +128,8 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const [values, setValues] = useState<Record<string, string>>(initial);
   // feronerie v4: abaterile per rând de la sugestiile automate (doar ce s-a atins)
   const [hw, setHw] = useState<HardwareAdjustments>(hardwareAdjustments ?? {});
+  // produse create pe loc din combobox — vizibile imediat, până le aduce refresh-ul din snapshot
+  const [createdHw, setCreatedHw] = useState<HardwareComboItem[]>([]);
   const [isPending, startTransition] = useTransition();
   const [formState, setFormState] = useState<FormState>({});
 
@@ -155,12 +158,28 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const showError = (field: string) =>
     submitAttempted || touched.has(field) ? fieldErrors.get(field) : undefined;
 
+  // snapshotul + produsele create pe loc (dedupe pe id; refresh-ul serverului le va aduce în snapshot)
+  const snapExt = useMemo(() => {
+    const fresh = createdHw.filter((c) => !snapshot.hardware.some((h) => h.id === c.id));
+    if (fresh.length === 0) return snapshot;
+    return {
+      ...snapshot,
+      hardware: [
+        ...snapshot.hardware,
+        ...fresh.map((c) => ({
+          id: c.id, name: c.name, category: c.category, pricePerUnit: c.pricePerUnit,
+          nominalLengthMm: null, loadClassKg: null, boxHeightMm: null, active: true,
+        })),
+      ],
+    };
+  }, [snapshot, createdHw]);
+
   const catalogs = useMemo(
     () => toCostCatalogs(
-      snapshot.materials, snapshot.edgeBands, snapshot.hardware, snapshot.cuttingRates,
-      frontCatalogsFromSnapshot(snapshot),
+      snapExt.materials, snapExt.edgeBands, snapExt.hardware, snapExt.cuttingRates,
+      frontCatalogsFromSnapshot(snapExt),
     ),
-    [snapshot],
+    [snapExt],
   );
   const cc = useMemo(() => parseConstruction(snapshot.settings.constructionJson), [snapshot]);
 
@@ -250,10 +269,10 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
       parts = expanded.parts;
       warnings = expanded.warnings;
       const defaults = buildHardwareDefaults(
-        snapshot.hardware.filter((h) => h.active),
-        snapshot.settings,
+        snapExt.hardware.filter((h) => h.active),
+        snapExt.settings,
       );
-      if (legHeightMm != null) defaults.legId = pickLegId(snapshot.hardware, legHeightMm, defaults.legId);
+      if (legHeightMm != null) defaults.legId = pickLegId(snapExt.hardware, legHeightMm, defaults.legId);
       const resolved = resolveSuggestions(expanded.hardware, hw, defaults, catalogs.hardware);
       hardwareLines = resolved.lines;
       unresolvedHardware = resolved.unresolved;
@@ -261,30 +280,27 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     } catch (e) {
       expandError = e instanceof Error ? e.message : 'Eroare la generarea pieselor';
     }
-    const estimate = estimateCabinetCost({ input, hardwareAdjustments: hw, extraParts }, snapshot, {
+    const estimate = estimateCabinetCost({ input, hardwareAdjustments: hw, extraParts }, snapExt, {
       laborPct, yieldFactor, legHeightMm,
       projectHandle: { type: projectHandle.type as HandleType, itemId: projectHandle.itemId },
     });
     return { input, parts, warnings, expandError, estimate, hardwareLines, unresolvedHardware, slots };
-  }, [parsed, catalogs, cc, hw, extraParts, snapshot, laborPct, yieldFactor, legHeightMm, projectHandle]);
+  }, [parsed, catalogs, cc, hw, extraParts, snapExt, laborPct, yieldFactor, legHeightMm, projectHandle]);
 
   const invalid = !parsed.success;
 
   const materialName = (mid: string) => snapshot.materials.find((m) => m.id === mid)?.name ?? mid;
   const bandName = (bid?: string) => (bid ? (snapshot.edgeBands.find((e) => e.id === bid)?.name ?? bid) : '');
-  const hardwareItemName = (hid: string) => snapshot.hardware.find((h) => h.id === hid)?.name ?? hid;
-
-  // opțiunile de produs pentru un rând de feronerie: activele din categoria lui
-  // + produsul curent chiar dacă e dezactivat (marcat)
-  const hardwareOptions = (category: string, currentId: string | null) => {
-    const opts = snapshot.hardware
-      .filter((h) => h.active && h.category === category)
-      .map((h) => ({ value: h.id, label: `${h.name} (${h.pricePerUnit} lei)` }));
-    if (currentId && !opts.some((o) => o.value === currentId)) {
-      const cur = snapshot.hardware.find((h) => h.id === currentId);
-      if (cur) opts.push({ value: cur.id, label: `${cur.name} (dezactivat)` });
-    }
-    return opts;
+  // lista pentru combobox-ul de feronerie (căutare + creare pe loc)
+  const comboItems: HardwareComboItem[] = useMemo(
+    () => snapExt.hardware.map((h) => ({
+      id: h.id, name: h.name, category: h.category, pricePerUnit: h.pricePerUnit, active: h.active,
+    })),
+    [snapExt],
+  );
+  const onHardwareCreated = (item: HardwareComboItem) => {
+    setCreatedHw((prev) => [...prev, item]);
+    router.refresh(); // aduce produsul nou în snapshotul serverului
   };
 
   // manipularea abaterilor per slot: setezi doar ce atingi; undefined = revine la automat
@@ -730,42 +746,78 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
               <p className="text-xs text-muted-foreground">
                 Rândurile vin din configurația corpului (fronturi, polițe, tip). Ce modifici rămâne
                 ales manual; restul se recalculează automat la orice schimbare a corpului.
+                Scrii un produs care nu există? Îl adaugi direct din listă, cu preț.
               </p>
-              <div className="space-y-3">
+              <div>
+                <div className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.5fr)_4.5rem_4.5rem] items-center gap-x-3 border-b pb-1.5">
+                  <span className={fieldLabelCls}>Rând</span>
+                  <span className={fieldLabelCls}>Produs</span>
+                  <span className={fieldLabelCls}>Buc</span>
+                  <span />
+                </div>
                 {live.slots.map((r) => {
                   const adjusted = r.itemAdjusted || r.qtyAdjusted;
+                  const removed = r.qty === 0;
                   return (
-                    <div key={r.slot} className="grid grid-cols-2 items-end gap-2 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_5rem_auto]">
+                    <div
+                      key={r.slot}
+                      className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.5fr)_4.5rem_4.5rem] items-center gap-x-3 border-b border-border/60 py-2"
+                    >
                       <div className="min-w-0">
-                        <div className={cn('truncate text-sm font-medium', r.qty === 0 && 'text-muted-foreground line-through')}>
+                        <div className={cn('truncate text-sm font-medium', removed && 'text-muted-foreground line-through')}>
                           {r.name}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {r.qty === 0 ? 'eliminat de pe corp' : adjusted ? 'ales manual' : 'automat'}
-                          {r.qtyAdjusted && r.qty !== r.autoQty && r.qty !== 0 ? ` · sugestie: ${r.autoQty}` : ''}
+                          {removed ? 'eliminat de pe corp' : adjusted ? 'ales manual' : 'automat'}
+                          {r.qtyAdjusted && r.qty !== r.autoQty && !removed ? ` · sugestie: ${r.autoQty}` : ''}
                         </div>
                       </div>
-                      <SelectField
-                        label="Produs"
-                        value={r.itemId ?? ''}
-                        onChange={(v) => setSlotAdj(r.slot, { itemId: v || undefined })}
-                        options={hardwareOptions(r.category, r.itemId)}
-                        error={r.itemId === null && r.qty > 0 ? 'Alege produsul' : undefined}
-                      />
-                      <NumField
-                        label="Buc"
-                        value={String(r.qty)}
-                        onChange={(v) => setSlotAdj(r.slot, { qty: v === '' ? undefined : Math.max(0, Math.trunc(Number(v) || 0)) })}
-                      />
-                      <div className="pb-0.5">
+                      {removed ? (
+                        <div className="col-span-2 text-sm text-muted-foreground">—</div>
+                      ) : (
+                        <>
+                          <HardwareCombobox
+                            value={r.itemId}
+                            onChange={(v) => setSlotAdj(r.slot, { itemId: v })}
+                            items={comboItems}
+                            category={r.category}
+                            onCreated={onHardwareCreated}
+                            error={r.itemId === null ? 'Alege produsul' : undefined}
+                          />
+                          <Input
+                            type="number"
+                            step="1"
+                            value={String(r.qty)}
+                            onChange={(e) => setSlotAdj(r.slot, {
+                              qty: e.target.value === '' ? undefined : Math.max(0, Math.trunc(Number(e.target.value) || 0)),
+                            })}
+                            className="h-8 font-mono"
+                          />
+                        </>
+                      )}
+                      <div className="flex justify-end gap-1">
                         {adjusted && (
                           <button
                             type="button"
                             onClick={() => resetSlot(r.slot)}
                             title="Revino la automat"
-                            className="rounded-lg border px-2.5 py-1.5 text-xs hover:bg-muted"
+                            className="rounded-lg border px-2 py-1 text-xs hover:bg-muted"
                           >
-                            ↺ auto
+                            ↺
+                          </button>
+                        )}
+                        {!removed && (
+                          <button
+                            type="button"
+                            title="Elimină rândul de pe corp"
+                            onClick={() => {
+                              if (window.confirm(`Elimini „${r.name}" de pe acest corp? Îl aduci înapoi cu ↺.`)) {
+                                setSlotAdj(r.slot, { qty: 0 });
+                              }
+                            }}
+                            className="rounded-lg border px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+                          >
+                            ✕
                           </button>
                         )}
                       </div>
@@ -773,54 +825,52 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                   );
                 })}
                 {live.slots.length === 0 && (
-                  <p className="text-sm text-muted-foreground">Configurația corpului nu cere feronerie.</p>
+                  <p className="py-3 text-sm text-muted-foreground">Configurația corpului nu cere feronerie.</p>
                 )}
               </div>
 
-              <div className="space-y-2 border-t pt-3">
+              <div className="space-y-2">
                 <Label className={fieldLabelCls}>Produse adăugate manual</Label>
                 {(hw.extra ?? []).map((l, i) => (
-                  <div key={i} className="grid grid-cols-2 items-end gap-2 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_5rem_auto]">
+                  <div
+                    key={i}
+                    className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.5fr)_4.5rem_4.5rem] items-center gap-x-3"
+                  >
                     <div />
-                    <SelectField
-                      label="Produs"
-                      value={l.hardwareId}
+                    <HardwareCombobox
+                      value={l.hardwareId || null}
                       onChange={(v) => setExtra((extra) => extra.map((x, j) => (j === i ? { ...x, hardwareId: v } : x)))}
-                      options={hardwareOptions(snapshot.hardware.find((h) => h.id === l.hardwareId)?.category ?? '', l.hardwareId)}
+                      items={comboItems}
+                      onCreated={onHardwareCreated}
                     />
-                    <NumField
-                      label="Buc"
+                    <Input
+                      type="number"
+                      step="1"
                       value={String(l.qty)}
-                      onChange={(v) => setExtra((extra) => extra.map((x, j) => (j === i ? { ...x, qty: Math.max(0, Math.trunc(Number(v) || 0)) } : x)))}
+                      onChange={(e) => setExtra((extra) => extra.map((x, j) => (
+                        j === i ? { ...x, qty: Math.max(0, Math.trunc(Number(e.target.value) || 0)) } : x
+                      )))}
+                      className="h-8 font-mono"
                     />
-                    <div className="pb-0.5">
+                    <div className="flex justify-end">
                       <button
                         type="button"
+                        title="Șterge rândul"
                         onClick={() => setExtra((extra) => extra.filter((_, j) => j !== i))}
-                        className="rounded-lg border px-2.5 py-1.5 text-xs hover:bg-muted"
+                        className="rounded-lg border px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
                       >
-                        Șterge
+                        ✕
                       </button>
                     </div>
                   </div>
                 ))}
-                {(hw.extra ?? []).length === 0 && (
-                  <p className="text-xs text-muted-foreground">Nimic adăugat peste rândurile automate.</p>
-                )}
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {snapshot.hardware
-                    .filter((h) => h.active && !(hw.extra ?? []).some((l) => l.hardwareId === h.id))
-                    .map((h) => (
-                      <button
-                        key={h.id}
-                        type="button"
-                        onClick={() => setExtra((extra) => [...extra, { hardwareId: h.id, qty: 1 }])}
-                        className="rounded-full border px-2.5 py-1 text-xs hover:bg-muted"
-                      >
-                        ＋ {h.name}
-                      </button>
-                    ))}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setExtra((extra) => [...extra, { hardwareId: '', qty: 1 }])}
+                  className="rounded-lg border border-dashed px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted"
+                >
+                  ＋ Adaugă produs
+                </button>
               </div>
             </div>
           ) : (
