@@ -25,6 +25,7 @@ export interface SettingsRow {
   cutKerfMm?: number | null; cutTrimMm?: number | null;
   profilJPerFront?: number | null; golaPricePerMl?: number | null;
   eurToRon?: number | null; // curs EUR→RON pentru fronturile MDF vopsit
+  blatCutPricePerPiece?: number | null; // debitare blat, lei per placă (default 35)
   defaultHingeId: string | null; defaultHandleId: string | null;
   defaultLegId: string | null; defaultRailId: string | null;
   // opționale: snapshot-urile dinainte de feronerie v4 nu le au

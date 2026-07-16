@@ -30,13 +30,13 @@ describe('settingsSchema', () => {
       laborPct: '30', profilJPerFront: '25', golaPricePerMl: '90', sheetYieldFactor: '1.2', cutKerfMm: '4', cutTrimMm: '10', eurToRon: '4.97',
     })).toThrow();
     expect(settingsSchema.parse({
-      laborPct: '30', profilJPerFront: '25', golaPricePerMl: '90', sheetYieldFactor: '0.8', cutKerfMm: '4', cutTrimMm: '10', eurToRon: '4.97',
+      laborPct: '30', profilJPerFront: '25', golaPricePerMl: '90', blatCutPricePerPiece: '35', sheetYieldFactor: '0.8', cutKerfMm: '4', cutTrimMm: '10', eurToRon: '4.97',
     }).sheetYieldFactor).toBe(0.8);
   });
 
   it('settingsSchema acceptă kerf și trim numerice și respinge negativ', () => {
     const ok = settingsSchema.parse({
-      laborPct: '30', profilJPerFront: '25', golaPricePerMl: '90', sheetYieldFactor: '0.8', cutKerfMm: '4', cutTrimMm: '10', eurToRon: '4.97',
+      laborPct: '30', profilJPerFront: '25', golaPricePerMl: '90', blatCutPricePerPiece: '35', sheetYieldFactor: '0.8', cutKerfMm: '4', cutTrimMm: '10', eurToRon: '4.97',
     });
     expect(ok.cutKerfMm).toBe(4);
     expect(ok.cutTrimMm).toBe(10);

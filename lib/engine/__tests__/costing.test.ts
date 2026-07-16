@@ -207,3 +207,33 @@ describe('computeCosts — fronturi MDF vopsit cotate per m² (EUR × curs)', ()
     );
   });
 });
+
+describe('computeCosts — blaturi', () => {
+  const NEST = { kerfMm: 4, trimMm: 10 };
+  const blatResult = {
+    materialId: 'blat-x', pieces: 2, fitsOnDepth: true,
+    totalAreaSqm: 3.0, sheets: 2, boardCost: 700, cuttingCost: 70, warnings: [],
+  };
+
+  it('costul blatului intră la boards + cuttingService și în needs', () => {
+    const r = computeCosts({
+      parts: [], hardwareLines: [], cabinets: [],
+      freeLines: [], laborPct: 0, nesting: NEST, catalogs: COST_CATALOGS,
+      blats: [blatResult],
+    });
+    expect(r.breakdown.boards).toBe(700);
+    expect(r.breakdown.cuttingService).toBe(70);
+    expect(r.needs.boards).toEqual([
+      expect.objectContaining({ materialId: 'blat-x', totalAreaSqm: 3.0, sheets: 2 }),
+    ]);
+  });
+
+  it('blaturile nu contează la lei/ml (rezervat corpurilor de bază)', () => {
+    const r = computeCosts({
+      parts: [], hardwareLines: [], cabinets: [],
+      freeLines: [], laborPct: 30, nesting: NEST, catalogs: COST_CATALOGS,
+      blats: [blatResult],
+    });
+    expect(r.leiPerMl).toBeNull();
+  });
+});

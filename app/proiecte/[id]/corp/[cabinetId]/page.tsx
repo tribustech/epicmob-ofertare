@@ -2,17 +2,19 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import type { CabinetInput } from '@/lib/engine';
-import { addExtraPart, removeExtraPart, updateCabinetData } from '@/lib/quote/actions';
+import { addExtraPart, removeExtraPart, updateBlat, updateCabinetData } from '@/lib/quote/actions';
 import { normalizeCabinetInput } from '@/lib/quote/normalize-input';
 import { normalizeHardwareJson } from '@/lib/quote/hardware-adjustments';
 import type { ExtraPart } from '@/lib/quote/cabinet-form';
 import { HANDLE_TYPE_OPTIONS } from '@/lib/quote/handle';
 import { buildHardwareSelOptions, loadCorpEditorData, optionsWithCurrent } from '@/lib/quote/corp-editor-data';
 import { CabinetEditorForm } from '@/components/CabinetEditorForm';
+import { BlatEditorForm, type BlatMaterialOption } from '@/components/BlatEditorForm';
 import { ActionForm } from '@/components/ActionForm';
 import { DeleteButton } from '@/components/DeleteButton';
 import { NumberInput, Select, SubmitButton, TextInput } from '@/components/forms';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fmtNum } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -86,6 +88,51 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
   const legHeightMm = assembly?.legHeightMm ?? null;
   const activeMaterials = materials.filter((m) => m.active);
   const materialName = (mid: string) => materials.find((m) => m.id === mid)?.name ?? mid;
+
+  // Blatul are editor propriu, minimal — nu trece prin CabinetEditorForm.
+  if (input.type === 'BLAT') {
+    const blatMaterials: BlatMaterialOption[] = materials
+      .filter((m) => m.active && m.category === 'BLAT')
+      .map((m) => ({
+        id: m.id,
+        label: m.decorCode ? `${m.decorCode} · ${m.name}` : m.name,
+        sheetLengthMm: m.sheetLengthMm,
+        sheetWidthMm: m.sheetWidthMm,
+        thicknessMm: m.thicknessMm,
+        pricingMode: m.pricingMode as 'PER_SHEET' | 'PER_SQM',
+        pricePerSheet: m.pricePerSheet,
+        pricePerSqm: m.pricePerSqm,
+      }));
+    return (
+      <div className="space-y-5">
+        <div className="flex items-baseline justify-between">
+          <h1 className="text-2xl font-bold tracking-tight">
+            Blat: <span className="font-mono text-xl">{input.label}</span>
+          </h1>
+          <Link href={`/proiecte/${id}`} className="text-[13px] font-medium text-accent-blue-foreground hover:underline">
+            ← Înapoi la proiect
+          </Link>
+        </div>
+        <Card>
+          <CardHeader><CardTitle>Configurare blat</CardTitle></CardHeader>
+          <CardContent>
+            <BlatEditorForm
+              initial={{
+                label: input.label,
+                widthMm: input.widthMm ? String(input.widthMm) : '',
+                depthMm: input.depthMm ? String(input.depthMm) : '',
+                blatMaterialId: input.blat?.materialId ?? '',
+                manualPieces: input.blat?.manualPieces != null ? String(input.blat.manualPieces) : '',
+              }}
+              materials={blatMaterials}
+              cutPricePerPiece={settings?.blatCutPricePerPiece ?? 35}
+              save={updateBlat.bind(null, cabinetId)}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   const extraParts = JSON.parse(cab.extraPartsJson) as ExtraPart[];
   const { tandemboxHeights } = buildHardwareSelOptions(hardwareItems, settings);
 

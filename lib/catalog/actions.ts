@@ -106,6 +106,7 @@ export const updateSettings = formAction(async (fd: FormData) => {
       cutKerfMm: d.cutKerfMm, cutTrimMm: d.cutTrimMm,
       eurToRon: d.eurToRon,
       profilJPerFront: d.profilJPerFront, golaPricePerMl: d.golaPricePerMl,
+      blatCutPricePerPiece: d.blatCutPricePerPiece,
       defaultHingeId: d.defaultHingeId ?? null, defaultHandleId: d.defaultHandleId ?? null,
       defaultLegId: d.defaultLegId ?? null, defaultRailId: d.defaultRailId ?? null,
       defaultShelfSupportId: d.defaultShelfSupportId ?? null,

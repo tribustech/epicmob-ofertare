@@ -54,6 +54,7 @@ export default async function SetariPage() {
               <NumberInput name="eurToRon" label="Curs EUR→RON" defaultValue={settings.eurToRon} step="0.01" />
               <NumberInput name="profilJPerFront" label="Profil J (lei/front frezat)" defaultValue={settings.profilJPerFront} />
               <NumberInput name="golaPricePerMl" label="Profil GOLA (lei/ml)" defaultValue={settings.golaPricePerMl} />
+              <NumberInput name="blatCutPricePerPiece" label="Debitare blat (lei/placă)" defaultValue={settings.blatCutPricePerPiece} />
             </div>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
               <Select name="defaultHingeId" label="Balama implicită" options={byCategory('BALAMA')} defaultValue={settings.defaultHingeId} allowEmpty />

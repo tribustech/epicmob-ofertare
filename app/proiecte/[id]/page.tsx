@@ -27,7 +27,7 @@ import { CabinetRow } from './CabinetRow';
 export const dynamic = 'force-dynamic';
 
 const TYPE_LABELS: Record<string, string> = {
-  BAZA: 'Bază', SUSPENDAT: 'Suspendat', INALT: 'Înalt', COLT: 'Colț',
+  BAZA: 'Bază', SUSPENDAT: 'Suspendat', INALT: 'Înalt', COLT: 'Colț', BLAT: 'Blat',
 };
 const STATUS_OPTIONS = [
   { value: 'CIORNA', label: 'Ciornă' },
@@ -370,9 +370,14 @@ function AssemblyCard({ projectId, assembly, cabinets, issues }: {
 
         <CabinetsTable projectId={projectId} cabinets={cabinets} issues={issues} />
 
-        <ActionForm action={addCabinet.bind(null, projectId, assembly.id)}>
-          <SubmitButton>Adaugă corp</SubmitButton>
-        </ActionForm>
+        <div className="flex gap-2">
+          <ActionForm action={addCabinet.bind(null, projectId, assembly.id, 'BAZA')}>
+            <SubmitButton>Adaugă corp</SubmitButton>
+          </ActionForm>
+          <ActionForm action={addCabinet.bind(null, projectId, assembly.id, 'BLAT')}>
+            <SubmitButton>Adaugă blat</SubmitButton>
+          </ActionForm>
+        </div>
       </CardContent>
     </Card>
   );
@@ -404,7 +409,11 @@ function CabinetsTable({ projectId, cabinets, issues }: {
             href={`/proiecte/${projectId}/corp/${c.id}`}
             label={c.input.label}
             typeLabel={TYPE_LABELS[c.input.type] ?? c.input.type}
-            dims={incomplete ? '—' : `${c.input.widthMm}×${c.input.heightMm}×${c.input.depthMm}`}
+            dims={incomplete
+              ? '—'
+              : c.input.type === 'BLAT'
+                ? `${c.input.widthMm}×${c.input.depthMm}`
+                : `${c.input.widthMm}×${c.input.heightMm}×${c.input.depthMm}`}
             problems={cabinetProblems(issues.get(c.id), incomplete)}
             actions={
               <>

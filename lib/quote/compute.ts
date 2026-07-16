@@ -11,6 +11,7 @@ import type {
   FrontModel, FrontPrice, FrontSupplier, HardwareAdjustments,
   HardwareLine, HardwareSuggestion, HardwareSummaryRow, NestParams, Part, Warning,
 } from '@/lib/engine';
+import { computeBlat, type BlatResult } from '@/lib/engine';
 import { isCabinetInputComplete, type ExtraPart } from './cabinet-form';
 import { handleExtraCost, withResolvedHandle, type ProjectHandle } from './handle';
 import { pickLegId } from './legs';
@@ -93,11 +94,31 @@ export function computeQuote(qAll: QuoteInput, snap: SnapshotData): QuoteResult 
   const defaults = buildHardwareDefaults(snap.hardware.filter((h) => h.active), snap.settings);
   const cc = parseConstruction(snap.settings.constructionJson);
 
-  const inputs = q.cabinets.map((c) => withResolvedHandle(c.input, q.projectHandle));
+  // blaturile NU trec prin motorul de carcasă — au propriul calcul (plăci + debitare)
+  const normal = q.cabinets.filter((c) => c.input.type !== 'BLAT');
+  const blatCabinets = q.cabinets.filter((c) => c.input.type === 'BLAT');
+  const blatCutPricePerPiece = snap.settings.blatCutPricePerPiece ?? 35;
+  const blats = blatCabinets.map((c) => {
+    const material = catalogs.materials.find((m) => m.id === c.input.blat?.materialId);
+    const result = material
+      ? computeBlat({
+          label: c.input.label,
+          lengthMm: c.input.widthMm,
+          depthMm: c.input.depthMm,
+          material,
+          manualPieces: c.input.blat?.manualPieces,
+          cutPricePerPiece: blatCutPricePerPiece,
+        })
+      : null;
+    return { cabinet: c, result };
+  });
+  const blatResults = blats.map((b) => b.result).filter((r): r is BlatResult => r !== null);
+
+  const inputs = normal.map((c) => withResolvedHandle(c.input, q.projectHandle));
   const expanded = inputs.map((input) => expandCabinet(input, catalogs, cc));
 
   const parts: Part[] = expanded.flatMap((e) => e.parts);
-  for (const c of q.cabinets) {
+  for (const c of normal) {
     for (const p of c.extraParts) {
       parts.push({
         cabinetLabel: c.input.label, name: p.name,
@@ -111,11 +132,11 @@ export function computeQuote(qAll: QuoteInput, snap: SnapshotData): QuoteResult 
   const unresolvedHardware: HardwareSuggestion[] = [];
   const unresolvedByCabinet: HardwareSuggestion[][] = expanded.map(() => []);
   expanded.forEach((e, i) => {
-    const legHeightMm = q.cabinets[i].legHeightMm;
+    const legHeightMm = normal[i].legHeightMm;
     const cabinetDefaults = legHeightMm != null
       ? { ...defaults, legId: pickLegId(snap.hardware, legHeightMm, defaults.legId) }
       : defaults;
-    const r = resolveSuggestions(e.hardware, q.cabinets[i].hardwareAdjustments, cabinetDefaults, catalogs.hardware);
+    const r = resolveSuggestions(e.hardware, normal[i].hardwareAdjustments, cabinetDefaults, catalogs.hardware);
     unresolvedHardware.push(...r.unresolved);
     unresolvedByCabinet[i] = r.unresolved;
     for (const line of r.lines) byId.set(line.hardwareId, (byId.get(line.hardwareId) ?? 0) + line.qty);
@@ -131,7 +152,7 @@ export function computeQuote(qAll: QuoteInput, snap: SnapshotData): QuoteResult 
       incomplete: true, unresolvedHardware: [], warnings: [],
     });
   }
-  q.cabinets.forEach((c, i) => {
+  normal.forEach((c, i) => {
     const uh = unresolvedByCabinet[i];
     const ws = expanded[i].warnings;
     if (uh.length === 0 && ws.length === 0) return;
@@ -140,6 +161,14 @@ export function computeQuote(qAll: QuoteInput, snap: SnapshotData): QuoteResult 
       incomplete: false, unresolvedHardware: uh, warnings: ws,
     });
   });
+  // blaturi: avertismentul „adâncime peste lățimea plăcii" devine problemă pe rând
+  for (const b of blats) {
+    if (!b.result || b.result.warnings.length === 0) continue;
+    issueByCabinet.set(b.cabinet.id ?? '', {
+      cabinetId: b.cabinet.id ?? '', label: b.cabinet.input.label,
+      incomplete: false, unresolvedHardware: [], warnings: b.result.warnings,
+    });
+  }
   const cabinetIssues = qAll.cabinets
     .map((c) => issueByCabinet.get(c.id ?? ''))
     .filter((x): x is CabinetIssue => x !== undefined);
@@ -165,6 +194,7 @@ export function computeQuote(qAll: QuoteInput, snap: SnapshotData): QuoteResult 
     nesting,
     catalogs,
     extraHardware,
+    blats: blatResults,
   });
 
   return {
@@ -174,7 +204,7 @@ export function computeQuote(qAll: QuoteInput, snap: SnapshotData): QuoteResult 
     unresolvedHardware,
     hardwareSummary: aggregateHardware(hardwareLines, catalogs.hardware),
     cutList: cutListCsv(parts, catalogs),
-    warnings: [...incompleteWarnings, ...expanded.flatMap((e) => e.warnings)],
+    warnings: [...incompleteWarnings, ...expanded.flatMap((e) => e.warnings), ...blatResults.flatMap((r) => r.warnings)],
     cabinetIssues,
     cabinets: expanded,
   };

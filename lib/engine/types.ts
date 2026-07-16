@@ -64,7 +64,7 @@ export interface ConstructionConstants {
   frontExtensionDefaultMm: number;   // „fără mâner": prelungirea implicită a frontului
 }
 
-export type CabinetType = 'BAZA' | 'SUSPENDAT' | 'INALT' | 'COLT';
+export type CabinetType = 'BAZA' | 'SUSPENDAT' | 'INALT' | 'COLT' | 'BLAT';
 
 export type PanelMount = 'INCADRAT' | 'APLICAT';
 
@@ -124,6 +124,9 @@ export interface CabinetInput {
     handleCount?: number;
   };
   handle?: HandleConfig;        // rezolvat (excepția corpului sau moștenirea proiectului); lipsă = APLICAT + produs implicit
+  /** doar type === 'BLAT': materialul de blat + nr. manual de plăci (când adâncimea > lățimea plăcii).
+   *  Un blat nu folosește câmpurile de carcasă/fronturi/feronerie — widthMm = lungime, depthMm = adâncime. */
+  blat?: { materialId: string; manualPieces?: number };
 }
 
 export interface PartEdges {

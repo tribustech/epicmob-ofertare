@@ -161,6 +161,11 @@ export function toCabinetInput(d: CabinetFormData): CabinetInput {
  * oglindește cerințele minime din cabinetFormSchema la nivel de CabinetInput.
  */
 export function isCabinetInputComplete(i: CabinetInput): boolean {
+  // blatul are alte cerințe minime: lungime + adâncime + material blat.
+  // „adâncimea > lățimea plăcii" (nr. manual de plăci) e tratat ca avertisment la calcul, nu incompletitudine.
+  if (i.type === 'BLAT') {
+    return i.widthMm > 0 && i.depthMm > 0 && !!i.blat?.materialId;
+  }
   const isVopsit = i.frontKind === 'MDF_VOPSIT' && !!i.mdfFront;
   const hasFronts = i.doors > 0 || (i.drawers?.count ?? 0) > 0;
   return (
@@ -182,3 +187,31 @@ export const extraPartSchema = z.object({
 });
 
 export type ExtraPart = z.infer<typeof extraPartSchema>;
+
+/** Blatul are un formular propriu, minimal: fără carcasă/fronturi/feronerie.
+ *  widthMm = lungime (rularea pe perete), depthMm = adâncime (față–spate). */
+export const blatFormSchema = z.object({
+  label: z.string().trim().min(1, 'Completează eticheta'),
+  widthMm: posNum,
+  depthMm: posNum,
+  blatMaterialId: z.string().min(1, 'Alege materialul blatului'),
+  manualPieces: z.preprocess(emptyToUndefined, z.coerce.number().int().min(1).optional()),
+});
+export type BlatFormData = z.infer<typeof blatFormSchema>;
+
+export function toBlatInput(d: BlatFormData, thicknessMm: number): CabinetInput {
+  return {
+    label: d.label,
+    type: 'BLAT',
+    widthMm: d.widthMm,
+    heightMm: thicknessMm, // grosimea preluată din material (informativ)
+    depthMm: d.depthMm,
+    shelves: 0,
+    doors: 0,
+    carcassMaterialId: '',
+    frontMaterialId: null,
+    back: { enabled: false, mount: 'FALT' },
+    edgeBands: { carcassFrontEdgeId: '', frontPerimeterId: null },
+    blat: { materialId: d.blatMaterialId, manualPieces: d.manualPieces },
+  };
+}

@@ -55,6 +55,7 @@ export const settingsSchema = z.object({
   laborPct: num.nonnegative(),
   profilJPerFront: num.nonnegative(),
   golaPricePerMl: num.nonnegative(),
+  blatCutPricePerPiece: num.nonnegative(),
   sheetYieldFactor: num.gt(0).lte(1),
   cutKerfMm: num.nonnegative().lte(50),
   cutTrimMm: num.nonnegative().lte(200),

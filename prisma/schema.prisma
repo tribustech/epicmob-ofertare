@@ -114,6 +114,7 @@ model AppSettings {
   defaultPlinthClipId   String?
   defaultAventosId      String?
   eurToRon         Float   @default(4.97)
+  blatCutPricePerPiece Float @default(35)
 }
 
 model Project {

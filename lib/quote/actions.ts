@@ -6,12 +6,12 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { formDataToObject } from '@/lib/catalog/schemas';
 import { formAction } from '@/lib/forms/form-action';
-import { cabinetFormSchema, extraPartSchema, toCabinetInput } from './cabinet-form';
+import { blatFormSchema, cabinetFormSchema, extraPartSchema, toBlatInput, toCabinetInput } from './cabinet-form';
 import { hardwareAdjustmentsSchema, pruneAdjustments } from './hardware-adjustments';
 import { buildSnapshot } from './snapshot';
 import { isFrozenStatus } from './basis';
 import { ASSEMBLY_LEG_HEIGHT_PRESETS, ASSEMBLY_NAME_PRESETS } from './assembly-presets';
-import type { CabinetInput } from '@/lib/engine';
+import type { CabinetInput, CabinetType } from '@/lib/engine';
 
 const optStr = z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().optional());
 
@@ -190,29 +190,44 @@ export const deleteAssembly = formAction(async (assemblyId: string) => {
   revalidatePath(`/proiecte/${a.projectId}`);
 });
 
-export const addCabinet = formAction(async (projectId: string, assemblyId: string) => {
+export const addCabinet = formAction(async (projectId: string, assemblyId: string, type: CabinetType = 'BAZA') => {
   const assembly = await prisma.assembly.findUnique({ where: { id: assemblyId } });
   if (!assembly || assembly.projectId !== projectId) {
     throw new Error('Ansamblul nu aparține acestui proiect');
   }
-  // corpul se creează GOL (fără dimensiuni/materiale inventate) și e exclus din
-  // calculul ofertei până e completat; precompletăm doar alegerile structurale
-  // și default-urile care au sens: spate PFL + cant ABS 0,4mm
-  const [pfl, band04] = await Promise.all([
-    prisma.material.findFirst({ where: { active: true, kind: 'PFL' }, orderBy: { name: 'asc' } }),
-    prisma.edgeBand.findFirst({ where: { active: true, thicknessMm: 0.4 }, orderBy: { name: 'asc' } }),
-  ]);
   const count = await prisma.cabinet.count({ where: { projectId } });
-  const input: CabinetInput = {
-    label: `C${count + 1}`,
-    type: 'BAZA',
-    widthMm: 0, heightMm: 0, depthMm: 0,
-    shelves: 1, doors: 1,
-    carcassMaterialId: '',
-    frontMaterialId: null,
-    back: { enabled: true, materialId: pfl?.id, mount: 'FALT' },
-    edgeBands: { carcassFrontEdgeId: band04?.id ?? '', frontPerimeterId: band04?.id ?? null },
-  };
+
+  let input: CabinetInput;
+  if (type === 'BLAT') {
+    // blatul se creează gol: doar tipul; lungime/adâncime/material se aleg în editor
+    input = {
+      label: `Blat ${count + 1}`, type: 'BLAT',
+      widthMm: 0, heightMm: 0, depthMm: 0,
+      shelves: 0, doors: 0,
+      carcassMaterialId: '', frontMaterialId: null,
+      back: { enabled: false, mount: 'FALT' },
+      edgeBands: { carcassFrontEdgeId: '', frontPerimeterId: null },
+      blat: { materialId: '' },
+    };
+  } else {
+    // corpul se creează GOL (fără dimensiuni/materiale inventate) și e exclus din
+    // calculul ofertei până e completat; precompletăm doar alegerile structurale
+    // și default-urile care au sens: spate PFL + cant ABS 0,4mm
+    const [pfl, band04] = await Promise.all([
+      prisma.material.findFirst({ where: { active: true, kind: 'PFL' }, orderBy: { name: 'asc' } }),
+      prisma.edgeBand.findFirst({ where: { active: true, thicknessMm: 0.4 }, orderBy: { name: 'asc' } }),
+    ]);
+    input = {
+      label: `C${count + 1}`,
+      type,
+      widthMm: 0, heightMm: 0, depthMm: 0,
+      shelves: 1, doors: 1,
+      carcassMaterialId: '',
+      frontMaterialId: null,
+      back: { enabled: true, materialId: pfl?.id, mount: 'FALT' },
+      edgeBands: { carcassFrontEdgeId: band04?.id ?? '', frontPerimeterId: band04?.id ?? null },
+    };
+  }
   const cab = await prisma.cabinet.create({
     data: { projectId, assemblyId, sortOrder: count, inputJson: JSON.stringify(input) },
   });
@@ -233,6 +248,19 @@ export const updateCabinetData = formAction(async (cabinetId: string, data: Reco
       inputJson: JSON.stringify(input),
       ...(adjustments !== undefined ? { hardwareJson: adjustments ? JSON.stringify(adjustments) : null } : {}),
     },
+  });
+  revalidatePath(`/proiecte/${cab.projectId}/corp/${cabinetId}`);
+  revalidatePath(`/proiecte/${cab.projectId}`);
+});
+
+export const updateBlat = formAction(async (cabinetId: string, fd: FormData) => {
+  const d = blatFormSchema.parse(formDataToObject(fd));
+  // grosimea informativă vine din material (dacă lipsește, rămâne 0)
+  const material = await prisma.material.findUnique({ where: { id: d.blatMaterialId } });
+  const input = toBlatInput(d, material?.thicknessMm ?? 0);
+  const cab = await prisma.cabinet.update({
+    where: { id: cabinetId },
+    data: { inputJson: JSON.stringify(input) },
   });
   revalidatePath(`/proiecte/${cab.projectId}/corp/${cabinetId}`);
   revalidatePath(`/proiecte/${cab.projectId}`);

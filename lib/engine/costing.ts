@@ -1,4 +1,5 @@
 import { frontVopsitCostEur, ralIsBlack } from '../quote/front-pricing';
+import type { BlatResult } from './blat';
 import { findMaterial } from './carcass';
 import { computeMaterialNeeds, type BoardNeed, type EdgingNeed } from './needs';
 import type { NestParams } from './nesting';
@@ -80,6 +81,7 @@ export function computeCosts(args: {
   nesting: NestParams;
   catalogs: CostCatalogs;
   extraHardware?: FreeLine[];
+  blats?: BlatResult[]; // blaturi deja calculate (nu trec prin motorul de carcasă)
 }): CostResult {
   const { catalogs } = args;
   const warnings: string[] = [];
@@ -112,6 +114,32 @@ export function computeCosts(args: {
       boards += sheets * material.pricing.pricePerSheet;
       const rate = rates.find((r) => r.maxThicknessMm >= material.thicknessMm);
       if (rate) cuttingService += sheets * rate.pricePerSheet;
+    }
+  }
+
+  // Blaturi: materialul de blat e o placă (intră la „boards"), iar debitarea per placă
+  // la „cuttingService". Necesarul se agregă pe material și se adaugă la needs.boards
+  // (materialele de blat nu apar în boardParts, deci nu se ciocnesc cu piesele normale).
+  const blats = args.blats ?? [];
+  if (blats.length > 0) {
+    const areaByMaterial = new Map<string, number>();
+    const sheetsByMaterial = new Map<string, number | null>();
+    for (const b of blats) {
+      boards += b.boardCost;
+      cuttingService += b.cuttingCost;
+      areaByMaterial.set(b.materialId, (areaByMaterial.get(b.materialId) ?? 0) + b.totalAreaSqm);
+      if (b.sheets !== null) {
+        sheetsByMaterial.set(b.materialId, (sheetsByMaterial.get(b.materialId) ?? 0) + b.sheets);
+      } else if (!sheetsByMaterial.has(b.materialId)) {
+        sheetsByMaterial.set(b.materialId, null);
+      }
+    }
+    for (const [materialId, totalAreaSqm] of areaByMaterial) {
+      needs.boards.push({
+        materialId, totalAreaSqm,
+        sheets: sheetsByMaterial.get(materialId) ?? null,
+        wastePct: null, layout: null,
+      });
     }
   }
 
