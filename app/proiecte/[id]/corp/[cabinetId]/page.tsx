@@ -91,17 +91,24 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
 
   // Blatul are editor propriu, minimal — nu trece prin CabinetEditorForm.
   if (input.type === 'BLAT') {
+    // păstrăm materialele inactive în listă doar dacă sunt selectate (MaterialPicker filtrează activele)
     const blatMaterials: BlatMaterialOption[] = materials
-      .filter((m) => m.active && m.category === 'BLAT')
+      .filter((m) => m.category === 'BLAT' && (m.active || m.id === input.blat?.materialId))
       .map((m) => ({
         id: m.id,
-        label: m.decorCode ? `${m.decorCode} · ${m.name}` : m.name,
-        sheetLengthMm: m.sheetLengthMm,
-        sheetWidthMm: m.sheetWidthMm,
+        name: m.name,
+        kind: m.kind,
         thicknessMm: m.thicknessMm,
-        pricingMode: m.pricingMode as 'PER_SHEET' | 'PER_SQM',
+        brand: m.brand,
+        category: m.category,
+        imageUrl: m.imageUrl,
+        decorCode: m.decorCode,
         pricePerSheet: m.pricePerSheet,
         pricePerSqm: m.pricePerSqm,
+        pricingMode: m.pricingMode,
+        active: m.active,
+        sheetLengthMm: m.sheetLengthMm,
+        sheetWidthMm: m.sheetWidthMm,
       }));
     return (
       <div className="space-y-5">

@@ -264,6 +264,8 @@ export const updateBlat = formAction(async (cabinetId: string, fd: FormData) => 
   });
   revalidatePath(`/proiecte/${cab.projectId}/corp/${cabinetId}`);
   revalidatePath(`/proiecte/${cab.projectId}`);
+  // la salvarea blatului ne întoarcem în pagina proiectului
+  redirect(`/proiecte/${cab.projectId}`);
 });
 
 export const deleteCabinet = formAction(async (cabinetId: string) => {

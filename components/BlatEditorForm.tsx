@@ -7,36 +7,26 @@ import type { FormState } from '@/lib/forms/form-action';
 import { fmtLei, fmtNum } from '@/lib/format';
 import { ActionForm } from '@/components/ActionForm';
 import { SubmitButton, fieldLabelCls } from '@/components/forms';
+import { MaterialPicker, type MaterialPickerItem } from '@/components/MaterialPicker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { cn } from '@/lib/utils';
 
-export interface BlatMaterialOption {
-  id: string;
-  label: string;
+
+// materialul de blat = un rând de picker (poză + preț) + dimensiunile plăcii (pentru calcul)
+export type BlatMaterialOption = MaterialPickerItem & {
   sheetLengthMm: number;
   sheetWidthMm: number;
-  thicknessMm: number;
-  pricingMode: 'PER_SHEET' | 'PER_SQM';
-  pricePerSheet: number | null;
-  pricePerSqm: number | null;
-}
-
-const selectCls = cn(
-  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none',
-  'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50',
-  'md:text-sm dark:bg-input/30',
-);
+};
 
 function toBoardMaterial(m: BlatMaterialOption): BoardMaterial {
   return {
-    id: m.id, name: m.label, kind: 'PAL', thicknessMm: m.thicknessMm,
+    id: m.id, name: m.name, kind: 'PAL', thicknessMm: m.thicknessMm,
     sheetLengthMm: m.sheetLengthMm, sheetWidthMm: m.sheetWidthMm,
-    pricing: m.pricingMode === 'PER_SHEET'
-      ? { mode: 'PER_SHEET', pricePerSheet: m.pricePerSheet ?? 0 }
-      : { mode: 'PER_SQM', pricePerSqm: m.pricePerSqm ?? 0 },
+    pricing: m.pricingMode === 'PER_SQM'
+      ? { mode: 'PER_SQM', pricePerSqm: m.pricePerSqm ?? 0 }
+      : { mode: 'PER_SHEET', pricePerSheet: m.pricePerSheet ?? 0 },
   };
 }
 
@@ -84,16 +74,15 @@ export function BlatEditorForm(props: {
           <Label htmlFor="depthMm" className={fieldLabelCls}>Adâncime (mm)</Label>
           <Input id="depthMm" name="depthMm" type="number" step="1" min="0" value={depthMm} onChange={(e) => setDepthMm(e.target.value)} required />
         </div>
-        <div className="col-span-2 grid gap-1">
-          <Label htmlFor="blatMaterialId" className={fieldLabelCls}>Material blat</Label>
-          <select id="blatMaterialId" name="blatMaterialId" value={blatMaterialId} onChange={(e) => setBlatMaterialId(e.target.value)} className={selectCls} required>
-            <option value="">— alege —</option>
-            {props.materials.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.label} · placă {fmtNum(m.sheetLengthMm, 0)}×{fmtNum(m.sheetWidthMm, 0)}
-              </option>
-            ))}
-          </select>
+        <div className="col-span-2">
+          <MaterialPicker
+            label="Material blat"
+            value={blatMaterialId}
+            onChange={setBlatMaterialId}
+            materials={props.materials}
+          />
+          {/* MaterialPicker nu emite un câmp de formular — îl trimitem noi */}
+          <input type="hidden" name="blatMaterialId" value={blatMaterialId} />
         </div>
         {overDepth && (
           <div className="grid gap-1">
@@ -125,14 +114,14 @@ export function BlatEditorForm(props: {
 
       {result && (
         <Card size="sm" className="bg-muted/40">
-          <CardContent className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <CardContent className="grid grid-cols-2 gap-3 md:grid-cols-5">
+            <div>
+              <div className="text-xs text-muted-foreground">Placă ({fmtNum(material!.thicknessMm, 0)} mm)</div>
+              <div className="text-lg font-semibold">{fmtNum(material!.sheetLengthMm, 0)}×{fmtNum(material!.sheetWidthMm, 0)}</div>
+            </div>
             <div>
               <div className="text-xs text-muted-foreground">Plăci necesare</div>
               <div className="text-lg font-semibold">{result.pieces} {result.pieces === 1 ? 'placă' : 'plăci'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Grosime</div>
-              <div className="text-lg font-semibold">{fmtNum(material!.thicknessMm, 0)} mm</div>
             </div>
             <div>
               <div className="text-xs text-muted-foreground">Cost plăci</div>
