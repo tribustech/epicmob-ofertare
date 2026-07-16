@@ -167,7 +167,6 @@ export interface ExpandedCabinet {
 export interface HardwareDefaults {
   hingeId: string;
   slideIdsByNominal: Record<number, string>;
-  handleId: string | null;
   legId: string | null;
   railId: string | null;
 }

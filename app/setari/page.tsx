@@ -57,7 +57,6 @@ export default async function SetariPage() {
             </div>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
               <Select name="defaultHingeId" label="Balama implicită" options={byCategory('BALAMA')} defaultValue={settings.defaultHingeId} allowEmpty />
-              <Select name="defaultHandleId" label="Mâner implicit" options={byCategory('MANER')} defaultValue={settings.defaultHandleId} allowEmpty />
               <Select name="defaultLegId" label="Picior implicit" options={byCategory('PICIOR')} defaultValue={settings.defaultLegId} allowEmpty />
               <Select name="defaultRailId" label="Șină implicită" options={byCategory('SINA_SUSPENDARE')} defaultValue={settings.defaultRailId} allowEmpty />
             </div>

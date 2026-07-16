@@ -30,8 +30,10 @@ export function handleExtraCost(
   if (h.type === 'PROFIL_J' && frontCount > 0) {
     lines.push({ name: `Prelucrare profil J — ${input.label}`, amount: frontCount * prices.profilJPerFront });
   }
-  if (h.type === 'GOLA' && input.frontMaterialId != null && frontCount > 0) {
-    lines.push({ name: `Profil GOLA — ${input.label}`, amount: (input.widthMm / 1000) * prices.golaPricePerMl });
+  if (h.type === 'GOLA' && frontCount > 0 && (input.frontMaterialId != null || input.mdfFront != null)) {
+    // uși: un singur profil sus; sertare: câte un profil deasupra fiecărui front
+    const rows = (input.drawers?.count ?? 0) > 0 ? input.drawers!.count : 1;
+    lines.push({ name: `Profil GOLA — ${input.label}`, amount: rows * (input.widthMm / 1000) * prices.golaPricePerMl });
   }
   return lines;
 }

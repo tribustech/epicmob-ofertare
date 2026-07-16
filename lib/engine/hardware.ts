@@ -116,7 +116,8 @@ export function resolveSuggestions(
         }
       }
     } else if (s.category === 'BALAMA') id = defaults.hingeId;
-    else if (s.category === 'MANER') id = defaults.handleId;
+    // MANER: fără fallback pe defaultul global — produsul se alege la Fronturi
+    // sau în setările proiectului; altfel rămâne nerezolvat (vizibil ca avertisment)
     else if (s.category === 'PICIOR') id = defaults.legId;
     else if (s.category === 'SINA_SUSPENDARE') id = defaults.railId;
     else if (s.category === 'SERTAR' && !s.requiresBox && s.nominalLengthMm !== undefined) {

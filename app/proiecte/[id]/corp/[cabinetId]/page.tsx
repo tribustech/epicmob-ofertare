@@ -166,6 +166,35 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
     ? 'Nicio piesă suplimentară'
     : `${extraParts.length} ${extraParts.length === 1 ? 'piesă' : 'piese'}`;
 
+  // comenzi rapide: un click adaugă produsul (cu liniile curente păstrate) și trece corpul pe feronerie editată manual
+  const quickAddChips = (current: HardwareLine[]) => {
+    const present = new Set(current.map((l) => l.hardwareId));
+    const items = activeHardwareItems.filter((h) => !present.has(h.id));
+    if (items.length === 0) return null;
+    return (
+      <div className="mt-3 border-t pt-2">
+        <p className="mb-1.5 text-xs text-muted-foreground">Adaugă rapid (1 buc — ajustezi apoi cantitatea):</p>
+        <div className="flex flex-wrap gap-1.5">
+          {items.map((h) => (
+            <ActionForm key={h.id} action={saveCabinetHardware.bind(null, cabinetId)} className="inline">
+              {current.map((l, i) => (
+                <span key={i}>
+                  <input type="hidden" name="hardwareId" value={l.hardwareId} />
+                  <input type="hidden" name="qty" value={l.qty} />
+                </span>
+              ))}
+              <input type="hidden" name="hardwareId" value={h.id} />
+              <input type="hidden" name="qty" value={1} />
+              <button type="submit" className="rounded-full border px-2.5 py-1 text-xs hover:bg-muted">
+                ＋ {h.name}
+              </button>
+            </ActionForm>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const feronerieSlot = (
     <>
       {overrides === null ? (
@@ -178,7 +207,11 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
               <li key={l.hardwareId}>{l.qty} × {hardwareName(l.hardwareId)}</li>
             ))}
             {unresolvedSuggestions.map((s, i) => (
-              <li key={`unresolved-${i}`} className="text-amber-800">⚠ {s.qty} × {s.name} — fără produs implicit (setează în Setări)</li>
+              <li key={`unresolved-${i}`} className="text-amber-800">
+                ⚠ {s.qty} × {s.name} — {s.category === 'MANER'
+                  ? 'alege produsul mânerului la Fronturi sau în setările proiectului'
+                  : 'fără produs implicit (setează în Setări)'}
+              </li>
             ))}
             {suggestedLines.length === 0 && unresolvedSuggestions.length === 0 && (
               <li className="text-muted-foreground">Nicio sugestie (corp fără fronturi/sertare).</li>
@@ -193,6 +226,7 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
             ))}
             <SubmitButton>Preia în editor</SubmitButton>
           </ActionForm>
+          {quickAddChips(suggestedLines)}
         </>
       ) : (
         <>
@@ -225,6 +259,7 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
               <SubmitButton>Salvează feroneria</SubmitButton>
             </div>
           </ActionForm>
+          {quickAddChips(overrides)}
           <div className="mt-2">
             <ActionForm action={resetCabinetHardware.bind(null, cabinetId)}>
               <button type="submit" className="rounded-lg border px-3 py-1.5 text-sm hover:bg-muted">

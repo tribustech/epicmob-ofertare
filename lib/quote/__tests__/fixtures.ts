@@ -42,6 +42,8 @@ export function refCabinet(): CabinetInput {
     widthMm: 600, heightMm: 720, depthMm: 560,
     shelves: 1, doors: 1,
     carcassMaterialId: 'pal-alb', frontMaterialId: 'mdf-vopsit',
+    // produsul mânerului e ales explicit — nu mai există fallback pe un default global
+    handle: { type: 'APLICAT', itemId: 'maner-std' },
     back: { enabled: true, materialId: 'pfl-alb', mount: 'FALT' },
     edgeBands: { carcassFrontEdgeId: 'abs-04', frontPerimeterId: null },
   };

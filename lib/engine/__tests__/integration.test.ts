@@ -16,7 +16,6 @@ const CATALOGS: ProjectCatalogs = {
   hardwareDefaults: {
     hingeId: 'blum-cliptop',
     slideIdsByNominal: {},
-    handleId: 'maner-std',
     legId: 'picior-std',
     railId: null,
   },
@@ -28,7 +27,8 @@ const CATALOGS: ProjectCatalogs = {
 
 describe('computeProject — corp bază de referință (calcul de mână)', () => {
   const result = computeProject(
-    { cabinets: [bazaInput()], freeLines: [], laborPct: 30, nesting: { kerfMm: 4, trimMm: 10 } },
+    // produsul mânerului e ales explicit — nu mai există fallback pe un default global
+    { cabinets: [bazaInput({ handle: { type: 'APLICAT', itemId: 'maner-std' } })], freeLines: [], laborPct: 30, nesting: { kerfMm: 4, trimMm: 10 } },
     CATALOGS,
   );
 

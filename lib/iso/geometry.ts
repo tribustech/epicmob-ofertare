@@ -50,45 +50,41 @@ export function buildIsoModel(input: CabinetInput, cc: ConstructionConstants): C
   const isGola = handleType === 'GOLA';
   const isJ = handleType === 'PROFIL_J';
   const deduct = cc.golaFrontDeductMm;
-  // la suspendate prinderea e pe muchia de jos (profilul GOLA / freza J stau jos)
-  const gripAtBottom = input.type === 'SUSPENDAT';
 
   const doorH = isGola ? frontH - deduct
     : handleType === 'FARA' && input.handle?.frontExtensionMm ? frontH + input.handle.frontExtensionMm
     : frontH;
-  // GOLA: golul rămâne pe partea profilului; FARA: prelungirea coboară sub linia corpului
-  const doorY = isGola ? (gripAtBottom ? g + deduct : g) : g - (doorH - frontH);
+  // GOLA: golul profilului rămâne sus; FARA: prelungirea coboară sub linia corpului
+  const doorY = isGola ? g : g - (doorH - frontH);
 
+  // prinderea (profil GOLA / freză J) e pe muchia de sus a frontului, indiferent de tipul corpului
   const doorJStrip = (x: number, w: number): IsoRect =>
-    gripAtBottom
-      ? { xMm: x, yMm: doorY, wMm: w, hMm: J_STRIP_MM }
-      : { xMm: x, yMm: doorY + doorH - J_STRIP_MM, wMm: w, hMm: J_STRIP_MM };
+    ({ xMm: x, yMm: doorY + doorH - J_STRIP_MM, wMm: w, hMm: J_STRIP_MM });
 
   if (blindW > 0) {
     fronts.push({ kind: 'PANOU_ORB', xMm: g, yMm: doorY, wMm: blindW, hMm: doorH });
   }
 
   if (hasFronts && drawerCount > 0) {
-    let heights = input.drawers!.frontHeightsMm
+    const heights = input.drawers!.frontHeightsMm
       ?? Array.from({ length: drawerCount }, () => (H - 2 * g - (drawerCount - 1) * gap) / drawerCount);
-    if (isGola && heights.length > 0) heights = [heights[0] - deduct, ...heights.slice(1)];
-    // GOLA: profilul stă deasupra primului sertar — stiva coboară, golul nu mai apare jos
-    let topY = isGola ? H - g - deduct : H - g; // sertarul 1 e sus
-    if (isGola) golaBars.push({ xMm: g, yMm: H - g - deduct, wMm: W - 2 * g, hMm: deduct });
+    let topY = H - g; // sertarul 1 e sus
+    // GOLA: fiecare sertar are profilul lui deasupra frontului (frontul se scurtează cu profilul)
     for (const h of heights) {
+      if (isGola) golaBars.push({ xMm: g, yMm: topY - deduct, wMm: W - 2 * g, hMm: deduct });
+      const rowTop = isGola ? topY - deduct : topY;
+      const frontHRow = isGola ? h - deduct : h;
       fronts.push({
-        kind: 'SERTAR', xMm: frontX0, yMm: topY - h, wMm: usableW, hMm: h,
-        ...(markKind ? { handle: { xMm: frontX0 + usableW / 2, yMm: topY - HANDLE_INSET_MM, kind: markKind, vertical: false } } : {}),
-        ...(isJ ? { jStrip: { xMm: frontX0, yMm: topY - J_STRIP_MM, wMm: usableW, hMm: J_STRIP_MM } } : {}),
+        kind: 'SERTAR', xMm: frontX0, yMm: rowTop - frontHRow, wMm: usableW, hMm: frontHRow,
+        ...(markKind ? { handle: { xMm: frontX0 + usableW / 2, yMm: rowTop - HANDLE_INSET_MM, kind: markKind, vertical: false } } : {}),
+        ...(isJ ? { jStrip: { xMm: frontX0, yMm: rowTop - J_STRIP_MM, wMm: usableW, hMm: J_STRIP_MM } } : {}),
       });
       topY -= h + gap;
     }
   } else if (hasFronts && input.doors > 0) {
     const doorW = (usableW - (input.doors - 1) * gap) / input.doors;
     if (isGola) {
-      golaBars.push(gripAtBottom
-        ? { xMm: g, yMm: g, wMm: W - 2 * g, hMm: deduct }
-        : { xMm: g, yMm: H - g - deduct, wMm: W - 2 * g, hMm: deduct });
+      golaBars.push({ xMm: g, yMm: H - g - deduct, wMm: W - 2 * g, hMm: deduct });
     }
     for (let i = 0; i < input.doors; i++) {
       const x = frontX0 + i * (doorW + gap);

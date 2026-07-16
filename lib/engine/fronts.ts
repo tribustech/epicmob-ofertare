@@ -73,9 +73,9 @@ export function expandFronts(
 
   if ((input.drawers?.count ?? 0) > 0) {
     const heights = drawerFrontHeights(input, cc);
-    // GOLA: profilul ocupă din frontul de sus al stivei de sertare
-    const adjusted = handleType === 'GOLA' && heights.length > 0
-      ? [assertPositiveDim(heights[0] - cc.golaFrontDeductMm, 'front sertar sus (GOLA)', input.label), ...heights.slice(1)]
+    // GOLA: fiecare sertar are profilul lui deasupra frontului — toate fronturile se scurtează
+    const adjusted = handleType === 'GOLA'
+      ? heights.map((h, i) => assertPositiveDim(h - cc.golaFrontDeductMm, `front sertar ${i + 1} (GOLA)`, input.label))
       : heights;
     // grupează înălțimile identice într-o singură linie de piesă
     const groups = new Map<number, number>();

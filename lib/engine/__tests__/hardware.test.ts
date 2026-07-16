@@ -9,7 +9,6 @@ const cc = DEFAULT_CONSTRUCTION;
 const DEFAULTS: HardwareDefaults = {
   hingeId: 'blum-cliptop',
   slideIdsByNominal: { 450: 'tbx-450', 500: 'tbx-500' },
-  handleId: 'maner-std',
   legId: 'picior-std',
   railId: 'sina-std',
 };
@@ -64,7 +63,7 @@ describe('resolveSuggestions', () => {
         { category: 'BALAMA', name: 'Balama ușă', qty: 2 },
         { category: 'BALAMA', name: 'Balama ușă 2', qty: 2 },
         { category: 'SERTAR', name: 'Glisiere', qty: 3, nominalLengthMm: 500 },
-        { category: 'MANER', name: 'Mâner', qty: 4 },
+        { category: 'MANER', name: 'Mâner', qty: 4, preferredId: 'maner-std' },
       ],
       DEFAULTS,
       [],
@@ -84,10 +83,10 @@ describe('resolveSuggestions', () => {
     expect(lines).toContainEqual({ hardwareId: 'tbx-450', qty: 1 });
   });
 
-  it('fără default (handleId null) → unresolved', () => {
+  it('mâner fără produs ales (fără preferredId) → unresolved, nu defaultul global', () => {
     const { lines, unresolved } = resolveSuggestions(
       [{ category: 'MANER', name: 'Mâner', qty: 2 }],
-      { ...DEFAULTS, handleId: null },
+      DEFAULTS,
       [],
     );
     expect(lines).toEqual([]);

@@ -518,7 +518,9 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                 </div>
                 {values.handleMode === 'CUSTOM' && values.handleType === 'GOLA' && (
                   <p className="text-xs text-muted-foreground">
-                    GOLA: fronturile se scurtează cu {fmtNum(cc.golaFrontDeductMm, 0)}mm, profil {'≈'}{fmtNum(Number(values.widthMm) / 1000, 2)}ml — valori din Setări.
+                    GOLA: fiecare front se scurtează cu {fmtNum(cc.golaFrontDeductMm, 0)}mm,
+                    profil {'≈'}{fmtNum(((frontType === 'SERTARE' ? Math.max(drawersCount, 1) : 1) * Number(values.widthMm)) / 1000, 2)}ml
+                    {frontType === 'SERTARE' ? ' (un profil pe fiecare sertar)' : ''} — valori din Setări.
                   </p>
                 )}
                 {values.handleMode === 'CUSTOM' && values.handleType === 'FARA' && (
@@ -673,7 +675,7 @@ function SelectField({ label, value, onChange, options, allowEmpty }: {
       <select className={selectCls} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
         {allowEmpty && <option value="">—</option>}
         {/* fără valoare aleasă, un select nativ ar afișa prima opțiune ca și cum ar fi selectată */}
-        {!allowEmpty && !value && <option value="" disabled>Selectează…</option>}
+        {!allowEmpty && !value && !options.some((o) => o.value === '') && <option value="" disabled>Selectează…</option>}
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
     </div>

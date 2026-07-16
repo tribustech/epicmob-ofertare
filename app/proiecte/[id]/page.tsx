@@ -228,8 +228,9 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                     <ul className="space-y-1">
                       {quote.unresolvedHardware.map((s, i) => (
                         <li key={i} className="rounded bg-amber-50 px-2 py-1 text-xs text-amber-800">
-                          ⚠ Feronerie fără produs implicit: {s.name} × {s.qty} — setează implicitul în Setări
-                          sau editează feroneria corpului.
+                          ⚠ Feronerie fără produs: {s.name} × {s.qty} — {s.category === 'MANER'
+                            ? 'alege produsul mânerului la corp (Fronturi) sau în setările proiectului.'
+                            : 'setează implicitul în Setări sau editează feroneria corpului.'}
                         </li>
                       ))}
                     </ul>

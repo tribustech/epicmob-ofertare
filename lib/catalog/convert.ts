@@ -115,7 +115,6 @@ export function buildHardwareDefaults(hardware: HardwareRow[], settings: Setting
   return {
     hingeId: settings.defaultHingeId,
     slideIdsByNominal,
-    handleId: settings.defaultHandleId,
     legId: settings.defaultLegId,
     railId: settings.defaultRailId,
   };

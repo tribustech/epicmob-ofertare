@@ -57,7 +57,6 @@ describe('buildHardwareDefaults', () => {
     const d = buildHardwareDefaults(slides, settings);
     expect(d.slideIdsByNominal).toEqual({ 450: 's450-ieftin', 500: 's500' });
     expect(d.hingeId).toBe('h1');
-    expect(d.handleId).toBeNull();
   });
 });
 
