@@ -64,6 +64,7 @@ export interface ConstructionConstants {
   tandemboxFrontClearanceMm: number; // rezervă: laterala Tandembox ≤ front − această valoare
   golaFrontDeductMm: number;         // GOLA: scurtarea fronturilor (profilul ocupă din înălțime)
   frontExtensionDefaultMm: number;   // „fără mâner": prelungirea implicită a frontului
+  pazieDefaultWidthMm: number;       // lățimea implicită a paziilor (capac tip pazii)
 }
 
 export type CabinetType = 'BAZA' | 'SUSPENDAT' | 'INALT' | 'COLT' | 'BLAT';
@@ -129,6 +130,8 @@ export interface CabinetInput {
   /** doar type === 'BLAT': materialul de blat + nr. manual de plăci (când adâncimea > lățimea plăcii).
    *  Un blat nu folosește câmpurile de carcasă/fronturi/feronerie — widthMm = lungime, depthMm = adâncime. */
   blat?: { materialId: string; manualPieces?: number };
+  /** configurarea pieselor (configurator 3D): slot capac, override-uri per bucată, piese libere */
+  pieces?: PiecesConfig;
 }
 
 export interface PartEdges {
@@ -136,6 +139,70 @@ export interface PartEdges {
   l2?: string;
   w1?: string; // cant pe prima latură scurtă
   w2?: string;
+}
+
+/** Laturi semantice; fiecare piesă folosește exact 4, după orientare:
+ *  laterală = fata/spate/sus/jos; blat/fund/poliță/pazie = fata/spate/stanga/dreapta;
+ *  front/spate corp = sus/jos/stanga/dreapta. */
+export type EdgeSide = 'fata' | 'spate' | 'sus' | 'jos' | 'stanga' | 'dreapta';
+
+export const EDGE_SIDES: EdgeSide[] = ['fata', 'spate', 'sus', 'jos', 'stanga', 'dreapta'];
+
+export const EDGE_SIDE_LABELS: Record<EdgeSide, string> = {
+  fata: 'Față', spate: 'Spate', sus: 'Sus', jos: 'Jos', stanga: 'Stânga', dreapta: 'Dreapta',
+};
+
+/** Cheie stabilă de bucată: 'laterala:0', 'blat-corp', 'pazie-fata', 'polita:2',
+ *  'usa:0', 'front-sertar:1', 'panou-orb', 'sertar:0:laterala:1', 'libera:<id>'. */
+export type PieceKey = string;
+
+export interface PieceOverride {
+  edges?: Partial<Record<EdgeSide, string | null>>; // id EdgeBand; null = fără cant
+  materialId?: string;
+  lengthMm?: number;   // override manual; lipsă = auto
+  widthMm?: number;
+  removed?: boolean;   // piesa nu se generează (nici în cutlist)
+}
+
+export interface FreePiece {
+  id: string;          // generat în UI la adăugare (crypto.randomUUID)
+  name: string;
+  lengthMm: number;    // fixe — nu se recalculează la redimensionarea corpului
+  widthMm: number;
+  qty: number;
+  materialId: string;
+  edges?: Partial<Record<EdgeSide, string | null>>;
+}
+
+export interface PiecesConfig {
+  /** slot capac; default PLIN. Pazii = 2 traverse orizontale față+spate,
+   *  lățime default cc.pazieDefaultWidthMm. */
+  top?: { variant: 'PLIN' | 'PAZII' | 'ABSENT'; pazieWidthMm?: number };
+  overrides?: Record<PieceKey, PieceOverride>;
+  free?: FreePiece[];
+}
+
+/** mm; x: 0→W stânga→dreapta, y: 0→înălțimea carcasei jos→sus (0 = baza carcasei,
+ *  sub picior nu se randează), z: 0→D spate→față (fronturile ies la z=D). */
+export interface PiecePlacement {
+  x: number; y: number; z: number;
+  w: number; h: number; d: number;
+}
+
+export interface PieceInstance {
+  key: PieceKey;
+  cabinetLabel: string;
+  name: string;   // numele canonic de debitare ('Laterală', 'Ușă') — filtrat de FRONT_PART_NAMES
+  label: string;  // eticheta de afișare ('Laterală stânga', 'Ușă 1')
+  lengthMm: number;
+  widthMm: number;
+  materialId: string;
+  edges: Partial<Record<EdgeSide, string>>;          // doar muchiile cu cant
+  edgeAxis: Partial<Record<EdgeSide, 'L' | 'W'>>;    // cele 4 laturi aplicabile → latura de debitare
+  manual?: { lengthMm?: boolean; widthMm?: boolean; material?: boolean; edges?: EdgeSide[] };
+  calc?: { length?: DimCalc; width?: DimCalc };
+  placement?: PiecePlacement; // lipsă la piese libere și BLAT — nu se randează în 3D
+  free?: boolean;
 }
 
 /** Un termen dintr-o formulă de dimensiune; valueMm semnat (negativ = scăzut). */

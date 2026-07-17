@@ -22,4 +22,5 @@ export const DEFAULT_CONSTRUCTION: ConstructionConstants = {
   tandemboxFrontClearanceMm: 30,
   golaFrontDeductMm: 35,
   frontExtensionDefaultMm: 30,
+  pazieDefaultWidthMm: 100,
 };
