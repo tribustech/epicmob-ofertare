@@ -1,6 +1,6 @@
 'use client';
 import { Canvas } from '@react-three/fiber';
-import { Edges, Html, OrbitControls, Text } from '@react-three/drei';
+import { Edges, Html, OrbitControls } from '@react-three/drei';
 import type { EdgeSide, PieceInstance, PiecePlacement } from '@/lib/engine';
 
 const KIND_COLORS: Record<string, string> = {
@@ -51,6 +51,34 @@ function grainMarkTransform(pc: PieceInstance, p: PiecePlacement): { position: [
   return { position: [position.x, position.y, position.z], rotation };
 }
 
+/** Direcția decorului ca „>>>" din geometrie pură (fără fonturi — drei Text/troika nu randează
+ *  fiabil aici): 3 chevron-uri din bare subțiri, în planul XY local, cu vârfurile spre +x. */
+function GrainArrows({ position, rotation }: {
+  position: [number, number, number]; rotation: [number, number, number];
+}) {
+  const L = 26 * S;   // lungimea unui braț
+  const TH = 5 * S;   // grosimea barei
+  const D = 1 * S;    // adâncimea (plată, deasupra feței)
+  const SP = 24 * S;  // distanța dintre chevron-uri
+  const c = (Math.SQRT1_2 * L) / 2; // offsetul centrului brațului față de vârf
+  return (
+    <group position={position} rotation={rotation}>
+      {[-1, 0, 1].map((i) => (
+        <group key={i} position={[i * SP, 0, 0]}>
+          <mesh position={[-c, c, 0]} rotation={[0, 0, -Math.PI / 4]} raycast={() => null}>
+            <boxGeometry args={[L, TH, D]} />
+            <meshBasicMaterial color="#7a5c35" transparent opacity={0.6} />
+          </mesh>
+          <mesh position={[-c, -c, 0]} rotation={[0, 0, Math.PI / 4]} raycast={() => null}>
+            <boxGeometry args={[L, TH, D]} />
+            <meshBasicMaterial color="#7a5c35" transparent opacity={0.6} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
 function PieceMesh({ pc, color, selected, hovered, hoveredEdge, hasGrain, onSelect, onHover }: {
   pc: PieceInstance; color: string; selected: boolean; hovered: boolean;
   hoveredEdge: EdgeSide | null; hasGrain: boolean;
@@ -80,18 +108,7 @@ function PieceMesh({ pc, color, selected, hovered, hoveredEdge, hasGrain, onSele
           <meshBasicMaterial color="#2b5fd9" />
         </mesh>
       )}
-      {grainMark && (
-        <Text
-          position={grainMark.position}
-          rotation={grainMark.rotation}
-          fontSize={0.03}
-          color="#8a6d45"
-          fillOpacity={0.55}
-          raycast={() => null}
-        >
-          {'»»»'}
-        </Text>
-      )}
+      {grainMark && <GrainArrows position={grainMark.position} rotation={grainMark.rotation} />}
       {selected && (
         <Html center distanceFactor={1.6} position={[0, p.h * S / 2 + 0.04, 0]}>
           <div className="pointer-events-none whitespace-nowrap rounded bg-foreground/90 px-2 py-0.5 font-mono text-[11px] text-background shadow">
