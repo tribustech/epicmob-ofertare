@@ -3,15 +3,15 @@
 import type { ReactNode } from 'react';
 import { Fragment, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { cabinetFormSchema, toCabinetInput } from '@/lib/quote/cabinet-form';
-import type { ExtraPart } from '@/lib/quote/cabinet-form';
+import { cabinetFormSchema, prunePiecesConfig, toCabinetInput } from '@/lib/quote/cabinet-form';
+import type { ExtraPart, PiecesConfigForm } from '@/lib/quote/cabinet-form';
 import { estimateCabinetCost } from '@/lib/quote/estimate';
 import { frontCatalogsFromSnapshot, type SnapshotData } from '@/lib/quote/compute';
 import { HANDLE_TYPE_OPTIONS, withResolvedHandle } from '@/lib/quote/handle';
 import { expandCabinet, resolveSuggestions } from '@/lib/engine';
 import type {
   DimCalc, HandleType, HardwareAdjustments, HardwareLine, HardwareSlot, HardwareSuggestion,
-  Part, ResolvedSlot, Warning,
+  Part, PieceInstance, ResolvedSlot, Warning,
 } from '@/lib/engine';
 import { buildHardwareDefaults, parseConstruction, toCostCatalogs } from '@/lib/catalog/convert';
 import { pickLegId } from '@/lib/quote/legs';
@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CabinetIsoSvg } from '@/components/CabinetIsoSvg';
+import { ConfiguratorSheet } from '@/components/configurator/ConfiguratorSheet';
 import { HardwareCombobox, type HardwareComboItem } from '@/components/HardwareCombobox';
 import { MaterialPicker } from '@/components/MaterialPicker';
 import { FrontModelPicker, type FrontModelOption } from '@/components/FrontModelPicker';
@@ -130,6 +131,7 @@ export interface CabinetEditorFormProps {
   ralColors: RalColor[];
   projectHandle: { type: string; itemId: string | null; label: string };
   tandemboxHeights: number[];
+  initialPieces?: PiecesConfigForm;
   save: (data: Record<string, string>) => Promise<FormState>;
 }
 
@@ -139,12 +141,14 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     bandOptions, hardwareAdjustments, extraParts,
     extraPartsSlot, extraPartsSummary,
     frontSupplierOptions, frontModelOptions, ralColors,
-    projectHandle, tandemboxHeights, save,
+    projectHandle, tandemboxHeights, initialPieces, save,
   } = props;
   const router = useRouter();
   const [values, setValues] = useState<Record<string, string>>(initial);
   // feronerie v4: abaterile per rând de la sugestiile automate (doar ce s-a atins)
   const [hw, setHw] = useState<HardwareAdjustments>(hardwareAdjustments ?? {});
+  // configurator 3D: override-uri per bucată / piese libere / slot capac
+  const [piecesCfg, setPiecesCfg] = useState<PiecesConfigForm>(initialPieces ?? {});
   // produse create pe loc din combobox — vizibile imediat, până le aduce refresh-ul din snapshot
   const [createdHw, setCreatedHw] = useState<HardwareComboItem[]>([]);
   const [isPending, startTransition] = useTransition();
@@ -273,10 +277,11 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const live = useMemo(() => {
     if (!parsed.success) return null;
     const input = withResolvedHandle(
-      toCabinetInput(parsed.data),
+      toCabinetInput(parsed.data, prunePiecesConfig(piecesCfg)),
       { type: projectHandle.type as HandleType, itemId: projectHandle.itemId },
     );
     let parts: Part[] = [];
+    let pieces: PieceInstance[] = [];
     let warnings: Warning[] = [];
     let expandError: string | null = null;
     // tabelul de feronerie: rândurile auto rezolvate cu abaterile per slot + liniile extra
@@ -286,6 +291,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     try {
       const expanded = expandCabinet(input, catalogs, cc, legHeightMm ?? undefined);
       parts = expanded.parts;
+      pieces = expanded.pieces;
       warnings = expanded.warnings;
       const defaults = buildHardwareDefaults(
         snapExt.hardware.filter((h) => h.active),
@@ -303,8 +309,8 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
       laborPct, yieldFactor, legHeightMm,
       projectHandle: { type: projectHandle.type as HandleType, itemId: projectHandle.itemId },
     });
-    return { input, parts, warnings, expandError, estimate, hardwareLines, unresolvedHardware, slots };
-  }, [parsed, catalogs, cc, hw, extraParts, snapExt, laborPct, yieldFactor, legHeightMm, projectHandle]);
+    return { input, parts, pieces, warnings, expandError, estimate, hardwareLines, unresolvedHardware, slots };
+  }, [parsed, catalogs, cc, hw, extraParts, snapExt, laborPct, yieldFactor, legHeightMm, projectHandle, piecesCfg]);
 
   const invalid = !parsed.success;
 
@@ -364,7 +370,11 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
       return;
     }
     startTransition(async () => {
-      const result = await save({ ...values, hardwareAdjustmentsJson: JSON.stringify(hw) });
+      const result = await save({
+        ...values,
+        hardwareAdjustmentsJson: JSON.stringify(hw),
+        piecesJson: JSON.stringify(prunePiecesConfig(piecesCfg) ?? {}),
+      });
       setFormState(result);
       if (!result.error) router.refresh();
     });
@@ -474,7 +484,8 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   );
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_380px] lg:items-start">
+    <>
+    <div className="grid gap-6 pb-16 lg:grid-cols-[1fr_380px] lg:items-start">
       <div className="flex flex-col gap-3">
         <SectionAccordion title="Identificare și dimensiuni" summary={dimSummary}
           open={openSections.has('dimensiuni')} onToggle={() => toggleSection('dimensiuni')}
@@ -1011,6 +1022,17 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
         )}
       </div>
     </div>
+    {live && !live.expandError && (
+      <ConfiguratorSheet
+        corpLabel={values.label || 'corp'}
+        pieces={live.pieces}
+        materials={pickerMaterials}
+        edgeBands={snapshot.edgeBands}
+        cfg={piecesCfg}
+        onCfgChange={setPiecesCfg}
+      />
+    )}
+    </>
   );
 }
 

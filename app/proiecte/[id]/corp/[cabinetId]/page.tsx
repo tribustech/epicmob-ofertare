@@ -225,6 +225,7 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
           label: HANDLE_TYPE_OPTIONS.find((o) => o.value === project.handleType)?.label ?? project.handleType,
         }}
         tandemboxHeights={tandemboxHeights}
+        initialPieces={input.pieces}
         save={updateCabinetData.bind(null, cabinetId)}
       />
     </div>
