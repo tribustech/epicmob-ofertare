@@ -47,9 +47,9 @@ export function expandCabinet(
   }
 
   const carcass = expandCarcass(input, catalogs, cc, legHeightMm);
-  const fronts = expandFronts(input, catalogs, cc);
+  const fronts = expandFronts(input, catalogs, cc, legHeightMm);
   const boxes = drawerCount > 0
-    ? expandDrawerBoxes(input, catalogs, cc)
+    ? expandDrawerBoxes(input, catalogs, cc, legHeightMm)
     : { pieces: [], warnings: [] };
   const hardware = suggestHardware(input, fronts.fronts, catalogs, cc, legHeightMm);
 

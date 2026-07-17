@@ -101,7 +101,7 @@ export function assignPlacements(
       }
       case /^front-sertar:\d+$/.test(pc.key): {
         const i = Number(pc.key.split(':')[1]);
-        const heights = drawerFrontHeights(input, cc);
+        const heights = drawerFrontHeights(input, cc, legDeduct);
         let topY = carcassH - g;
         for (let k = 0; k < i; k++) topY -= heights[k] + cc.frontGapMm;
         if (isGola) topY -= cc.golaFrontDeductMm; // profilul fiecărui sertar e deasupra frontului
@@ -113,7 +113,7 @@ export function assignPlacements(
       }
       case pc.key.startsWith('sertar:'): {
         const i = Number(pc.key.split(':')[1]);
-        const heights = drawerFrontHeights(input, cc);
+        const heights = drawerFrontHeights(input, cc, legDeduct);
         let topY = carcassH - g;
         for (let k = 0; k < i; k++) topY -= heights[k] + cc.frontGapMm;
         const boxBottom = Math.max(0, topY - heights[i] + 20); // cutia stă pe glisieră, aproximativ

@@ -25,6 +25,7 @@ export function expandDrawerBoxes(
   input: CabinetInput,
   catalogs: Catalogs,
   cc: ConstructionConstants,
+  legHeightMm?: number,
 ): { pieces: PieceInstance[]; warnings: Warning[] } {
   const drawers = input.drawers;
   if (!drawers || drawers.count <= 0) return { pieces: [], warnings: [] };
@@ -40,7 +41,7 @@ export function expandDrawerBoxes(
   const t = carcass.thicknessMm;
   const innerW = input.widthMm - 2 * t;
   const { nominalMm, warnings } = pickSlideNominal(input.depthMm, cc);
-  const heights = drawerFrontHeights(input, cc);
+  const heights = drawerFrontHeights(input, cc, legHeightMm);
   const fe = input.edgeBands.carcassFrontEdgeId;
 
   // laterala cutiei = piesă verticală, lungă pe glisieră (sus/jos), scurtă pe fața/spatele cutiei

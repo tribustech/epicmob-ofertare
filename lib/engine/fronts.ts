@@ -1,9 +1,12 @@
 import { assertPositiveDim, findMaterial } from './carcass';
+import { LEGGED_TYPES } from './constants';
 import type {
   CabinetInput, Catalogs, ConstructionConstants, FrontInfo, MaterialKind, PieceInstance, Warning,
 } from './types';
 
-export function drawerFrontHeights(input: CabinetInput, cc: ConstructionConstants): number[] {
+export function drawerFrontHeights(
+  input: CabinetInput, cc: ConstructionConstants, legHeightMm?: number,
+): number[] {
   const drawers = input.drawers;
   if (!drawers || drawers.count <= 0) return [];
   if (drawers.frontHeightsMm) {
@@ -15,7 +18,9 @@ export function drawerFrontHeights(input: CabinetInput, cc: ConstructionConstant
     }
     return drawers.frontHeightsMm;
   }
-  const usable = input.heightMm - 2 * cc.outerGapMm - (drawers.count - 1) * cc.frontGapMm;
+  // corpul stă pe picior: fronturile scad la fel ca lateralele (vezi expandCarcass)
+  const legDeduct = legHeightMm && LEGGED_TYPES.has(input.type) ? legHeightMm : 0;
+  const usable = input.heightMm - legDeduct - 2 * cc.outerGapMm - (drawers.count - 1) * cc.frontGapMm;
   return Array.from({ length: drawers.count }, () => usable / drawers.count);
 }
 
@@ -23,6 +28,7 @@ export function expandFronts(
   input: CabinetInput,
   catalogs: Catalogs,
   cc: ConstructionConstants,
+  legHeightMm?: number,
 ): { pieces: PieceInstance[]; fronts: FrontInfo[]; warnings: Warning[] } {
   // MDF vopsit: frontMaterialId e null (frontul se cotează per m² în EUR, nu din catalogul
   // de plăci). Geometria/grosimea frontului vine dintr-un material generic MDF_VOPSIT din
@@ -54,7 +60,11 @@ export function expandFronts(
   const usableW = assertPositiveDim(
     input.widthMm - 2 * cc.outerGapMm - blindW, 'lățime utilă fronturi', input.label,
   );
-  let frontH = assertPositiveDim(input.heightMm - 2 * cc.outerGapMm, 'înălțime front', input.label);
+  // corpul stă pe picior: fronturile scad la fel ca lateralele (vezi expandCarcass)
+  const legDeduct = legHeightMm && LEGGED_TYPES.has(input.type) ? legHeightMm : 0;
+  let frontH = assertPositiveDim(
+    input.heightMm - legDeduct - 2 * cc.outerGapMm, 'înălțime front', input.label,
+  );
   const handleType = input.handle?.type;
   if (handleType === 'GOLA') {
     frontH = assertPositiveDim(frontH - cc.golaFrontDeductMm, 'înălțime front (GOLA)', input.label);
@@ -76,7 +86,7 @@ export function expandFronts(
   }
 
   if ((input.drawers?.count ?? 0) > 0) {
-    const heights = drawerFrontHeights(input, cc);
+    const heights = drawerFrontHeights(input, cc, legHeightMm);
     // GOLA: fiecare sertar are profilul lui deasupra frontului — toate fronturile se scurtează
     const adjusted = handleType === 'GOLA'
       ? heights.map((h, i) => assertPositiveDim(h - cc.golaFrontDeductMm, `front sertar ${i + 1} (GOLA)`, input.label))
