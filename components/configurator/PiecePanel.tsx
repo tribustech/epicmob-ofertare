@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import type { DimCalc, EdgeSide, PieceInstance, PieceOverride } from '@/lib/engine';
+import type { DimCalc, EdgeSide, FreePiece, PieceInstance, PieceOverride } from '@/lib/engine';
 import { EDGE_SIDES, EDGE_SIDE_LABELS } from '@/lib/engine';
 import type { PiecesConfigForm } from '@/lib/quote/cabinet-form';
 import { fmtNum } from '@/lib/format';
@@ -29,6 +29,17 @@ function fmtDimCalc(c: DimCalc): string {
     .join(' ');
   return `${c.label}: ${body} = ${fmtNum(c.resultMm, 1)}`;
 }
+
+// duplicat din ConfiguratorSheet (neexportat acolo)
+const omit = <T,>(o: Record<string, T> | undefined, k: string): Record<string, T> => {
+  const { [k]: _, ...rest } = o ?? {};
+  return rest;
+};
+
+// un override fără niciun conținut nu merită păstrat în cfg.overrides (ar umfla contorul din peek)
+const isEmptyOverride = (ov: PieceOverride): boolean =>
+  !ov.removed && !ov.materialId && ov.lengthMm === undefined && ov.widthMm === undefined
+  && Object.keys(ov.edges ?? {}).length === 0;
 
 const TOP_SLOT_KEYS = new Set(['blat-corp', 'pazie-fata', 'pazie-spate']);
 const TOP_OPTIONS = [
@@ -69,36 +80,61 @@ export function PiecePanel(props: {
   const key = piece.key;
   const override = cfg.overrides?.[key];
 
-  const setOverride = (patch: Partial<PieceOverride>) => {
+  // piesele libere NU trec prin cfg.overrides (motorul le generează direct din cfg.free) —
+  // toate editările lor merg în intrarea din cfg.free găsită după id-ul de bază.
+  const freeId = piece.free ? piece.key.split(':')[1] : null;
+  const freeEntry = freeId ? (cfg.free ?? []).find((f) => f.id === freeId) : undefined;
+
+  const updateFree = (patch: Partial<FreePiece>) => {
+    if (!freeId) return;
+    onCfgChange({ ...cfg, free: (cfg.free ?? []).map((f) => (f.id === freeId ? { ...f, ...patch } : f)) });
+  };
+
+  const writeOverride = (next: PieceOverride) => {
     onCfgChange({
       ...cfg,
-      overrides: { ...cfg.overrides, [key]: { ...cfg.overrides?.[key], ...patch } },
+      overrides: isEmptyOverride(next) ? omit(cfg.overrides, key) : { ...cfg.overrides, [key]: next },
     });
+  };
+
+  const setOverride = (patch: Partial<PieceOverride>) => {
+    writeOverride({ ...cfg.overrides?.[key], ...patch });
   };
 
   const clearOverrideField = (field: keyof PieceOverride) => {
     const next = { ...(cfg.overrides?.[key] ?? {}) };
     delete next[field];
-    onCfgChange({ ...cfg, overrides: { ...cfg.overrides, [key]: next } });
+    writeOverride(next);
   };
 
   const setEdge = (side: EdgeSide, raw: string) => {
+    if (freeEntry) {
+      updateFree({ edges: { ...freeEntry.edges, [side]: raw === 'null' ? null : raw } });
+      return;
+    }
     const edges = { ...override?.edges };
     if (raw === '') delete edges[side];
     else edges[side] = raw === 'null' ? null : raw;
-    setOverride({ edges });
+    if (Object.keys(edges).length === 0) clearOverrideField('edges');
+    else setOverride({ edges });
   };
 
   const setAllEdges = (bandId: string | null) => {
     const edges: Partial<Record<EdgeSide, string | null>> = {};
     for (const side of Object.keys(piece.edgeAxis) as EdgeSide[]) edges[side] = bandId;
-    setOverride({ edges });
+    if (freeEntry) updateFree({ edges });
+    else setOverride({ edges });
+  };
+
+  const setMaterial = (raw: string) => {
+    if (freeEntry) { if (raw) updateFree({ materialId: raw }); return; }
+    if (raw === '') clearOverrideField('materialId');
+    else setOverride({ materialId: raw });
   };
 
   const removePiece = () => {
     if (piece.free) {
-      const id = piece.key.split(':')[1];
-      onCfgChange({ ...cfg, free: (cfg.free ?? []).filter((f) => f.id !== id) });
+      onCfgChange({ ...cfg, free: (cfg.free ?? []).filter((f) => f.id !== freeId) });
     } else {
       setOverride({ removed: true });
     }
@@ -132,12 +168,16 @@ export function PiecePanel(props: {
 
       <div className="grid gap-1.5">
         <Label className={fieldLabelCls}>Material</Label>
+        {/* la piese libere nu există „automat": materialul e chiar cel din cfg.free */}
         <select
           className={selectCls}
-          value={override?.materialId ?? ''}
-          onChange={(e) => (e.target.value === '' ? clearOverrideField('materialId') : setOverride({ materialId: e.target.value }))}
+          value={freeEntry ? freeEntry.materialId : (override?.materialId ?? '')}
+          onChange={(e) => setMaterial(e.target.value)}
         >
-          <option value="">Automat — {currentMaterialName}</option>
+          {!freeEntry && <option value="">Automat — {currentMaterialName}</option>}
+          {freeEntry && !activeMaterials.some((m) => m.id === freeEntry.materialId) && (
+            <option value={freeEntry.materialId}>{currentMaterialName}</option>
+          )}
           {activeMaterials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
         </select>
       </div>
@@ -145,16 +185,23 @@ export function PiecePanel(props: {
       <div className="grid gap-2">
         <Label className={fieldLabelCls}>Canturi pe muchii</Label>
         {EDGE_SIDES.filter((side) => piece.edgeAxis[side] !== undefined).map((side) => {
-          const sideOverride = override?.edges?.[side];
-          const value = sideOverride === undefined ? '' : sideOverride === null ? 'null' : sideOverride;
-          const autoName = sideOverride === undefined
-            ? (piece.edges[side] ? (edgeBands.find((b) => b.id === piece.edges[side])?.name ?? piece.edges[side]) : '—')
-            : null; // cu override activ nu mai știm valoarea automată fără re-calcul
+          let value: string;
+          let autoName: string | null = null;
+          if (freeEntry) {
+            // fără opțiune „Automat" la piese libere: canturile trăiesc direct în cfg.free
+            value = freeEntry.edges?.[side] ?? 'null';
+          } else {
+            const sideOverride = override?.edges?.[side];
+            value = sideOverride === undefined ? '' : sideOverride === null ? 'null' : sideOverride;
+            autoName = sideOverride === undefined
+              ? (piece.edges[side] ? (edgeBands.find((b) => b.id === piece.edges[side])?.name ?? piece.edges[side]) : '—')
+              : null; // cu override activ nu mai știm valoarea automată fără re-calcul
+          }
           return (
             <div key={side} className="grid grid-cols-[64px_1fr] items-center gap-2">
               <span className="text-xs text-muted-foreground">{EDGE_SIDE_LABELS[side]}</span>
               <select className={selectCls} value={value} onChange={(e) => setEdge(side, e.target.value)}>
-                <option value="">{autoName !== null ? `Automat — ${autoName}` : 'Automat'}</option>
+                {!freeEntry && <option value="">{autoName !== null ? `Automat — ${autoName}` : 'Automat'}</option>}
                 <option value="null">Fără cant</option>
                 {edgeBands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
               </select>
@@ -163,7 +210,11 @@ export function PiecePanel(props: {
         })}
       </div>
 
-      <DimensionsSection piece={piece} override={override} setOverride={setOverride} clearOverrideField={clearOverrideField} />
+      {freeEntry ? (
+        <FreeDimensionsSection freeEntry={freeEntry} updateFree={updateFree} />
+      ) : (
+        <DimensionsSection piece={piece} override={override} setOverride={setOverride} clearOverrideField={clearOverrideField} />
+      )}
 
       <div className="grid gap-1.5">
         <Label className={fieldLabelCls}>Sugestii</Label>
@@ -238,6 +289,46 @@ function DimensionsSection(props: {
           {piece.calc.width && <div>{fmtDimCalc(piece.calc.width)}</div>}
         </div>
       )}
+    </div>
+  );
+}
+
+/** Dimensiunile pieselor libere sunt fixe (fără „automat"): inputurile arată valoarea curentă
+ *  editabilă și scriu direct în cfg.free. Necontrolate (defaultValue) ca să se poată goli
+ *  câmpul în timpul tastării — commit doar la număr valid > 0. */
+function FreeDimensionsSection(props: {
+  freeEntry: FreePiece;
+  updateFree: (patch: Partial<FreePiece>) => void;
+}) {
+  const { freeEntry, updateFree } = props;
+  const onDim = (field: 'lengthMm' | 'widthMm', raw: string) => {
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n <= 0) return;
+    updateFree({ [field]: n });
+  };
+  return (
+    <div className="grid gap-2">
+      <Label className={fieldLabelCls}>Dimensiuni</Label>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="grid gap-1">
+          <span className="text-xs text-muted-foreground">Lungime (mm)</span>
+          <Input
+            key={`${freeEntry.id}:L`}
+            type="number" step="0.1"
+            defaultValue={freeEntry.lengthMm}
+            onChange={(e) => onDim('lengthMm', e.target.value)}
+          />
+        </div>
+        <div className="grid gap-1">
+          <span className="text-xs text-muted-foreground">Lățime (mm)</span>
+          <Input
+            key={`${freeEntry.id}:l`}
+            type="number" step="0.1"
+            defaultValue={freeEntry.widthMm}
+            onChange={(e) => onDim('widthMm', e.target.value)}
+          />
+        </div>
+      </div>
     </div>
   );
 }
