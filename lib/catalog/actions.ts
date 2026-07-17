@@ -62,6 +62,21 @@ export const createHardware = formAction(async (fd: FormData) => {
   revalidatePath('/setari');
 });
 
+/** Operatorul marchează din editorul de corp dacă decorul materialului are direcție (fibră) —
+ *  se salvează în catalog, deci data viitoare e deja știut. */
+export async function setMaterialHasGrain(
+  materialId: string,
+  hasGrain: boolean,
+): Promise<{ ok?: boolean; error?: string }> {
+  try {
+    await prisma.material.update({ where: { id: materialId }, data: { hasGrain } });
+    revalidatePath('/cataloage/materiale');
+    return { ok: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Nu s-a putut salva direcția decorului' };
+  }
+}
+
 /** Creare rapidă din editorul de corp (combobox-ul de feronerie): doar denumire + preț. */
 export async function quickCreateHardware(
   category: string,

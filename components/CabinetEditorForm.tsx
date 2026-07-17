@@ -15,6 +15,7 @@ import type {
   Part, PieceInstance, ResolvedSlot, Warning,
 } from '@/lib/engine';
 import { buildHardwareDefaults, parseConstruction, toCostCatalogs } from '@/lib/catalog/convert';
+import { setMaterialHasGrain } from '@/lib/catalog/actions';
 import { pickLegId } from '@/lib/quote/legs';
 import type { FormState } from '@/lib/forms/form-action';
 import { fmtNum } from '@/lib/format';
@@ -363,8 +364,20 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const pickerMaterials = useMemo(() => snapshot.materials.filter((m) => m.category !== 'BLAT'), [snapshot]);
   // culoarea piesei în viewportul 3D depinde de tipul materialului (PAL/MDF/…)
   const materialKindById: Record<string, string> = Object.fromEntries(pickerMaterials.map((m) => [m.id, m.kind ?? 'PAL']));
-  // marcaj „»»»" în 3D pentru piesele cu material cu decor direcțional (snapshot-uri vechi înghețate: lipsă = false)
-  const materialGrainById: Record<string, boolean> = Object.fromEntries(pickerMaterials.map((m) => [m.id, m.hasGrain ?? false]));
+  // marcaj „»»»" în 3D pentru piesele cu material cu decor direcțional (snapshot-uri vechi înghețate: lipsă = false);
+  // operatorul poate corecta din editor — corecția se salvează în catalog și se ține minte optimist local
+  const [grainOverrides, setGrainOverrides] = useState<Record<string, boolean>>({});
+  const materialGrainById: Record<string, boolean> = {
+    ...Object.fromEntries(pickerMaterials.map((m) => [m.id, m.hasGrain ?? false])),
+    ...grainOverrides,
+  };
+  const toggleGrain = (materialId: string, next: boolean) => {
+    setGrainOverrides((prev) => ({ ...prev, [materialId]: next }));
+    void setMaterialHasGrain(materialId, next).then((r) => {
+      if (r.error) setGrainOverrides((prev) => { const { [materialId]: _, ...rest } = prev; return rest; });
+      else router.refresh();
+    });
+  };
 
   const noPriceMaterials = useMemo(() => {
     const ids = [values.carcassMaterialId, values.frontMaterialId, values.backMaterialId, values.drawersBottomMaterialId, ...extraParts.map((p) => p.materialId)];
@@ -477,6 +490,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <MaterialPicker label="Material polițe" value={values.shelfMaterialId} onChange={(v) => set('shelfMaterialId', v)} materials={pickerMaterials} allowEmpty />
+        <GrainCheckbox materialId={values.shelfMaterialId} grainById={materialGrainById} onToggle={toggleGrain} idSuffix="polite" />
       </div>
       <p className="text-xs text-muted-foreground">Fără selecție, polițele se fac din materialul carcasei.</p>
       <div className="flex items-center gap-2">
@@ -545,6 +559,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
               <MaterialPicker label="Material carcasă" value={values.carcassMaterialId} onChange={(v) => set('carcassMaterialId', v)} materials={pickerMaterials} error={showError('carcassMaterialId')} />
               <SelectField label="Cant carcasă" value={values.carcassFrontEdgeId} onChange={(v) => set('carcassFrontEdgeId', v)} options={bandOptions.carcassFront} error={showError('carcassFrontEdgeId')} />
             </div>
+            <GrainCheckbox materialId={values.carcassMaterialId} grainById={materialGrainById} onToggle={toggleGrain} idSuffix="carcasa" />
 
             <div className="grid gap-2 border-t pt-3">
               <Label className={fieldLabelCls}>Tip front</Label>
@@ -555,6 +570,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <MaterialPicker label="Material fronturi" value={values.frontMaterialId} onChange={(v) => set('frontMaterialId', v)} materials={pickerMaterials} allowEmpty error={showError('frontMaterialId')} />
                 <SelectField label="Cant fronturi" value={values.frontPerimeterId} onChange={(v) => set('frontPerimeterId', v)} options={bandOptions.frontPerimeter} allowEmpty />
+                <GrainCheckbox materialId={values.frontMaterialId} grainById={materialGrainById} onToggle={toggleGrain} idSuffix="fronturi" />
               </div>
             ) : (
               <div className="space-y-3">
@@ -1016,6 +1032,25 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Operatorul marchează pe loc dacă decorul materialului ales are direcție (fibră) —
+ *  se salvează în catalog (setMaterialHasGrain), deci la următoarea folosire e deja știut. */
+function GrainCheckbox({ materialId, grainById, onToggle, idSuffix }: {
+  materialId: string | undefined;
+  grainById: Record<string, boolean>;
+  onToggle: (materialId: string, next: boolean) => void;
+  idSuffix: string;
+}) {
+  if (!materialId) return null;
+  const id = `hasGrain-${idSuffix}`;
+  return (
+    <div className="flex items-center gap-2">
+      <Checkbox id={id} checked={grainById[materialId] ?? false}
+        onCheckedChange={(c) => onToggle(materialId, c === true)} />
+      <Label htmlFor={id} className="font-normal">Decor cu direcție (fibră) — se salvează în catalog</Label>
     </div>
   );
 }
