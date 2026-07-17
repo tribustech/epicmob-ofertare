@@ -67,11 +67,11 @@ function GrainArrows({ position, rotation }: {
         <group key={i} position={[i * SP, 0, 0]}>
           <mesh position={[-c, c, 0]} rotation={[0, 0, -Math.PI / 4]} raycast={() => null}>
             <boxGeometry args={[L, TH, D]} />
-            <meshBasicMaterial color="#7a5c35" transparent opacity={0.6} />
+            <meshBasicMaterial color="#3d2f1d" transparent opacity={0.9} />
           </mesh>
           <mesh position={[-c, -c, 0]} rotation={[0, 0, Math.PI / 4]} raycast={() => null}>
             <boxGeometry args={[L, TH, D]} />
-            <meshBasicMaterial color="#7a5c35" transparent opacity={0.6} />
+            <meshBasicMaterial color="#3d2f1d" transparent opacity={0.9} />
           </mesh>
         </group>
       ))}
