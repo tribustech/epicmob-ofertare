@@ -18,16 +18,30 @@ const selectCls = cn(
   'md:text-sm dark:bg-input/30',
 );
 
-// „H 720 − picior 100 = 620"; un singur termen → doar „label: valoare" (copiat din CabinetEditorForm.fmtDimCalc)
-function fmtDimCalc(c: DimCalc): string {
-  if (c.terms.length <= 1) return `${c.label}: ${fmtNum(c.resultMm, 1)}`;
-  const body = c.terms
-    .map((term, i) => {
-      const sign = i === 0 ? '' : term.valueMm < 0 ? '− ' : '+ ';
-      return `${sign}${term.label} ${fmtNum(Math.abs(term.valueMm), 1)}`;
-    })
-    .join(' ');
-  return `${c.label}: ${body} = ${fmtNum(c.resultMm, 1)}`;
+/** „Bonul" unei dimensiuni: termenii pe rânduri cu cifrele aliniate la dreapta, rezultatul sus. */
+function DimCalcView({ calc }: { calc: DimCalc }) {
+  return (
+    <div className="rounded-lg bg-muted/60 px-3 py-2">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{calc.label}</span>
+        <span className="font-mono text-sm font-bold tabular-nums">
+          {fmtNum(calc.resultMm, 1)}<span className="ml-1 text-[10px] font-normal text-muted-foreground">mm</span>
+        </span>
+      </div>
+      {calc.terms.length > 1 && (
+        <div className="mt-1 space-y-0.5 border-t border-border/60 pt-1">
+          {calc.terms.map((t, i) => (
+            <div key={i} className="flex items-baseline justify-between gap-3 text-xs text-muted-foreground">
+              <span>{t.label}</span>
+              <span className="font-mono tabular-nums">
+                {t.valueMm < 0 ? `−${fmtNum(-t.valueMm, 1)}` : fmtNum(t.valueMm, 1)} mm
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // duplicat din ConfiguratorSheet (neexportat acolo)
@@ -284,9 +298,9 @@ function DimensionsSection(props: {
         </div>
       </div>
       {piece.calc && (
-        <div className="space-y-0.5 font-mono text-xs text-muted-foreground">
-          {piece.calc.length && <div>{fmtDimCalc(piece.calc.length)}</div>}
-          {piece.calc.width && <div>{fmtDimCalc(piece.calc.width)}</div>}
+        <div className="space-y-1.5">
+          {piece.calc.length && <DimCalcView calc={piece.calc.length} />}
+          {piece.calc.width && <DimCalcView calc={piece.calc.width} />}
         </div>
       )}
     </div>
