@@ -2,8 +2,14 @@
 import { useEffect, useState } from 'react';
 import type { PieceInstance } from '@/lib/engine';
 import type { PiecesConfigForm } from '@/lib/quote/cabinet-form';
+import { PieceList } from './PieceList';
 
 export interface ConfiguratorCatalogItem { id: string; name: string; thicknessMm?: number; kind?: string }
+
+const omit = <T,>(o: Record<string, T> | undefined, k: string): Record<string, T> => {
+  const { [k]: _, ...rest } = o ?? {};
+  return rest;
+};
 
 export function ConfiguratorSheet(props: {
   corpLabel: string;
@@ -15,6 +21,7 @@ export function ConfiguratorSheet(props: {
 }) {
   const [open, setOpen] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [addingFree, setAddingFree] = useState(false);
   const overrideCount = Object.keys(props.cfg.overrides ?? {}).length
     + (props.cfg.free?.length ?? 0)
     + (props.cfg.top && props.cfg.top.variant !== 'PLIN' ? 1 : 0);
@@ -50,9 +57,23 @@ export function ConfiguratorSheet(props: {
         <button type="button" onClick={() => setOpen(false)} className="text-sm text-muted-foreground hover:text-foreground">Închide ✕</button>
       </div>
       <div className="grid min-h-0 flex-1 grid-cols-[280px_1fr_360px]">
-        <div className="overflow-y-auto border-r border-border p-3">{/* Task 8: PieceList */}</div>
+        <div className="overflow-y-auto border-r border-border p-3">
+          <PieceList
+            pieces={props.pieces}
+            cfg={props.cfg}
+            selectedKey={selectedKey}
+            onSelect={(key) => { setSelectedKey(key); setAddingFree(false); }}
+            onRestore={(key) => props.onCfgChange({ ...props.cfg, overrides: omit(props.cfg.overrides, key) })}
+            onAddFree={() => setAddingFree(true)}
+          />
+        </div>
         <div className="relative">{/* Task 9: Scene3D */}</div>
-        <div className="overflow-y-auto border-l border-border p-4">{/* Task 10: PiecePanel */}</div>
+        <div className="overflow-y-auto border-l border-border p-4">
+          {addingFree ? (
+            <span className="text-sm text-muted-foreground">Formular piesă liberă — vine în T10</span>
+          ) : null}
+          {/* Task 10: PiecePanel */}
+        </div>
       </div>
     </div>
   );
