@@ -61,7 +61,7 @@ export function computeProject(
 }
 
 // API public al motorului — consumat de aplicația web (Planul 2)
-export { DEFAULT_CONSTRUCTION } from './constants';
+export { DEFAULT_CONSTRUCTION, LEGGED_TYPES } from './constants';
 export { expandCabinet } from './templates';
 export { computeBlat, type BlatResult } from './blat';
 export { computeMaterialNeeds, type BoardNeed, type EdgingNeed } from './needs';

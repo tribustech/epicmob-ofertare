@@ -8,9 +8,9 @@ import type { ExtraPart, PiecesConfigForm } from '@/lib/quote/cabinet-form';
 import { estimateCabinetCost } from '@/lib/quote/estimate';
 import { frontCatalogsFromSnapshot, type SnapshotData } from '@/lib/quote/compute';
 import { HANDLE_TYPE_OPTIONS, withResolvedHandle } from '@/lib/quote/handle';
-import { expandCabinet, resolveSuggestions } from '@/lib/engine';
+import { expandCabinet, LEGGED_TYPES, resolveSuggestions } from '@/lib/engine';
 import type {
-  DimCalc, HandleType, HardwareAdjustments, HardwareLine, HardwareSlot, HardwareSuggestion,
+  CabinetType, DimCalc, HandleType, HardwareAdjustments, HardwareLine, HardwareSlot, HardwareSuggestion,
   Part, PieceInstance, ResolvedSlot, Warning,
 } from '@/lib/engine';
 import { buildHardwareDefaults, parseConstruction, toCostCatalogs } from '@/lib/catalog/convert';
@@ -210,6 +210,8 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const frontKind = values.frontKind ?? 'PAL';
   const withShelves = values.withShelves === 'true';
   const drawersCount = Math.max(0, Math.trunc(Number(values.drawersCount) || 0));
+  // corpurile pe picior reglabil (BAZA/INALT/COLT) scad piciorul, la fel ca ușile — vezi lib/engine/fronts.ts
+  const legDeduct = legHeightMm != null && LEGGED_TYPES.has(values.type as CabinetType) ? legHeightMm : 0;
 
   const autoDoors = (widthMm: number) => (widthMm <= DOOR_SPLIT_WIDTH_MM ? 1 : 2);
   // ușile se precompletează după lățime cât timp utilizatorul nu le-a atins
@@ -234,7 +236,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const [heightsTouched, setHeightsTouched] = useState(() => {
     const n = Math.max(0, Math.trunc(Number(initial.drawersCount) || 0));
     if (initial.frontType !== 'SERTARE' || n === 0) return false;
-    const eq = equalHeights(Number(initial.heightMm), n);
+    const eq = equalHeights(Number(initial.heightMm) - legDeduct, n);
     const cur = (initial.drawerFrontHeightsMm ?? '').split(',').map((s) => Number(s.trim()));
     return !(cur.length === n && cur.every((h, i) => Math.abs(h - eq[i]) < 0.15));
   });
@@ -245,7 +247,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
       const recalc = prev.frontType === 'SERTARE' && n > 0 && !heightsTouched;
       return {
         ...prev, heightMm: v,
-        ...(recalc ? { drawerFrontHeightsMm: equalHeights(Number(v), n).join(', ') } : {}),
+        ...(recalc ? { drawerFrontHeightsMm: equalHeights(Number(v) - legDeduct, n).join(', ') } : {}),
       };
     });
   };
@@ -255,7 +257,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     setHeightsTouched(false); // re-împărțim egal la schimbarea numărului
     setValues((prev) => ({
       ...prev, drawersCount: v,
-      drawerFrontHeightsMm: n > 0 ? equalHeights(Number(prev.heightMm), n).join(', ') : '',
+      drawerFrontHeightsMm: n > 0 ? equalHeights(Number(prev.heightMm) - legDeduct, n).join(', ') : '',
     }));
   };
   const setDrawerHeight = (i: number, v: string) => {
@@ -264,7 +266,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     next[i] = Number(v);
     set('drawerFrontHeightsMm', next.join(', '));
   };
-  const usableDrawerH = Number(values.heightMm) - 2 * cc.outerGapMm - (drawersCount - 1) * cc.frontGapMm;
+  const usableDrawerH = Number(values.heightMm) - legDeduct - 2 * cc.outerGapMm - (drawersCount - 1) * cc.frontGapMm;
   const drawerSum = drawerHeights.reduce((a, b) => a + b, 0);
   const drawerSumMismatch = drawersCount > 0 && drawerHeights.length === drawersCount
     && Math.abs(drawerSum - usableDrawerH) > 1;
@@ -585,7 +587,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                 ...prev, frontType: v,
                 ...(v === 'USI' && !doorsTouched ? { doors: String(autoDoors(Number(prev.widthMm))) } : {}),
                 ...(v === 'SERTARE' && drawersCount === 0
-                  ? { drawersCount: '3', drawerFrontHeightsMm: equalHeights(Number(prev.heightMm), 3).join(', ') }
+                  ? { drawersCount: '3', drawerFrontHeightsMm: equalHeights(Number(prev.heightMm) - legDeduct, 3).join(', ') }
                   : {}),
               }))}
               options={FRONT_TYPE_OPTIONS}
