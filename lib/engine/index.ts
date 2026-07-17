@@ -76,4 +76,5 @@ export { suggestHingeCount, doorWeightKg } from './hinges';
 export { pickSlideNominal } from './drawers';
 export { nestParts, DEFAULT_NEST_PARAMS } from './nesting';
 export type { NestParams, NestPiece, PlacedPiece, SheetLayout, NestResult } from './nesting';
+export { toParts, applyPiecesConfig } from './pieces';
 export * from './types';

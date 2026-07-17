@@ -1,4 +1,79 @@
-import { EDGE_SIDES, type EdgeSide, type Part, type PartEdges, type PieceInstance } from './types';
+import type { Catalogs, EdgeSide, Part, PartEdges, PieceInstance, PiecesConfig } from './types';
+import { EDGE_SIDES } from './types';
+
+function assertBand(catalogs: Catalogs, id: string) {
+  if (!catalogs.edgeBands.some((b) => b.id === id)) {
+    throw new Error(`Cant inexistent în catalog: ${id}`);
+  }
+}
+
+/** Aplică abaterile utilizatorului: canturi/material/dimensiuni/eliminare per bucată
+ *  + piesele libere. Cheile care nu mai există se ignoră silențios. */
+export function applyPiecesConfig(
+  pieces: PieceInstance[],
+  cfg: PiecesConfig | undefined,
+  catalogs: Catalogs,
+  cabinetLabel: string,
+): PieceInstance[] {
+  if (!cfg) return pieces;
+  const out: PieceInstance[] = [];
+  for (const pc of pieces) {
+    const ov = cfg.overrides?.[pc.key];
+    if (!ov) { out.push(pc); continue; }
+    if (ov.removed) continue;
+    const next: PieceInstance = { ...pc, edges: { ...pc.edges }, manual: { ...pc.manual } };
+    if (ov.edges) {
+      const touched: EdgeSide[] = [];
+      for (const [side, band] of Object.entries(ov.edges) as [EdgeSide, string | null][]) {
+        if (next.edgeAxis[side] === undefined) continue; // latură neaplicabilă piesei
+        if (band === null) delete next.edges[side];
+        else { assertBand(catalogs, band); next.edges[side] = band; }
+        touched.push(side);
+      }
+      if (touched.length > 0) next.manual = { ...next.manual, edges: touched };
+    }
+    if (ov.materialId) {
+      if (!catalogs.materials.some((m) => m.id === ov.materialId)) {
+        throw new Error(`Material inexistent în catalog: ${ov.materialId}`);
+      }
+      next.materialId = ov.materialId;
+      next.manual = { ...next.manual, material: true };
+    }
+    if (ov.lengthMm !== undefined) {
+      if (ov.lengthMm <= 0) throw new Error(`Corpul ${cabinetLabel}: lungime manuală imposibilă (${ov.lengthMm}mm)`);
+      next.lengthMm = ov.lengthMm;
+      next.manual = { ...next.manual, lengthMm: true };
+      delete next.calc; // formula nu mai descrie valoarea manuală
+    }
+    if (ov.widthMm !== undefined) {
+      if (ov.widthMm <= 0) throw new Error(`Corpul ${cabinetLabel}: lățime manuală imposibilă (${ov.widthMm}mm)`);
+      next.widthMm = ov.widthMm;
+      next.manual = { ...next.manual, widthMm: true };
+      delete next.calc;
+    }
+    out.push(next);
+  }
+  for (const fp of cfg.free ?? []) {
+    if (!catalogs.materials.some((m) => m.id === fp.materialId)) {
+      throw new Error(`Material inexistent în catalog: ${fp.materialId}`);
+    }
+    const edges: PieceInstance['edges'] = {};
+    for (const [side, band] of Object.entries(fp.edges ?? {}) as [EdgeSide, string | null][]) {
+      if (band) { assertBand(catalogs, band); edges[side] = band; }
+    }
+    for (let i = 0; i < Math.max(1, Math.trunc(fp.qty)); i++) {
+      out.push({
+        key: `libera:${fp.id}${fp.qty > 1 ? `:${i}` : ''}`,
+        cabinetLabel, name: fp.name,
+        label: fp.qty > 1 ? `${fp.name} ${i + 1}` : fp.name,
+        lengthMm: fp.lengthMm, widthMm: fp.widthMm, materialId: fp.materialId,
+        edges, edgeAxis: { fata: 'L', spate: 'L', stanga: 'W', dreapta: 'W' },
+        free: true,
+      });
+    }
+  }
+  return out;
+}
 
 /** Regrupează bucățile identice în rânduri de debitare (Part cu qty), mapând
  *  muchiile semantice pe laturile l1/l2/w1/w2 după edgeAxis. Ordinea laturilor

@@ -2,7 +2,7 @@ import { expandCarcass, findMaterial } from './carcass';
 import { expandDrawerBoxes } from './drawers';
 import { expandFronts } from './fronts';
 import { suggestHardware } from './hardware';
-import { toParts } from './pieces';
+import { applyPiecesConfig, toParts } from './pieces';
 import type { CabinetInput, Catalogs, ConstructionConstants, ExpandedCabinet, MaterialKind } from './types';
 
 // mânerele frezate în front (profil J, îngropat) cer un material care se poate freza:
@@ -52,7 +52,8 @@ export function expandCabinet(
     : { pieces: [], warnings: [] };
   const hardware = suggestHardware(input, fronts.fronts, catalogs, cc, legHeightMm);
 
-  const pieces = [...carcass.pieces, ...fronts.pieces, ...boxes.pieces];
+  const assembled = [...carcass.pieces, ...fronts.pieces, ...boxes.pieces];
+  const pieces = applyPiecesConfig(assembled, input.pieces, catalogs, input.label);
 
   return {
     input,
