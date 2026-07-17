@@ -105,7 +105,8 @@ function PieceMesh({ pc, color, selected, hovered, hoveredEdge, hasGrain, onSele
       {edgeHighlight && (
         <mesh position={edgeHighlight.position} raycast={() => null}>
           <boxGeometry args={edgeHighlight.size} />
-          <meshBasicMaterial color="#2b5fd9" />
+          {/* portocaliu — contrast pe piesa selectată (albastră), nu se pierde ca albastru-pe-albastru */}
+          <meshBasicMaterial color="#ff9f1c" />
         </mesh>
       )}
       {grainMark && <GrainArrows position={grainMark.position} rotation={grainMark.rotation} />}
