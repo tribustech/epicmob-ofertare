@@ -1,10 +1,16 @@
 'use client';
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import type { PieceInstance } from '@/lib/engine';
 import type { PiecesConfigForm } from '@/lib/quote/cabinet-form';
 import { PieceList } from './PieceList';
 
 export interface ConfiguratorCatalogItem { id: string; name: string; thicknessMm?: number; kind?: string }
+
+const Scene3D = dynamic(() => import('./Scene3D'), {
+  ssr: false,
+  loading: () => <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Se încarcă 3D…</div>,
+});
 
 const omit = <T,>(o: Record<string, T> | undefined, k: string): Record<string, T> => {
   const { [k]: _, ...rest } = o ?? {};
@@ -25,6 +31,10 @@ export function ConfiguratorSheet(props: {
   const overrideCount = Object.keys(props.cfg.overrides ?? {}).length
     + (props.cfg.free?.length ?? 0)
     + (props.cfg.top && props.cfg.top.variant !== 'PLIN' ? 1 : 0);
+  const materialKindById: Record<string, string> = Object.fromEntries(
+    props.materials.map((m) => [m.id, m.kind ?? 'PAL']),
+  );
+  const handleSelect = (key: string | null) => { setSelectedKey(key); setAddingFree(false); };
 
   useEffect(() => {
     if (!open) return;
@@ -62,12 +72,19 @@ export function ConfiguratorSheet(props: {
             pieces={props.pieces}
             cfg={props.cfg}
             selectedKey={selectedKey}
-            onSelect={(key) => { setSelectedKey(key); setAddingFree(false); }}
+            onSelect={handleSelect}
             onRestore={(key) => props.onCfgChange({ ...props.cfg, overrides: omit(props.cfg.overrides, key) })}
             onAddFree={() => setAddingFree(true)}
           />
         </div>
-        <div className="relative">{/* Task 9: Scene3D */}</div>
+        <div className="relative h-full min-h-0">
+          <Scene3D
+            pieces={props.pieces}
+            selectedKey={selectedKey}
+            onSelect={handleSelect}
+            materialKindById={materialKindById}
+          />
+        </div>
         <div className="overflow-y-auto border-l border-border p-4">
           {addingFree ? (
             <span className="text-sm text-muted-foreground">Formular piesă liberă — vine în T10</span>
