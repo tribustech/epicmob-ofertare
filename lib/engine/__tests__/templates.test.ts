@@ -10,7 +10,7 @@ describe('expandCabinet', () => {
     const r = expandCabinet(bazaInput(), TEST_CATALOGS, cc);
     const names = r.parts.map((p) => p.name);
     expect(names).toEqual(
-      expect.arrayContaining(['Laterală', 'Blat corp / Fund corp', 'Poliță', 'Spate', 'Ușă']),
+      expect.arrayContaining(['Laterală', 'Blat corp', 'Fund corp', 'Poliță', 'Spate', 'Ușă']),
     );
     expect(r.hardware.some((h) => h.category === 'BALAMA')).toBe(true);
     expect(r.hardware.some((h) => h.category === 'PICIOR')).toBe(true);

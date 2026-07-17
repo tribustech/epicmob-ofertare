@@ -290,6 +290,7 @@ export interface Catalogs {
 
 export interface ExpandedCabinet {
   input: CabinetInput;
+  pieces: PieceInstance[];
   parts: Part[];
   hardware: HardwareSuggestion[];
   warnings: Warning[];

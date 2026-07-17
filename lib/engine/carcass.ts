@@ -1,6 +1,6 @@
 import { LEGGED_TYPES } from './constants';
 import type {
-  CabinetInput, Catalogs, ConstructionConstants, DimCalc, DimTerm, PanelMount, Part, Warning,
+  CabinetInput, Catalogs, ConstructionConstants, DimCalc, DimTerm, PanelMount, PieceInstance, Warning,
 } from './types';
 
 export function findMaterial(catalogs: Catalogs, id: string) {
@@ -28,7 +28,7 @@ export function expandCarcass(
   catalogs: Catalogs,
   cc: ConstructionConstants,
   legHeightMm?: number,
-): { parts: Part[]; warnings: Warning[] } {
+): { pieces: PieceInstance[]; warnings: Warning[] } {
   const { widthMm: W, heightMm: H, depthMm: D, label } = input;
   if (W <= 0 || H <= 0 || D <= 0) throw new Error(`Dimensiuni invalide pentru corpul ${label}`);
 
@@ -76,35 +76,57 @@ export function expandCarcass(
       ? dim('Lățime', [{ label: 'lățime corp', valueMm: W }])
       : dim('Lățime', [{ label: 'lățime corp', valueMm: W }, grosime2x]);
 
-  const parts: Part[] = [
-    {
-      cabinetLabel: label, name: 'Laterală',
-      lengthMm: sideH, widthMm: panelDepth, qty: 2,
-      materialId: carcass.id, edges: { l1: fe },
+  // axele de cant: laterala e verticală (fata/spate pe lungime, sus/jos pe lățime);
+  // blat/fund/poliță LR/pazie sunt orizontale, culcate pe lățime (fata/spate pe lungime, stanga/dreapta pe lățime)
+  const SIDE_AXES_VERT: PieceInstance['edgeAxis'] = { fata: 'L', spate: 'L', sus: 'W', jos: 'W' };
+  const SIDE_AXES_HORIZ: PieceInstance['edgeAxis'] = { fata: 'L', spate: 'L', stanga: 'W', dreapta: 'W' };
+
+  const pieces: PieceInstance[] = [];
+  (['stânga', 'dreapta'] as const).forEach((pos, i) => {
+    pieces.push({
+      key: `laterala:${i}`, cabinetLabel: label,
+      name: 'Laterală', label: `Laterală ${pos}`,
+      lengthMm: sideH, widthMm: panelDepth, materialId: carcass.id,
+      edges: { fata: fe }, edgeAxis: SIDE_AXES_VERT,
       calc: { length: sideHCalc, width: depthCalc },
-    },
-  ];
-  if (mountTop === mountBottom) {
-    parts.push({
-      cabinetLabel: label, name: 'Blat corp / Fund corp',
-      lengthMm: panelW(mountTop), widthMm: panelDepth, qty: 2,
-      materialId: carcass.id, edges: { l1: fe },
+    });
+  });
+
+  const topVariant = input.pieces?.top?.variant ?? 'PLIN';
+  if (topVariant === 'PLIN') {
+    pieces.push({
+      key: 'blat-corp', cabinetLabel: label, name: 'Blat corp', label: 'Blat corp',
+      lengthMm: panelW(mountTop), widthMm: panelDepth, materialId: carcass.id,
+      edges: { fata: fe }, edgeAxis: SIDE_AXES_HORIZ,
       calc: { length: panelWCalc(mountTop), width: depthCalc },
     });
-  } else {
-    parts.push({
-      cabinetLabel: label, name: 'Blat corp',
-      lengthMm: panelW(mountTop), widthMm: panelDepth, qty: 1,
-      materialId: carcass.id, edges: { l1: fe },
-      calc: { length: panelWCalc(mountTop), width: depthCalc },
-    });
-    parts.push({
-      cabinetLabel: label, name: 'Fund corp',
-      lengthMm: panelW(mountBottom), widthMm: panelDepth, qty: 1,
-      materialId: carcass.id, edges: { l1: fe },
-      calc: { length: panelWCalc(mountBottom), width: depthCalc },
-    });
-  }
+  } else if (topVariant === 'PAZII') {
+    const pazieW = input.pieces?.top?.pazieWidthMm ?? cc.pazieDefaultWidthMm;
+    assertPositiveDim(pazieW, 'lățime pazie', label);
+    const pazieCalc = {
+      length: panelWCalc(mountTop),
+      width: dim('Adâncime', [{ label: 'lățime pazie', valueMm: pazieW }]),
+    };
+    pieces.push(
+      {
+        key: 'pazie-fata', cabinetLabel: label, name: 'Pazie', label: 'Pazie față',
+        lengthMm: panelW(mountTop), widthMm: pazieW, materialId: carcass.id,
+        edges: { fata: fe }, edgeAxis: SIDE_AXES_HORIZ, calc: pazieCalc,
+      },
+      {
+        key: 'pazie-spate', cabinetLabel: label, name: 'Pazie', label: 'Pazie spate',
+        lengthMm: panelW(mountTop), widthMm: pazieW, materialId: carcass.id,
+        edges: {}, edgeAxis: SIDE_AXES_HORIZ, calc: pazieCalc,
+      },
+    );
+  } // ABSENT: nimic
+
+  pieces.push({
+    key: 'fund-corp', cabinetLabel: label, name: 'Fund corp', label: 'Fund corp',
+    lengthMm: panelW(mountBottom), widthMm: panelDepth, materialId: carcass.id,
+    edges: { fata: fe }, edgeAxis: SIDE_AXES_HORIZ,
+    calc: { length: panelWCalc(mountBottom), width: depthCalc },
+  });
 
   if (input.shelves > 0) {
     const shelfW = assertPositiveDim(D - cc.shelfSetbackMm, 'lățime poliță', label);
@@ -116,31 +138,35 @@ export function expandCarcass(
     ]);
     // nesting-ul nu rotește piese (decorul curge pe lungime) — axa FAȚĂ–SPATE
     // înseamnă piesa rotită în lista de debitare, cu cantul frontal pe latura scurtă
-    if (input.shelf?.decorAxis === 'FB') {
-      parts.push({
-        cabinetLabel: label, name: 'Poliță',
-        lengthMm: shelfW, widthMm: innerW, qty: input.shelves,
-        materialId: shelfMat.id, edges: { w1: fe },
-        calc: { length: shelfDepthCalc, width: interiorCalc },
-      });
-    } else {
-      parts.push({
-        cabinetLabel: label, name: 'Poliță',
-        lengthMm: innerW, widthMm: shelfW, qty: input.shelves,
-        materialId: shelfMat.id, edges: { l1: fe },
-        calc: { length: interiorCalc, width: shelfDepthCalc },
-      });
+    for (let i = 0; i < input.shelves; i++) {
+      if (input.shelf?.decorAxis === 'FB') {
+        pieces.push({
+          key: `polita:${i}`, cabinetLabel: label, name: 'Poliță', label: `Poliță ${i + 1}`,
+          lengthMm: shelfW, widthMm: innerW, materialId: shelfMat.id,
+          edges: { fata: fe },
+          edgeAxis: { fata: 'W', spate: 'W', stanga: 'L', dreapta: 'L' },
+          calc: { length: shelfDepthCalc, width: interiorCalc },
+        });
+      } else {
+        pieces.push({
+          key: `polita:${i}`, cabinetLabel: label, name: 'Poliță', label: `Poliță ${i + 1}`,
+          lengthMm: innerW, widthMm: shelfW, materialId: shelfMat.id,
+          edges: { fata: fe }, edgeAxis: SIDE_AXES_HORIZ,
+          calc: { length: interiorCalc, width: shelfDepthCalc },
+        });
+      }
     }
   }
 
   if (backMat) {
     const isFalt = input.back.mount === 'FALT';
     const faltRebate = isFalt ? cc.backRebateMm : 0;
-    parts.push({
-      cabinetLabel: label, name: 'Spate',
+    pieces.push({
+      key: 'spate', cabinetLabel: label, name: 'Spate', label: 'Spate',
       lengthMm: assertPositiveDim(H - faltRebate - legDeduct, 'înălțime spate', label),
       widthMm: W - faltRebate,
-      qty: 1, materialId: backMat.id, edges: {},
+      materialId: backMat.id,
+      edges: {}, edgeAxis: { sus: 'W', jos: 'W', stanga: 'L', dreapta: 'L' },
       calc: {
         length: dim('Înălțime', [
           { label: 'înălțime corp', valueMm: H },
@@ -164,5 +190,5 @@ export function expandCarcass(
     });
   }
 
-  return { parts, warnings };
+  return { pieces, warnings };
 }

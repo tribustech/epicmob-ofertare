@@ -40,7 +40,8 @@ describe('computeProject — corp bază de referință (calcul de mână)', () =
   );
 
   it('piese: carcasă + spate + ușă', () => {
-    expect(result.parts).toHaveLength(5); // Laterală, Blat/Fund, Poliță, Spate, Ușă
+    // Blat corp și Fund corp sunt acum bucăți individuale (nu se mai grupează pe qty 2)
+    expect(result.parts).toHaveLength(6); // Laterală, Blat corp, Fund corp, Poliță, Spate, Ușă
   });
 
   it('feronerie rezolvată automat: 2 balamale, 1 mâner, 4 picioare, holtșurub', () => {

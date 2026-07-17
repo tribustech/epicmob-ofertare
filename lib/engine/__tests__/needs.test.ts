@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { computeMaterialNeeds } from '../needs';
 import { expandCarcass } from '../carcass';
+import { toParts } from '../pieces';
 import { DEFAULT_CONSTRUCTION } from '../constants';
 import type { Part } from '../types';
 import { bazaInput, TEST_CATALOGS } from './fixtures';
 
 describe('computeMaterialNeeds', () => {
-  const { parts } = expandCarcass(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+  const parts = toParts(expandCarcass(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION).pieces);
 
   it('calculează arii, foi și cant pentru carcasa de test', () => {
     const { boards, edging } = computeMaterialNeeds(parts, TEST_CATALOGS, { kerfMm: 4, trimMm: 10 });

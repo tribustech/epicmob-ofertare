@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { expandCarcass } from '../carcass';
+import { toParts } from '../pieces';
 import { DEFAULT_CONSTRUCTION } from '../constants';
 import { bazaInput, TEST_CATALOGS } from './fixtures';
 
 describe('expandCarcass', () => {
   it('generează piesele carcasei pentru corp bază 600×720×560', () => {
-    const { parts, warnings } = expandCarcass(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const { pieces, warnings } = expandCarcass(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const parts = toParts(pieces);
 
     const byName = (n: string) => parts.find((p) => p.name === n)!;
 
@@ -14,8 +16,12 @@ describe('expandCarcass', () => {
       lengthMm: 720, widthMm: 555, qty: 2, materialId: 'pal-alb',
       edges: { l1: 'abs-04' },
     });
-    expect(byName('Blat corp / Fund corp')).toMatchObject({
-      lengthMm: 564, widthMm: 555, qty: 2, edges: { l1: 'abs-04' },
+    // fără grupul „Blat corp / Fund corp" — sunt bucăți individuale, deci rânduri qty 1
+    expect(byName('Blat corp')).toMatchObject({
+      lengthMm: 564, widthMm: 555, qty: 1, edges: { l1: 'abs-04' },
+    });
+    expect(byName('Fund corp')).toMatchObject({
+      lengthMm: 564, widthMm: 555, qty: 1, edges: { l1: 'abs-04' },
     });
     // polița nu e afectată de spate (stă în fața lui)
     expect(byName('Poliță')).toMatchObject({
@@ -30,13 +36,13 @@ describe('expandCarcass', () => {
 
   it('spate aplicat = dimensiunea corpului', () => {
     const input = bazaInput({ back: { enabled: true, materialId: 'pfl-alb', mount: 'APLICAT' } });
-    const { parts } = expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const parts = toParts(expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION).pieces);
     expect(parts.find((p) => p.name === 'Spate')).toMatchObject({ lengthMm: 720, widthMm: 600 });
   });
 
   it('fără spate → nicio piesă Spate', () => {
     const input = bazaInput({ back: { enabled: false, mount: 'FALT' } });
-    const { parts } = expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const parts = toParts(expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION).pieces);
     expect(parts.some((p) => p.name === 'Spate')).toBe(false);
   });
 
@@ -62,21 +68,22 @@ describe('expandCarcass', () => {
   });
 
   it('piciorul se scade din laterală și spate la corp cu picior (BAZA)', () => {
-    const { parts } = expandCarcass(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION, 100);
+    const parts = toParts(expandCarcass(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION, 100).pieces);
     const byName = (n: string) => parts.find((p) => p.name === n)!;
     // laterală: înălțime 720 − picior 100 = 620; adâncime 560 − PFL 3 − șurub 2 = 555
     expect(byName('Laterală')).toMatchObject({ lengthMm: 620, widthMm: 555 });
     // spate falț: (720 − 4 − 100) × (600 − 4) = 616 × 596 (spatele nu-și scade propria grosime)
     expect(byName('Spate')).toMatchObject({ lengthMm: 616, widthMm: 596 });
     // orizontalele: lungimea neschimbată, adâncimea scade cu PFL + șurub
-    expect(byName('Blat corp / Fund corp')).toMatchObject({ lengthMm: 564, widthMm: 555 });
+    expect(byName('Blat corp')).toMatchObject({ lengthMm: 564, widthMm: 555 });
+    expect(byName('Fund corp')).toMatchObject({ lengthMm: 564, widthMm: 555 });
     // polița e în fața spatelui — neschimbată
     expect(byName('Poliță')).toMatchObject({ lengthMm: 564, widthMm: 530 });
   });
 
   it('tip fără picior (SUSPENDAT) nu scade piciorul, dar scade PFL + șurub', () => {
     const input = bazaInput({ type: 'SUSPENDAT' });
-    const { parts } = expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION, 100);
+    const parts = toParts(expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION, 100).pieces);
     // fără picior pe înălțime, dar adâncimea tot scade cu PFL 3 + șurub 2
     expect(parts.find((p) => p.name === 'Laterală')).toMatchObject({ lengthMm: 720, widthMm: 555 });
     expect(parts.find((p) => p.name === 'Spate')).toMatchObject({ lengthMm: 716 });
@@ -85,18 +92,18 @@ describe('expandCarcass', () => {
   it('spate non-PFL (ex. PAL) nu scade adâncimea', () => {
     // material de spate PAL (18mm) — nu e PFL, deci fără scădere de adâncime
     const input = bazaInput({ back: { enabled: true, materialId: 'pal-alb', mount: 'APLICAT' } });
-    const { parts } = expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const parts = toParts(expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION).pieces);
     expect(parts.find((p) => p.name === 'Laterală')).toMatchObject({ lengthMm: 720, widthMm: 560 });
   });
 
   it('fără spate → nicio scădere de adâncime', () => {
     const input = bazaInput({ back: { enabled: false, mount: 'FALT' } });
-    const { parts } = expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const parts = toParts(expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION).pieces);
     expect(parts.find((p) => p.name === 'Laterală')).toMatchObject({ widthMm: 560 });
   });
 
   it('urma de calcul: înălțimea are picior, adâncimea are PFL + șurub', () => {
-    const { parts } = expandCarcass(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION, 100);
+    const parts = toParts(expandCarcass(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION, 100).pieces);
     const lat = parts.find((p) => p.name === 'Laterală')!;
     expect(lat.calc?.length?.terms).toEqual([
       { label: 'înălțime corp', valueMm: 720 },
@@ -111,7 +118,7 @@ describe('expandCarcass', () => {
   });
 
   it('fără legHeightMm laterala rămâne pe înălțimea totală (compat)', () => {
-    const { parts } = expandCarcass(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const parts = toParts(expandCarcass(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION).pieces);
     const lat = parts.find((p) => p.name === 'Laterală')!;
     expect(lat.lengthMm).toBe(720);
     // termenul „picior" (0) e eliminat din urmă

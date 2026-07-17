@@ -50,7 +50,8 @@ describe('computeQuote — override-uri și piese suplimentare', () => {
     const q = baseQuote();
     q.cabinets[0].extraParts = [{ name: 'Mască soclu', lengthMm: 500, widthMm: 500, qty: 1, materialId: 'pal-alb' }];
     const r = computeQuote(q, makeSnapshot());
-    expect(r.parts).toHaveLength(6);
+    // Laterală, Blat corp, Fund corp, Poliță, Spate, Ușă + Mască soclu
+    expect(r.parts).toHaveLength(7);
     expect(r.costs.totalCost).toBeCloseTo(686.16, 1);          // tot 1 foaie PAL
   });
 
