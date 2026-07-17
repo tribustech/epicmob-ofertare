@@ -49,16 +49,15 @@ export function expandCabinet(
   const fronts = expandFronts(input, catalogs, cc);
   const boxes = drawerCount > 0
     ? expandDrawerBoxes(input, catalogs, cc)
-    : { parts: [], warnings: [] };
+    : { pieces: [], warnings: [] };
   const hardware = suggestHardware(input, fronts.fronts, catalogs, cc, legHeightMm);
 
-  // fronturile/sertarele rămân pe Part[] până la Task 3; doar carcasa e deja pe bucăți individuale
-  const pieces = [...carcass.pieces];
+  const pieces = [...carcass.pieces, ...fronts.pieces, ...boxes.pieces];
 
   return {
     input,
     pieces,
-    parts: [...toParts(pieces), ...fronts.parts, ...boxes.parts],
+    parts: toParts(pieces),
     hardware: hardware.suggestions,
     warnings: [...carcass.warnings, ...fronts.warnings, ...boxes.warnings, ...hardware.warnings],
   };

@@ -1,6 +1,6 @@
 import { assertPositiveDim, findMaterial } from './carcass';
 import type {
-  CabinetInput, Catalogs, ConstructionConstants, FrontInfo, MaterialKind, Part, PartEdges, Warning,
+  CabinetInput, Catalogs, ConstructionConstants, FrontInfo, MaterialKind, PieceInstance, Warning,
 } from './types';
 
 export function drawerFrontHeights(input: CabinetInput, cc: ConstructionConstants): number[] {
@@ -23,12 +23,12 @@ export function expandFronts(
   input: CabinetInput,
   catalogs: Catalogs,
   cc: ConstructionConstants,
-): { parts: Part[]; fronts: FrontInfo[]; warnings: Warning[] } {
+): { pieces: PieceInstance[]; fronts: FrontInfo[]; warnings: Warning[] } {
   // MDF vopsit: frontMaterialId e null (frontul se cotează per m² în EUR, nu din catalogul
   // de plăci). Geometria/grosimea frontului vine dintr-un material generic MDF_VOPSIT din
   // catalog; costul lui de placă e ulterior scos din bucket-ul de plăci de către computeCosts.
   const isVopsit = input.frontKind === 'MDF_VOPSIT' && !!input.mdfFront;
-  if (!input.frontMaterialId && !isVopsit) return { parts: [], fronts: [], warnings: [] };
+  if (!input.frontMaterialId && !isVopsit) return { pieces: [], fronts: [], warnings: [] };
 
   const material = input.frontMaterialId
     ? findMaterial(catalogs, input.frontMaterialId)
@@ -39,7 +39,11 @@ export function expandFronts(
   // MDF vopsit și MDF înfoliat au fața finisată pe toate laturile — fără cant ABS
   const NO_EDGE_KINDS: MaterialKind[] = ['MDF_VOPSIT', 'MDF_INFOLIAT'];
   const bandId = NO_EDGE_KINDS.includes(material.kind) ? null : input.edgeBands.frontPerimeterId;
-  const edges: PartEdges = bandId ? { l1: bandId, l2: bandId, w1: bandId, w2: bandId } : {};
+  // front = piesă verticală cu fața spre tine; lengthMm = înălțimea → stânga/dreapta pe lungime
+  const FRONT_AXES: PieceInstance['edgeAxis'] = { sus: 'W', jos: 'W', stanga: 'L', dreapta: 'L' };
+  const perim: PieceInstance['edges'] = bandId
+    ? { sus: bandId, jos: bandId, stanga: bandId, dreapta: bandId }
+    : {};
 
   if (input.blindPanelWidthMm !== undefined && input.blindPanelWidthMm < 0) {
     throw new Error(
@@ -59,15 +63,15 @@ export function expandFronts(
     frontH += input.handle.frontExtensionMm; // front prelungit ca să ai de unde deschide
   }
 
-  const parts: Part[] = [];
+  const pieces: PieceInstance[] = [];
   const fronts: FrontInfo[] = [];
   const warnings: Warning[] = [];
 
   if (blindW > 0) {
-    parts.push({
-      cabinetLabel: input.label, name: 'Panou orb',
-      lengthMm: frontH, widthMm: blindW, qty: 1,
-      materialId: material.id, edges,
+    pieces.push({
+      key: 'panou-orb', cabinetLabel: input.label, name: 'Panou orb', label: 'Panou orb',
+      lengthMm: frontH, widthMm: blindW, materialId: material.id,
+      edges: perim, edgeAxis: FRONT_AXES,
     });
   }
 
@@ -77,27 +81,29 @@ export function expandFronts(
     const adjusted = handleType === 'GOLA'
       ? heights.map((h, i) => assertPositiveDim(h - cc.golaFrontDeductMm, `front sertar ${i + 1} (GOLA)`, input.label))
       : heights;
-    // grupează înălțimile identice într-o singură linie de piesă
-    const groups = new Map<number, number>();
-    for (const h of adjusted) groups.set(h, (groups.get(h) ?? 0) + 1);
-    for (const [h, qty] of groups) {
-      parts.push({
-        cabinetLabel: input.label, name: 'Front sertar',
-        lengthMm: h, widthMm: usableW, qty,
-        materialId: material.id, edges,
+    // regruparea înălțimilor identice într-o singură linie de piesă se face în toParts
+    adjusted.forEach((h, i) => {
+      pieces.push({
+        key: `front-sertar:${i}`, cabinetLabel: input.label, name: 'Front sertar',
+        label: `Front sertar ${i + 1}`,
+        lengthMm: h, widthMm: usableW, materialId: material.id,
+        edges: perim, edgeAxis: FRONT_AXES,
       });
-    }
-    for (const h of adjusted) fronts.push({ kind: 'SERTAR', widthMm: usableW, heightMm: h });
+      fronts.push({ kind: 'SERTAR', widthMm: usableW, heightMm: h });
+    });
   } else if (input.doors > 0) {
     const doorW = assertPositiveDim(
       (usableW - (input.doors - 1) * cc.frontGapMm) / input.doors, 'lățime ușă', input.label,
     );
-    parts.push({
-      cabinetLabel: input.label, name: 'Ușă',
-      lengthMm: frontH, widthMm: doorW, qty: input.doors,
-      materialId: material.id, edges,
-    });
-    for (let i = 0; i < input.doors; i++) fronts.push({ kind: 'USA', widthMm: doorW, heightMm: frontH });
+    for (let i = 0; i < input.doors; i++) {
+      pieces.push({
+        key: `usa:${i}`, cabinetLabel: input.label, name: 'Ușă',
+        label: input.doors > 1 ? `Ușă ${i + 1}` : 'Ușă',
+        lengthMm: frontH, widthMm: doorW, materialId: material.id,
+        edges: perim, edgeAxis: FRONT_AXES,
+      });
+      fronts.push({ kind: 'USA', widthMm: doorW, heightMm: frontH });
+    }
     if (doorW > cc.doorMaxWidthMm) {
       warnings.push({
         code: 'DOOR_WIDTH',
@@ -107,5 +113,5 @@ export function expandFronts(
     }
   }
 
-  return { parts, fronts, warnings };
+  return { pieces, fronts, warnings };
 }

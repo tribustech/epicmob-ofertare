@@ -1,6 +1,6 @@
 import { assertPositiveDim, findMaterial } from './carcass';
 import { drawerFrontHeights } from './fronts';
-import type { CabinetInput, Catalogs, ConstructionConstants, Part, Warning } from './types';
+import type { CabinetInput, Catalogs, ConstructionConstants, PieceInstance, Warning } from './types';
 
 export function pickSlideNominal(
   depthMm: number,
@@ -25,12 +25,12 @@ export function expandDrawerBoxes(
   input: CabinetInput,
   catalogs: Catalogs,
   cc: ConstructionConstants,
-): { parts: Part[]; warnings: Warning[] } {
+): { pieces: PieceInstance[]; warnings: Warning[] } {
   const drawers = input.drawers;
-  if (!drawers || drawers.count <= 0) return { parts: [], warnings: [] };
+  if (!drawers || drawers.count <= 0) return { pieces: [], warnings: [] };
 
   // TANDEMBOX = sertar metalic complet preasamblat — nimic la debitare, doar setul din feronerie
-  if (drawers.system !== 'PAL_BOX') return { parts: [], warnings: [] };
+  if (drawers.system !== 'PAL_BOX') return { pieces: [], warnings: [] };
   if (!drawers.bottomMaterialId) {
     throw new Error(`Corpul ${input.label}: cutia de sertar din PAL cere materialul fundului`);
   }
@@ -43,16 +43,14 @@ export function expandDrawerBoxes(
   const heights = drawerFrontHeights(input, cc);
   const fe = input.edgeBands.carcassFrontEdgeId;
 
-  const parts: Part[] = [];
-  const push = (p: Part) => {
-    const same = parts.find(
-      (q) => q.name === p.name && q.lengthMm === p.lengthMm && q.widthMm === p.widthMm && q.materialId === p.materialId,
-    );
-    if (same) same.qty += p.qty;
-    else parts.push(p);
-  };
+  // laterala cutiei = piesă verticală, lungă pe glisieră (sus/jos), scurtă pe fața/spatele cutiei
+  const BOX_SIDE_AXES: PieceInstance['edgeAxis'] = { sus: 'L', jos: 'L', fata: 'W', spate: 'W' };
+  // fundul cutiei stă culcat ca un fund/blat de corp (fata/spate pe lungime, stanga/dreapta pe lățime)
+  const SIDE_AXES_HORIZ_LIKE: PieceInstance['edgeAxis'] = { fata: 'L', spate: 'L', stanga: 'W', dreapta: 'W' };
 
-  for (const frontH of heights) {
+  const pieces: PieceInstance[] = [];
+
+  heights.forEach((frontH, i) => {
     const boxW = assertPositiveDim(
       innerW - cc.palBoxSlideAllowanceMm, 'lățime cutie sertar (PAL_BOX)', input.label,
     );
@@ -60,22 +58,29 @@ export function expandDrawerBoxes(
     const boxInnerW = assertPositiveDim(
       boxW - 2 * t, 'lățime față/spate cutie sertar (PAL_BOX)', input.label,
     );
-    push({
-      cabinetLabel: input.label, name: 'Laterală sertar',
-      lengthMm: nominalMm, widthMm: boxH, qty: 2,
-      materialId: carcass.id, edges: { l1: fe },
+    for (let j = 0; j < 2; j++) {
+      pieces.push({
+        key: `sertar:${i}:laterala:${j}`, cabinetLabel: input.label,
+        name: 'Laterală sertar', label: `Sertar ${i + 1} · laterală ${j === 0 ? 'stânga' : 'dreapta'}`,
+        lengthMm: nominalMm, widthMm: boxH, materialId: carcass.id,
+        edges: { sus: fe }, edgeAxis: BOX_SIDE_AXES,
+      });
+    }
+    (['fata', 'spate'] as const).forEach((pos) => {
+      pieces.push({
+        key: `sertar:${i}:${pos}`, cabinetLabel: input.label,
+        name: 'Față/Spate cutie sertar', label: `Sertar ${i + 1} · ${pos === 'fata' ? 'față' : 'spate'} cutie`,
+        lengthMm: boxInnerW, widthMm: boxH, materialId: carcass.id,
+        edges: { sus: fe }, edgeAxis: { sus: 'L', jos: 'L', stanga: 'W', dreapta: 'W' },
+      });
     });
-    push({
-      cabinetLabel: input.label, name: 'Față/Spate cutie sertar',
-      lengthMm: boxInnerW, widthMm: boxH, qty: 2,
-      materialId: carcass.id, edges: { l1: fe },
+    pieces.push({
+      key: `sertar:${i}:fund`, cabinetLabel: input.label,
+      name: 'Fund sertar', label: `Sertar ${i + 1} · fund`,
+      lengthMm: nominalMm, widthMm: boxW, materialId: bottom.id,
+      edges: {}, edgeAxis: SIDE_AXES_HORIZ_LIKE,
     });
-    push({
-      cabinetLabel: input.label, name: 'Fund sertar',
-      lengthMm: nominalMm, widthMm: boxW, qty: 1,
-      materialId: bottom.id, edges: {},
-    });
-  }
+  });
 
-  return { parts, warnings };
+  return { pieces, warnings };
 }

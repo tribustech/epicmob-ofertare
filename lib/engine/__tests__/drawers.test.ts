@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { expandDrawerBoxes, pickSlideNominal } from '../drawers';
+import { toParts } from '../pieces';
 import { DEFAULT_CONSTRUCTION } from '../constants';
 import { bazaInput, TEST_CATALOGS } from './fixtures';
 import type { CabinetInput, DrawerSystem } from '../types';
@@ -31,7 +32,8 @@ describe('pickSlideNominal', () => {
 
 describe('expandDrawerBoxes — PAL_BOX', () => {
   it('cutie PAL: laterale, față/spate, fund PFL', () => {
-    const { parts } = expandDrawerBoxes(sertareInput('PAL_BOX'), TEST_CATALOGS, cc);
+    const { pieces } = expandDrawerBoxes(sertareInput('PAL_BOX'), TEST_CATALOGS, cc);
+    const parts = toParts(pieces);
     // per sertar; front ≈ 236.67 → boxH = 236.67 − 60 = 176.67; boxW = 600 − 36 − 26 = 538
     const sides = parts.find((p) => p.name === 'Laterală sertar')!;
     expect(sides.lengthMm).toBe(500);           // = nominală glisieră
@@ -49,7 +51,8 @@ describe('expandDrawerBoxes — PAL_BOX', () => {
   it('înălțimea cutiei nu scade sub minim', () => {
     const input = sertareInput('PAL_BOX');
     input.drawers!.frontHeightsMm = [100, 308, 308];
-    const { parts } = expandDrawerBoxes(input, TEST_CATALOGS, cc);
+    const { pieces } = expandDrawerBoxes(input, TEST_CATALOGS, cc);
+    const parts = toParts(pieces);
     const heights = parts.filter((p) => p.name === 'Laterală sertar').map((p) => p.widthMm);
     expect(Math.min(...heights)).toBe(cc.palBoxMinHeightMm); // 80, nu 40
   });
@@ -57,7 +60,7 @@ describe('expandDrawerBoxes — PAL_BOX', () => {
 
 describe('expandDrawerBoxes — TANDEMBOX', () => {
   it('sertar metalic complet preasamblat → nicio piesă la debitare', () => {
-    const { parts } = expandDrawerBoxes(sertareInput('TANDEMBOX'), TEST_CATALOGS, cc);
-    expect(parts).toEqual([]);
+    const { pieces } = expandDrawerBoxes(sertareInput('TANDEMBOX'), TEST_CATALOGS, cc);
+    expect(pieces).toEqual([]);
   });
 });

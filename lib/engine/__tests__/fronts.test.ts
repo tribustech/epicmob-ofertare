@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { drawerFrontHeights, expandFronts } from '../fronts';
+import { toParts } from '../pieces';
 import { DEFAULT_CONSTRUCTION } from '../constants';
 import { bazaInput, TEST_CATALOGS } from './fixtures';
 import type { CabinetInput } from '../types';
@@ -16,7 +17,8 @@ function sertareInput(overrides: Partial<CabinetInput> = {}): CabinetInput {
 
 describe('expandFronts — uși', () => {
   it('o ușă: W−4 × H−4, MDF vopsit fără cant', () => {
-    const { parts, fronts } = expandFronts(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const { pieces, fronts } = expandFronts(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const parts = toParts(pieces);
     expect(parts).toHaveLength(1);
     expect(parts[0]).toMatchObject({
       name: 'Ușă', lengthMm: 716, widthMm: 596, qty: 1, materialId: 'mdf-vopsit', edges: {},
@@ -29,7 +31,8 @@ describe('expandFronts — uși', () => {
       doors: 2, frontMaterialId: 'pal-alb',
       edgeBands: { carcassFrontEdgeId: 'abs-04', frontPerimeterId: 'abs-1' },
     });
-    const { parts } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const { pieces } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const parts = toParts(pieces);
     expect(parts[0]).toMatchObject({
       widthMm: 296.5, qty: 2,
       edges: { l1: 'abs-1', l2: 'abs-1', w1: 'abs-1', w2: 'abs-1' },
@@ -41,7 +44,8 @@ describe('expandFronts — uși', () => {
       frontMaterialId: 'mdf-infoliat',
       edgeBands: { carcassFrontEdgeId: 'abs-04', frontPerimeterId: 'abs-1' },
     });
-    const { parts } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const { pieces } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const parts = toParts(pieces);
     expect(parts[0]).toMatchObject({ materialId: 'mdf-infoliat', edges: {} });
   });
 
@@ -53,8 +57,8 @@ describe('expandFronts — uși', () => {
 
   it('fără fronturi când frontMaterialId e null', () => {
     const input = bazaInput({ frontMaterialId: null });
-    const { parts, fronts } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
-    expect(parts).toEqual([]);
+    const { pieces, fronts } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    expect(pieces).toEqual([]);
     expect(fronts).toEqual([]);
   });
 });
@@ -65,7 +69,8 @@ describe('expandFronts — sertare', () => {
     expect(heights).toHaveLength(3);
     expect(heights[0]).toBeCloseTo(236.67, 1);
 
-    const { parts, fronts } = expandFronts(sertareInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const { pieces, fronts } = expandFronts(sertareInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const parts = toParts(pieces);
     expect(parts).toHaveLength(1); // qty 3 pe o singură linie de piesă identică
     expect(parts[0]).toMatchObject({ name: 'Front sertar', widthMm: 596, qty: 3 });
     expect(fronts.filter((f) => f.kind === 'SERTAR')).toHaveLength(3);
@@ -82,17 +87,17 @@ describe('expandFronts — sertare', () => {
 describe('expandFronts — panou orb (COLT)', () => {
   it('adaugă panoul orb și scade lățimea ușii', () => {
     const input = bazaInput({ type: 'COLT', blindPanelWidthMm: 100 });
-    const { parts } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
-    const blind = parts.find((p) => p.name === 'Panou orb')!;
-    const door = parts.find((p) => p.name === 'Ușă')!;
+    const { pieces } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const blind = pieces.find((p) => p.name === 'Panou orb')!;
+    const door = pieces.find((p) => p.name === 'Ușă')!;
     expect(blind).toMatchObject({ widthMm: 100, lengthMm: 716 });
     expect(door.widthMm).toBeCloseTo(496, 5); // 600 − 4 − 100
   });
 
   it('folosește lățimea implicită din constante când blindPanelWidthMm lipsește', () => {
     const input = bazaInput({ type: 'COLT' });
-    const { parts } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
-    expect(parts.find((p) => p.name === 'Panou orb')!.widthMm).toBe(100);
+    const { pieces } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    expect(pieces.find((p) => p.name === 'Panou orb')!.widthMm).toBe(100);
   });
 
   it('blindPanelWidthMm ≥ widthMm → eroare (ușă imposibilă)', () => {
