@@ -127,6 +127,46 @@ function PieceMesh({ pc, color, selected, hovered, hoveredEdge, hasGrain, onSele
   );
 }
 
+/** Previzualizarea izolată a unei singure piese (cardul din coloana contextuală):
+ *  piesa centrată, rotibilă, cu evidențierea muchiei la hover pe cant și săgețile de fibră. */
+export function PiecePreview3D({ piece, kind, hasGrain, hoveredEdge, thicknessMm }: {
+  piece: PieceInstance;
+  kind: string;
+  hasGrain: boolean;
+  hoveredEdge?: EdgeSide | null;
+  thicknessMm: number; // grosimea materialului — folosită când piesa nu are placement (piesă liberă)
+}) {
+  // orientarea din corp dacă există; piesele libere se arată culcate (L × grosime × l)
+  const p: PiecePlacement = piece.placement
+    ?? { x: 0, y: 0, z: 0, w: piece.lengthMm, h: thicknessMm, d: piece.widthMm };
+  const maxDim = Math.max(p.w, p.h, p.d) * S;
+  const edgeHighlight = hoveredEdge && piece.edgeAxis[hoveredEdge] !== undefined
+    ? edgeHighlightGeometry(p, hoveredEdge)
+    : null;
+  const grainMark = hasGrain ? grainMarkTransform(piece, p) : null;
+  return (
+    <Canvas camera={{ position: [maxDim * 1.1, maxDim * 0.9, maxDim * 1.5], fov: 35 }}>
+      <ambientLight intensity={0.9} />
+      <directionalLight position={[3, 5, 4]} intensity={1.1} />
+      <mesh>
+        <boxGeometry args={[p.w * S, p.h * S, p.d * S]} />
+        <meshStandardMaterial color={KIND_COLORS[kind] ?? '#c9a87c'} transparent opacity={0.95} />
+        <Edges color="#8a6d45" />
+        {edgeHighlight && (
+          <mesh position={edgeHighlight.position} raycast={() => null}>
+            <boxGeometry args={edgeHighlight.size} />
+            <meshBasicMaterial color="#ff9f1c" />
+          </mesh>
+        )}
+        {grainMark && grainMark.positions.map((pos, i) => (
+          <GrainArrows key={i} position={pos} rotation={grainMark.rotation} />
+        ))}
+      </mesh>
+      <OrbitControls makeDefault enableDamping />
+    </Canvas>
+  );
+}
+
 export default function Scene3D({
   pieces, selectedKey, hoveredKey, hoveredEdge, onSelect, onHover, materialKindById, materialGrainById,
 }: {

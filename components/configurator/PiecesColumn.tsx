@@ -1,10 +1,17 @@
 'use client';
+import dynamic from 'next/dynamic';
 import { EDGE_SIDES } from '@/lib/engine';
 import type { EdgeSide, PieceInstance } from '@/lib/engine';
 import type { PiecesConfigForm } from '@/lib/quote/cabinet-form';
 import { fmtNum } from '@/lib/format';
 import { PieceList } from './PieceList';
 import { PiecePanel } from './PiecePanel';
+
+// client-only (three.js) — încărcat doar când o piesă e selectată
+const PiecePreview3D = dynamic(() => import('./Scene3D').then((m) => m.PiecePreview3D), {
+  ssr: false,
+  loading: () => <div className="flex h-full items-center justify-center text-xs text-muted-foreground">Se încarcă…</div>,
+});
 
 export interface ConfiguratorCatalogItem {
   id: string; name: string; thicknessMm?: number; kind?: string;
@@ -30,6 +37,8 @@ export function PiecesColumn(props: {
   hoveredKey?: string | null;
   onHover?: (key: string | null) => void;
   onHoverEdge?: (side: EdgeSide | null) => void;
+  hoveredEdge?: EdgeSide | null;
+  materialGrainById?: Record<string, boolean>;
   materials: ConfiguratorCatalogItem[];
   edgeBands: ConfiguratorCatalogItem[];
   addingFree: boolean;
@@ -50,6 +59,17 @@ export function PiecesColumn(props: {
         >
           ← Toate piesele
         </button>
+        {selectedPiece && (
+          <div className="mb-4 h-44 overflow-hidden rounded-lg bg-muted/40 ring-1 ring-border">
+            <PiecePreview3D
+              piece={selectedPiece}
+              kind={props.materials.find((m) => m.id === selectedPiece.materialId)?.kind ?? 'PAL'}
+              hasGrain={props.materialGrainById?.[selectedPiece.materialId] ?? false}
+              hoveredEdge={props.hoveredEdge}
+              thicknessMm={props.materials.find((m) => m.id === selectedPiece.materialId)?.thicknessMm ?? 18}
+            />
+          </div>
+        )}
         <PiecePanel
           piece={selectedPiece}
           cfg={props.cfg}

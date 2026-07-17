@@ -1018,6 +1018,8 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             hoveredKey={hoveredKey}
             onHover={setHoveredKey}
             onHoverEdge={setHoveredEdge}
+            hoveredEdge={hoveredEdge}
+            materialGrainById={materialGrainById}
             materials={pickerMaterials}
             edgeBands={snapshot.edgeBands}
             addingFree={addingFree}
