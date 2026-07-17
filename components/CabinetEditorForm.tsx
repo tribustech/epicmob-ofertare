@@ -11,7 +11,7 @@ import { frontCatalogsFromSnapshot, type SnapshotData } from '@/lib/quote/comput
 import { HANDLE_TYPE_OPTIONS, withResolvedHandle } from '@/lib/quote/handle';
 import { expandCabinet, LEGGED_TYPES, resolveSuggestions } from '@/lib/engine';
 import type {
-  CabinetType, HandleType, HardwareAdjustments, HardwareLine, HardwareSlot, HardwareSuggestion,
+  CabinetType, EdgeSide, HandleType, HardwareAdjustments, HardwareLine, HardwareSlot, HardwareSuggestion,
   Part, PieceInstance, ResolvedSlot, Warning,
 } from '@/lib/engine';
 import { buildHardwareDefaults, parseConstruction, toCostCatalogs } from '@/lib/catalog/convert';
@@ -145,8 +145,10 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   // piesa selectată în viewportul 3D / coloana contextuală; null = coloana arată BOM-ul corpului
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+  // hover pe rândul unui cant din PiecePanel → evidențiază muchia respectivă pe piesa selectată în 3D
+  const [hoveredEdge, setHoveredEdge] = useState<EdgeSide | null>(null);
   const [addingFree, setAddingFree] = useState(false);
-  const handleSelectPiece = (k: string | null) => { setSelectedKey(k); setAddingFree(false); };
+  const handleSelectPiece = (k: string | null) => { setSelectedKey(k); setAddingFree(false); setHoveredEdge(null); };
   // produse create pe loc din combobox — vizibile imediat, până le aduce refresh-ul din snapshot
   const [createdHw, setCreatedHw] = useState<HardwareComboItem[]>([]);
   const [isPending, startTransition] = useTransition();
@@ -361,6 +363,8 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const pickerMaterials = useMemo(() => snapshot.materials.filter((m) => m.category !== 'BLAT'), [snapshot]);
   // culoarea piesei în viewportul 3D depinde de tipul materialului (PAL/MDF/…)
   const materialKindById: Record<string, string> = Object.fromEntries(pickerMaterials.map((m) => [m.id, m.kind ?? 'PAL']));
+  // marcaj „»»»" în 3D pentru piesele cu material cu decor direcțional (snapshot-uri vechi înghețate: lipsă = false)
+  const materialGrainById: Record<string, boolean> = Object.fromEntries(pickerMaterials.map((m) => [m.id, m.hasGrain ?? false]));
 
   const noPriceMaterials = useMemo(() => {
     const ids = [values.carcassMaterialId, values.frontMaterialId, values.backMaterialId, values.drawersBottomMaterialId, ...extraParts.map((p) => p.materialId)];
@@ -951,7 +955,12 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
 
       <div className="hidden xl:sticky xl:top-6 xl:block h-[calc(100vh-7rem)] min-h-[420px] overflow-hidden rounded-xl bg-card ring-1 ring-border">
         {live && !live.expandError ? (
-          <Scene3D pieces={live.pieces} selectedKey={selectedKey} hoveredKey={hoveredKey} onSelect={handleSelectPiece} onHover={setHoveredKey} materialKindById={materialKindById} />
+          <Scene3D
+            pieces={live.pieces} selectedKey={selectedKey} hoveredKey={hoveredKey}
+            hoveredEdge={selectedKey ? hoveredEdge : null}
+            onSelect={handleSelectPiece} onHover={setHoveredKey}
+            materialKindById={materialKindById} materialGrainById={materialGrainById}
+          />
         ) : (
           <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
             {pieceViewportPlaceholder}
@@ -974,7 +983,12 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
 
         {live && !live.expandError && (
           <div className="h-[420px] overflow-hidden rounded-xl bg-card ring-1 ring-border xl:hidden">
-            <Scene3D pieces={live.pieces} selectedKey={selectedKey} hoveredKey={hoveredKey} onSelect={handleSelectPiece} onHover={setHoveredKey} materialKindById={materialKindById} />
+            <Scene3D
+            pieces={live.pieces} selectedKey={selectedKey} hoveredKey={hoveredKey}
+            hoveredEdge={selectedKey ? hoveredEdge : null}
+            onSelect={handleSelectPiece} onHover={setHoveredKey}
+            materialKindById={materialKindById} materialGrainById={materialGrainById}
+          />
           </div>
         )}
 
@@ -987,6 +1001,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             onCfgChange={setPiecesCfg}
             hoveredKey={hoveredKey}
             onHover={setHoveredKey}
+            onHoverEdge={setHoveredEdge}
             materials={pickerMaterials}
             edgeBands={snapshot.edgeBands}
             addingFree={addingFree}

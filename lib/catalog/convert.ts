@@ -11,6 +11,7 @@ export interface MaterialRow {
   pricingMode: string; pricePerSheet: number | null; pricePerSqm: number | null;
   imageUrl?: string | null; decorCode?: string | null;
   brand?: string | null; structura?: string | null; category?: string | null;
+  hasGrain?: boolean; // decor cu direcție (lemn etc.) — nu UNI
 }
 export interface EdgeBandRow { id: string; name: string; thicknessMm: number; pricePerMl: number }
 export interface HardwareRow {

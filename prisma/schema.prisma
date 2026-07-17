@@ -23,6 +23,7 @@ model Material {
   structura     String?
   category      String   @default("PLACA") // PLACA | BLAT
   active        Boolean  @default(true)
+  hasGrain      Boolean  @default(false) // decor cu direcție (lemn etc.) — nu UNI; direcția curge pe lungimea plăcii/piesei
   updatedAt     DateTime @updatedAt
 }
 

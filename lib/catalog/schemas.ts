@@ -4,6 +4,8 @@ const emptyToUndefined = (v: unknown) => (v === '' || v == null ? undefined : v)
 const num = z.coerce.number().finite();
 const posNum = num.positive();
 const optPosNum = z.preprocess(emptyToUndefined, posNum.optional());
+// checkbox HTML: prezent+'on' = bifat, absent din FormData = nebifat
+const checkbox = z.preprocess((v) => v === 'on' || v === 'true' || v === true, z.boolean());
 
 export function formDataToObject(fd: FormData): Record<string, string> {
   const obj: Record<string, string> = {};
@@ -23,6 +25,7 @@ export const materialSchema = z
     pricingMode: z.enum(['PER_SHEET', 'PER_SQM']),
     pricePerSheet: optPosNum,
     pricePerSqm: optPosNum,
+    hasGrain: checkbox,
   })
   .refine(
     (d) => (d.pricingMode === 'PER_SHEET' ? d.pricePerSheet !== undefined : d.pricePerSqm !== undefined),

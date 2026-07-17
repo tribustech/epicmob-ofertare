@@ -1,6 +1,6 @@
 'use client';
 import { EDGE_SIDES } from '@/lib/engine';
-import type { PieceInstance } from '@/lib/engine';
+import type { EdgeSide, PieceInstance } from '@/lib/engine';
 import type { PiecesConfigForm } from '@/lib/quote/cabinet-form';
 import { fmtNum } from '@/lib/format';
 import { PieceList } from './PieceList';
@@ -9,6 +9,7 @@ import { PiecePanel } from './PiecePanel';
 export interface ConfiguratorCatalogItem {
   id: string; name: string; thicknessMm?: number; kind?: string;
   active?: boolean; // absent = toate se consideră disponibile
+  hasGrain?: boolean; // decor cu direcție (lemn etc.) — nu UNI
 }
 
 const omit = <T,>(o: Record<string, T> | undefined, k: string): Record<string, T> => {
@@ -28,6 +29,7 @@ export function PiecesColumn(props: {
   onCfgChange: (next: PiecesConfigForm) => void;
   hoveredKey?: string | null;
   onHover?: (key: string | null) => void;
+  onHoverEdge?: (side: EdgeSide | null) => void;
   materials: ConfiguratorCatalogItem[];
   edgeBands: ConfiguratorCatalogItem[];
   addingFree: boolean;
@@ -57,6 +59,7 @@ export function PiecesColumn(props: {
           addingFree={props.addingFree}
           onDoneAddingFree={props.onDoneAddingFree}
           topSlotWidthDefaultMm={props.topSlotWidthDefaultMm}
+          onHoverEdge={props.onHoverEdge}
         />
       </div>
     );

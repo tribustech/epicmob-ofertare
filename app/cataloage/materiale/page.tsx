@@ -23,6 +23,7 @@ const PRICING_OPTIONS = [
 function MaterialFields({ m }: { m?: {
   name: string; kind: string; thicknessMm: number; sheetLengthMm: number;
   sheetWidthMm: number; pricingMode: string; pricePerSheet: number | null; pricePerSqm: number | null;
+  hasGrain?: boolean;
 } }) {
   return (
     <div className="grid grid-cols-2 gap-2 md:grid-cols-8">
@@ -36,6 +37,10 @@ function MaterialFields({ m }: { m?: {
         <NumberInput name="pricePerSheet" label="Lei/foaie" defaultValue={m?.pricePerSheet} required={false} />
         <NumberInput name="pricePerSqm" label="Lei/m²" defaultValue={m?.pricePerSqm} required={false} />
       </div>
+      <label className="col-span-2 flex items-center gap-2 self-end pb-1.5 text-sm">
+        <input type="checkbox" name="hasGrain" defaultChecked={m?.hasGrain ?? false} className="h-4 w-4 rounded border-input" />
+        Decor cu direcție (nu e UNI)
+      </label>
     </div>
   );
 }

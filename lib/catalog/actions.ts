@@ -17,6 +17,7 @@ function materialData(fd: FormData) {
     pricingMode: d.pricingMode,
     pricePerSheet: d.pricingMode === 'PER_SHEET' ? (d.pricePerSheet ?? null) : null,
     pricePerSqm: d.pricingMode === 'PER_SQM' ? (d.pricePerSqm ?? null) : null,
+    hasGrain: d.hasGrain,
   };
 }
 

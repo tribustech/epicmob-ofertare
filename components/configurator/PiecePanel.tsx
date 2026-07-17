@@ -71,6 +71,7 @@ export function PiecePanel(props: {
   addingFree: boolean;
   onDoneAddingFree: () => void;
   topSlotWidthDefaultMm: number;
+  onHoverEdge?: (side: EdgeSide | null) => void;
 }) {
   const { piece, cfg, onCfgChange, materials, edgeBands } = props;
 
@@ -212,7 +213,12 @@ export function PiecePanel(props: {
               : null; // cu override activ nu mai știm valoarea automată fără re-calcul
           }
           return (
-            <div key={side} className="grid grid-cols-[64px_1fr] items-center gap-2">
+            <div
+              key={side}
+              className="grid grid-cols-[64px_1fr] items-center gap-2"
+              onMouseEnter={() => props.onHoverEdge?.(side)}
+              onMouseLeave={() => props.onHoverEdge?.(null)}
+            >
               <span className="text-xs text-muted-foreground">{EDGE_SIDE_LABELS[side]}</span>
               <select className={selectCls} value={value} onChange={(e) => setEdge(side, e.target.value)}>
                 {!freeEntry && <option value="">{autoName !== null ? `Automat — ${autoName}` : 'Automat'}</option>}
