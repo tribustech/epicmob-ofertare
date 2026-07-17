@@ -10,3 +10,4 @@ dev.db-journal
 
 # git worktrees (izolare feature)
 .worktrees/
+.superpowers/
