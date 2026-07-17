@@ -1030,6 +1030,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
         edgeBands={snapshot.edgeBands}
         cfg={piecesCfg}
         onCfgChange={setPiecesCfg}
+        topSlotWidthDefaultMm={cc.pazieDefaultWidthMm}
       />
     )}
     </>

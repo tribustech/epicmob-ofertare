@@ -4,8 +4,12 @@ import dynamic from 'next/dynamic';
 import type { PieceInstance } from '@/lib/engine';
 import type { PiecesConfigForm } from '@/lib/quote/cabinet-form';
 import { PieceList } from './PieceList';
+import { PiecePanel } from './PiecePanel';
 
-export interface ConfiguratorCatalogItem { id: string; name: string; thicknessMm?: number; kind?: string }
+export interface ConfiguratorCatalogItem {
+  id: string; name: string; thicknessMm?: number; kind?: string;
+  active?: boolean; // absent = toate se consideră disponibile
+}
 
 const Scene3D = dynamic(() => import('./Scene3D'), {
   ssr: false,
@@ -24,6 +28,7 @@ export function ConfiguratorSheet(props: {
   edgeBands: ConfiguratorCatalogItem[];
   cfg: PiecesConfigForm;
   onCfgChange: (next: PiecesConfigForm) => void;
+  topSlotWidthDefaultMm: number;
 }) {
   const [open, setOpen] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -35,6 +40,7 @@ export function ConfiguratorSheet(props: {
     props.materials.map((m) => [m.id, m.kind ?? 'PAL']),
   );
   const handleSelect = (key: string | null) => { setSelectedKey(key); setAddingFree(false); };
+  const selectedPiece = props.pieces.find((p) => p.key === selectedKey) ?? null;
 
   useEffect(() => {
     if (!open) return;
@@ -86,10 +92,16 @@ export function ConfiguratorSheet(props: {
           />
         </div>
         <div className="overflow-y-auto border-l border-border p-4">
-          {addingFree ? (
-            <span className="text-sm text-muted-foreground">Formular piesă liberă — vine în T10</span>
-          ) : null}
-          {/* Task 10: PiecePanel */}
+          <PiecePanel
+            piece={selectedPiece}
+            cfg={props.cfg}
+            onCfgChange={props.onCfgChange}
+            materials={props.materials}
+            edgeBands={props.edgeBands}
+            addingFree={addingFree}
+            onDoneAddingFree={() => setAddingFree(false)}
+            topSlotWidthDefaultMm={props.topSlotWidthDefaultMm}
+          />
         </div>
       </div>
     </div>
