@@ -152,6 +152,29 @@ export interface PiecePlacement {         // mm, originea = colțul din față-s
   plăcii, fronturi false etc.) — backlog separat.
 - Fără migrare de DB sau fallback la formatul vechi de edges — development.
 
+## Revizie v2 (2026-07-17, decizia Andrew): un singur ecran, fără bottom sheet
+
+Bottom sheet-ul separat „complică configurarea dintr-un alt ecran" — pagina
+corpului trece pe **trei coloane full-width** (breakout din `max-w-[1340px]`
+doar pe această pagină, plafonat ~1800px):
+
+1. **Stânga — formularul** existent (accordions), nemodificat structural.
+2. **Centru — viewport 3D permanent** (Scene3D, sticky pe verticală);
+   click pe piesă = selecție, click pe fundal = deselecție. Fără chips.
+3. **Dreapta — coloană contextuală (~400px), master–detail:**
+   - *Nimic selectat* → **BOM-ul corpului**: PIESE (toate bucățile cu
+     dimensiuni, punct de override, rânduri „eliminat" cu ↺, „+ Piesă
+     liberă"; click pe rând selectează), CANTURI (metraj ml per cant,
+     derivat din muchiile bucăților), FERONERIE (produsele rezolvate,
+     nume × cantitate — holtșuruburi, balamale, picioare etc.).
+   - *Piesă selectată* → panoul piesei existent (PiecePanel) cu
+     „← Toate piesele".
+
+Dispare: `ConfiguratorSheet` (peek + overlay + drag), tabelul „Piese
+generate" și „Previzualizare" 2D (`CabinetIsoSvg`) de pe pagina corpului —
+un singur adevăr vizual; se închide astfel și backlogul „iso 2D pe H întreg
+diverge la picior" (pentru pagina corpului).
+
 ## Fazare și testare
 
 1. **Faza 1 — motor:** tipuri, bucăți individuale + chei, override-uri, pazii,
