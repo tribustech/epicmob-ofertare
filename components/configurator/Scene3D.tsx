@@ -38,17 +38,21 @@ function edgeHighlightGeometry(p: PiecePlacement, side: EdgeSide): { position: [
 
 /** poziția/rotația marcajului de decor „»»»" pe fața mare a piesei — decorul curge pe axa
  *  care corespunde lungimii de debitare (lengthMm), nu pe axa grosimii. */
-function grainMarkTransform(pc: PieceInstance, p: PiecePlacement): { position: [number, number, number]; rotation: [number, number, number] } {
+function grainMarkTransform(pc: PieceInstance, p: PiecePlacement): { positions: [number, number, number][]; rotation: [number, number, number] } {
   const dims: Record<Axis3, number> = { x: p.w, y: p.h, z: p.d };
   const t = AXES.reduce((a, b) => (dims[b] < dims[a] ? b : a)); // axa grosimii
   const grainAxis = AXES.filter((a) => a !== t).find((a) => Math.abs(dims[a] - pc.lengthMm) < 0.5) ?? AXES.find((a) => a !== t)!;
-  const position: Record<Axis3, number> = { x: 0, y: 0, z: 0 };
-  position[t] = (dims[t] / 2 + 1) * S; // spre exterior — semnul pozitiv e suficient
+  // pe AMBELE fețe mari ale piesei, ca direcția să se vadă din orice unghi
+  const positions = ([1, -1] as const).map((sign) => {
+    const pos: Record<Axis3, number> = { x: 0, y: 0, z: 0 };
+    pos[t] = sign * (dims[t] / 2 + 1) * S;
+    return [pos.x, pos.y, pos.z] as [number, number, number];
+  });
   let rotation: [number, number, number];
   if (t === 'y') rotation = [-Math.PI / 2, 0, grainAxis === 'z' ? -Math.PI / 2 : 0];
   else if (t === 'z') rotation = [0, 0, grainAxis === 'y' ? Math.PI / 2 : 0];
   else rotation = [0, Math.PI / 2, grainAxis === 'y' ? Math.PI / 2 : 0];
-  return { position: [position.x, position.y, position.z], rotation };
+  return { positions, rotation };
 }
 
 /** Direcția decorului ca „>>>" din geometrie pură (fără fonturi — drei Text/troika nu randează
@@ -109,7 +113,9 @@ function PieceMesh({ pc, color, selected, hovered, hoveredEdge, hasGrain, onSele
           <meshBasicMaterial color="#ff9f1c" />
         </mesh>
       )}
-      {grainMark && <GrainArrows position={grainMark.position} rotation={grainMark.rotation} />}
+      {grainMark && grainMark.positions.map((pos, i) => (
+        <GrainArrows key={i} position={pos} rotation={grainMark.rotation} />
+      ))}
       {selected && (
         <Html center distanceFactor={1.6} position={[0, p.h * S / 2 + 0.04, 0]}>
           <div className="pointer-events-none whitespace-nowrap rounded bg-foreground/90 px-2 py-0.5 font-mono text-[11px] text-background shadow">
