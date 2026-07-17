@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import type { ConfiguratorCatalogItem } from './ConfiguratorSheet';
+import type { ConfiguratorCatalogItem } from './PiecesColumn';
 
 const selectCls = cn(
   'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none',
@@ -44,7 +44,7 @@ function DimCalcView({ calc }: { calc: DimCalc }) {
   );
 }
 
-// duplicat din ConfiguratorSheet (neexportat acolo)
+// duplicat din PiecesColumn (neexportat acolo)
 const omit = <T,>(o: Record<string, T> | undefined, k: string): Record<string, T> => {
   const { [k]: _, ...rest } = o ?? {};
   return rest;

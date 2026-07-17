@@ -1,7 +1,8 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Fragment, useMemo, useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { cabinetFormSchema, prunePiecesConfig, toCabinetInput } from '@/lib/quote/cabinet-form';
 import type { ExtraPart, PiecesConfigForm } from '@/lib/quote/cabinet-form';
@@ -10,7 +11,7 @@ import { frontCatalogsFromSnapshot, type SnapshotData } from '@/lib/quote/comput
 import { HANDLE_TYPE_OPTIONS, withResolvedHandle } from '@/lib/quote/handle';
 import { expandCabinet, LEGGED_TYPES, resolveSuggestions } from '@/lib/engine';
 import type {
-  CabinetType, DimCalc, HandleType, HardwareAdjustments, HardwareLine, HardwareSlot, HardwareSuggestion,
+  CabinetType, HandleType, HardwareAdjustments, HardwareLine, HardwareSlot, HardwareSuggestion,
   Part, PieceInstance, ResolvedSlot, Warning,
 } from '@/lib/engine';
 import { buildHardwareDefaults, parseConstruction, toCostCatalogs } from '@/lib/catalog/convert';
@@ -26,9 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { CabinetIsoSvg } from '@/components/CabinetIsoSvg';
-import { ConfiguratorSheet } from '@/components/configurator/ConfiguratorSheet';
+import { PiecesColumn } from '@/components/configurator/PiecesColumn';
 import { HardwareCombobox, type HardwareComboItem } from '@/components/HardwareCombobox';
 import { MaterialPicker } from '@/components/MaterialPicker';
 import { FrontModelPicker, type FrontModelOption } from '@/components/FrontModelPicker';
@@ -37,17 +36,11 @@ import { materialHasNoPrice } from '@/lib/quote/material-price';
 
 export type FieldOption = { value: string; label: string };
 
-// „H 720 − picior 100 = 620"; un singur termen → doar „label: valoare"
-function fmtDimCalc(c: DimCalc): string {
-  if (c.terms.length <= 1) return `${c.label}: ${fmtNum(c.resultMm, 1)}`;
-  const body = c.terms
-    .map((term, i) => {
-      const sign = i === 0 ? '' : term.valueMm < 0 ? '− ' : '+ ';
-      return `${sign}${term.label} ${fmtNum(Math.abs(term.valueMm), 1)}`;
-    })
-    .join(' ');
-  return `${c.label}: ${body} = ${fmtNum(c.resultMm, 1)}`;
-}
+// dynamic la nivel de modul, ssr:false — three.js/WebGL nu are sens pe server
+const Scene3D = dynamic(() => import('@/components/configurator/Scene3D'), {
+  ssr: false,
+  loading: () => <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Se încarcă 3D…</div>,
+});
 
 const FRONT_KIND_OPTIONS: FieldOption[] = [
   { value: 'PAL', label: 'PAL' },
@@ -149,12 +142,14 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const [hw, setHw] = useState<HardwareAdjustments>(hardwareAdjustments ?? {});
   // configurator 3D: override-uri per bucată / piese libere / slot capac
   const [piecesCfg, setPiecesCfg] = useState<PiecesConfigForm>(initialPieces ?? {});
+  // piesa selectată în viewportul 3D / coloana contextuală; null = coloana arată BOM-ul corpului
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [addingFree, setAddingFree] = useState(false);
+  const handleSelectPiece = (k: string | null) => { setSelectedKey(k); setAddingFree(false); };
   // produse create pe loc din combobox — vizibile imediat, până le aduce refresh-ul din snapshot
   const [createdHw, setCreatedHw] = useState<HardwareComboItem[]>([]);
   const [isPending, startTransition] = useTransition();
   const [formState, setFormState] = useState<FormState>({});
-  // rândul de piesă deschis (afișează derivarea dimensiunilor); null = niciunul
-  const [openPart, setOpenPart] = useState<number | null>(null);
 
   // erorile de validare apar doar pe câmpurile atinse sau după o încercare de salvare
   const [touched, setTouched] = useState<Set<string>>(() => new Set());
@@ -315,6 +310,8 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   }, [parsed, catalogs, cc, hw, extraParts, snapExt, laborPct, yieldFactor, legHeightMm, projectHandle, piecesCfg]);
 
   const invalid = !parsed.success;
+  // piesa selectată poate dispărea din live.pieces la regenerare (schimbare corp) — cade pe lista BOM, nu crapă
+  const selectedPiece = live?.pieces.find((p) => p.key === selectedKey) ?? null;
 
   const materialName = (mid: string) => snapshot.materials.find((m) => m.id === mid)?.name ?? mid;
   const bandName = (bid?: string) => (bid ? (snapshot.edgeBands.find((e) => e.id === bid)?.name ?? bid) : '');
@@ -325,6 +322,16 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     })),
     [snapExt],
   );
+  // rândurile de feronerie ale coloanei contextuale (BOM): agregate pe hardwareId, cu numele din comboItems
+  // (include și produsele create pe loc — de-asta comboItems, nu snapshot.hardware)
+  const hardwareRows = useMemo(() => {
+    if (!live) return [];
+    const byId = new Map<string, number>();
+    for (const l of live.hardwareLines) byId.set(l.hardwareId, (byId.get(l.hardwareId) ?? 0) + l.qty);
+    return [...byId.entries()].map(([id, qty]) => ({
+      name: comboItems.find((h) => h.id === id)?.name ?? id, qty,
+    }));
+  }, [live, comboItems]);
   const onHardwareCreated = (item: HardwareComboItem) => {
     setCreatedHw((prev) => [...prev, item]);
     router.refresh(); // aduce produsul nou în snapshotul serverului
@@ -351,6 +358,8 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     setHw((prev) => ({ ...prev, extra: updater(prev.extra ?? []) }));
 
   const pickerMaterials = useMemo(() => snapshot.materials.filter((m) => m.category !== 'BLAT'), [snapshot]);
+  // culoarea piesei în viewportul 3D depinde de tipul materialului (PAL/MDF/…)
+  const materialKindById: Record<string, string> = Object.fromEntries(pickerMaterials.map((m) => [m.id, m.kind ?? 'PAL']));
 
   const noPriceMaterials = useMemo(() => {
     const ids = [values.carcassMaterialId, values.frontMaterialId, values.backMaterialId, values.drawersBottomMaterialId, ...extraParts.map((p) => p.materialId)];
@@ -485,9 +494,14 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     </div>
   );
 
+  const pieceViewportPlaceholder = invalid
+    ? anyVisibleError
+      ? 'Corectează erorile pentru a vedea piesele.'
+      : 'Completează formularul pentru a vedea piesele.'
+    : 'Nu se pot genera piese.';
+
   return (
-    <>
-    <div className="grid gap-6 pb-16 lg:grid-cols-[1fr_380px] lg:items-start">
+    <div className="grid gap-6 lg:grid-cols-[1fr_380px] xl:grid-cols-[minmax(380px,470px)_minmax(0,1fr)_400px] lg:items-start">
       <div className="flex flex-col gap-3">
         <SectionAccordion title="Identificare și dimensiuni" summary={dimSummary}
           open={openSections.has('dimensiuni')} onToggle={() => toggleSection('dimensiuni')}
@@ -934,6 +948,16 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
         </div>
       </div>
 
+      <div className="hidden xl:sticky xl:top-6 xl:block h-[calc(100vh-7rem)] min-h-[420px] overflow-hidden rounded-xl bg-card ring-1 ring-border">
+        {live && !live.expandError ? (
+          <Scene3D pieces={live.pieces} selectedKey={selectedKey} onSelect={handleSelectPiece} materialKindById={materialKindById} />
+        ) : (
+          <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
+            {pieceViewportPlaceholder}
+          </div>
+        )}
+      </div>
+
       <div className="space-y-4 lg:sticky lg:top-6">
         {live?.expandError && (
           <Alert variant="destructive"><AlertDescription>{live.expandError}</AlertDescription></Alert>
@@ -947,95 +971,34 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
           </ul>
         )}
 
-        <div className="rounded-xl bg-card p-5 ring-1 ring-border">
-          <div className="mb-3 text-[15px] font-bold">Piese generate</div>
-          {live && !live.expandError ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Piesă</TableHead>
-                  <TableHead>Dim. (mm)</TableHead>
-                  <TableHead>Buc</TableHead>
-                  <TableHead>Material</TableHead>
-                  <TableHead>Canturi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {live.parts.map((p, i) => {
-                  const open = openPart === i;
-                  return (
-                    <Fragment key={i}>
-                      <TableRow
-                        className="cursor-pointer select-none"
-                        onClick={() => setOpenPart(open ? null : i)}
-                        aria-expanded={open}
-                      >
-                        <TableCell className="font-medium">
-                          <span className="mr-1 inline-block text-muted-foreground">{open ? '▾' : '▸'}</span>
-                          {p.name}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">{fmtNum(p.lengthMm, 1)}×{fmtNum(p.widthMm, 1)}</TableCell>
-                        <TableCell className="font-mono">{p.qty}</TableCell>
-                        <TableCell>{materialName(p.materialId)}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {[p.edges.l1, p.edges.l2, p.edges.w1, p.edges.w2].filter(Boolean).map((b) => bandName(b)).join(', ') || '—'}
-                        </TableCell>
-                      </TableRow>
-                      {open && (
-                        <TableRow className="hover:bg-transparent">
-                          <TableCell colSpan={5} className="bg-muted/40 text-xs text-muted-foreground">
-                            {p.calc ? (
-                              <div className="space-y-0.5 font-mono">
-                                {p.calc.length && <div>{fmtDimCalc(p.calc.length)}</div>}
-                                {p.calc.width && <div>{fmtDimCalc(p.calc.width)}</div>}
-                              </div>
-                            ) : (
-                              <div className="font-mono">
-                                Lungime: {fmtNum(p.lengthMm, 1)} · Lățime: {fmtNum(p.widthMm, 1)}
-                              </div>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </Fragment>
-                  );
-                })}
-                {live.parts.length === 0 && (
-                  <TableRow><TableCell colSpan={5} className="text-muted-foreground">Nicio piesă.</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {invalid
-                ? anyVisibleError
-                  ? 'Corectează erorile pentru a vedea piesele.'
-                  : 'Completează formularul pentru a vedea piesele.'
-                : 'Nu se pot genera piese.'}
-            </p>
-          )}
-        </div>
-
         {live && !live.expandError && (
-          <div className="rounded-xl bg-card p-5 ring-1 ring-border">
-            <div className="mb-1 text-[15px] font-bold">Previzualizare</div>
-            <CabinetIsoSvg input={live.input} cc={cc} />
+          <div className="h-[420px] overflow-hidden rounded-xl bg-card ring-1 ring-border xl:hidden">
+            <Scene3D pieces={live.pieces} selectedKey={selectedKey} onSelect={handleSelectPiece} materialKindById={materialKindById} />
+          </div>
+        )}
+
+        {live && !live.expandError ? (
+          <PiecesColumn
+            pieces={live.pieces}
+            selectedPiece={selectedPiece}
+            onSelect={handleSelectPiece}
+            cfg={piecesCfg}
+            onCfgChange={setPiecesCfg}
+            materials={pickerMaterials}
+            edgeBands={snapshot.edgeBands}
+            addingFree={addingFree}
+            onAddFree={() => setAddingFree(true)}
+            onDoneAddingFree={() => setAddingFree(false)}
+            topSlotWidthDefaultMm={cc.pazieDefaultWidthMm}
+            hardwareRows={hardwareRows}
+          />
+        ) : (
+          <div className="rounded-xl bg-card p-5 ring-1 ring-border text-sm text-muted-foreground">
+            {pieceViewportPlaceholder}
           </div>
         )}
       </div>
     </div>
-    {live && !live.expandError && (
-      <ConfiguratorSheet
-        corpLabel={values.label || 'corp'}
-        pieces={live.pieces}
-        materials={pickerMaterials}
-        edgeBands={snapshot.edgeBands}
-        cfg={piecesCfg}
-        onCfgChange={setPiecesCfg}
-        topSlotWidthDefaultMm={cc.pazieDefaultWidthMm}
-      />
-    )}
-    </>
   );
 }
 

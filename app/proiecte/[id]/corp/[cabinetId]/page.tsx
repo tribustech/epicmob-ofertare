@@ -185,49 +185,51 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
   );
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">
-          Corp: <span className="font-mono text-xl">{input.label}</span>
-        </h1>
-        <Link href={`/proiecte/${id}`} className="text-[13px] font-medium text-accent-blue-foreground hover:underline">
-          ← Înapoi la proiect
-        </Link>
+    <div className="xl:relative xl:left-1/2 xl:w-[min(1800px,calc(100vw-3rem))] xl:-translate-x-1/2">
+      <div className="space-y-5">
+        <div className="flex items-baseline justify-between">
+          <h1 className="text-2xl font-bold tracking-tight">
+            Corp: <span className="font-mono text-xl">{input.label}</span>
+          </h1>
+          <Link href={`/proiecte/${id}`} className="text-[13px] font-medium text-accent-blue-foreground hover:underline">
+            ← Înapoi la proiect
+          </Link>
+        </div>
+
+        {hasInactiveRefs && (
+          <Alert className="border-amber-300 bg-amber-50 text-amber-800">
+            <AlertDescription>
+              Corpul folosește materiale/feronerie dezactivate — verifică selecturile marcate „(dezactivat)".
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <CabinetEditorForm
+          initial={cabinetInputToFormValues(input)}
+          snapshot={snapshot}
+          laborPct={project.laborPct}
+          yieldFactor={project.yieldFactor}
+          legHeightMm={legHeightMm}
+          bandOptions={{
+            carcassFront: optionsWithCurrent(edgeBands, input.edgeBands.carcassFrontEdgeId),
+            frontPerimeter: optionsWithCurrent(edgeBands, input.edgeBands.frontPerimeterId),
+          }}
+          hardwareAdjustments={hardwareAdjustments}
+          extraParts={extraParts}
+          extraPartsSlot={extraPartsSlot}
+          extraPartsSummary={extraPartsSummary}
+          frontSupplierOptions={frontSupplierOptions}
+          frontModelOptions={frontModelOptions}
+          ralColors={ralColors}
+          projectHandle={{
+            type: project.handleType, itemId: project.handleItemId,
+            label: HANDLE_TYPE_OPTIONS.find((o) => o.value === project.handleType)?.label ?? project.handleType,
+          }}
+          tandemboxHeights={tandemboxHeights}
+          initialPieces={input.pieces}
+          save={updateCabinetData.bind(null, cabinetId)}
+        />
       </div>
-
-      {hasInactiveRefs && (
-        <Alert className="border-amber-300 bg-amber-50 text-amber-800">
-          <AlertDescription>
-            Corpul folosește materiale/feronerie dezactivate — verifică selecturile marcate „(dezactivat)".
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <CabinetEditorForm
-        initial={cabinetInputToFormValues(input)}
-        snapshot={snapshot}
-        laborPct={project.laborPct}
-        yieldFactor={project.yieldFactor}
-        legHeightMm={legHeightMm}
-        bandOptions={{
-          carcassFront: optionsWithCurrent(edgeBands, input.edgeBands.carcassFrontEdgeId),
-          frontPerimeter: optionsWithCurrent(edgeBands, input.edgeBands.frontPerimeterId),
-        }}
-        hardwareAdjustments={hardwareAdjustments}
-        extraParts={extraParts}
-        extraPartsSlot={extraPartsSlot}
-        extraPartsSummary={extraPartsSummary}
-        frontSupplierOptions={frontSupplierOptions}
-        frontModelOptions={frontModelOptions}
-        ralColors={ralColors}
-        projectHandle={{
-          type: project.handleType, itemId: project.handleItemId,
-          label: HANDLE_TYPE_OPTIONS.find((o) => o.value === project.handleType)?.label ?? project.handleType,
-        }}
-        tandemboxHeights={tandemboxHeights}
-        initialPieces={input.pieces}
-        save={updateCabinetData.bind(null, cabinetId)}
-      />
     </div>
   );
 }
