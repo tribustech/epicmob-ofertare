@@ -90,7 +90,7 @@ export function parseDrawerHeights(s: string): number[] {
     .filter((n) => Number.isFinite(n));
 }
 
-export function toCabinetInput(d: CabinetFormData): CabinetInput {
+export function toCabinetInput(d: CabinetFormData, pieces?: PiecesConfigForm): CabinetInput {
   const heights = d.drawerFrontHeightsMm ? parseDrawerHeights(d.drawerFrontHeightsMm) : [];
   const isMdfVopsit = d.frontType !== 'FARA' && d.frontKind === 'MDF_VOPSIT';
   const shelves = d.frontType === 'SERTARE' ? 0 : (d.frontType === 'USI' && !d.withShelves ? 0 : d.shelves);
@@ -152,6 +152,8 @@ export function toCabinetInput(d: CabinetFormData): CabinetInput {
           frontExtensionMm: d.handleType === 'FARA' ? d.frontExtensionMm : undefined,
         }
       : undefined,
+    // configurator 3D: slot capac / override-uri per bucată / piese libere (opțional)
+    ...(pieces ? { pieces: pieces as CabinetInput['pieces'] } : {}),
   };
 }
 
@@ -187,6 +189,49 @@ export const extraPartSchema = z.object({
 });
 
 export type ExtraPart = z.infer<typeof extraPartSchema>;
+
+const edgeSideEnum = z.enum(['fata', 'spate', 'sus', 'jos', 'stanga', 'dreapta']);
+const edgeOverrides = z.record(edgeSideEnum, z.string().nullable());
+
+export const piecesConfigSchema = z.object({
+  top: z.object({
+    variant: z.enum(['PLIN', 'PAZII', 'ABSENT']),
+    pazieWidthMm: posNum.optional(),
+  }).optional(),
+  overrides: z.record(z.string(), z.object({
+    edges: edgeOverrides.optional(),
+    materialId: z.string().optional(),
+    lengthMm: posNum.optional(),
+    widthMm: posNum.optional(),
+    removed: z.boolean().optional(),
+  })).optional(),
+  free: z.array(z.object({
+    id: z.string().min(1),
+    name: z.string().trim().min(1),
+    lengthMm: posNum,
+    widthMm: posNum,
+    qty: z.coerce.number().int().min(1),
+    materialId: z.string().min(1),
+    edges: edgeOverrides.optional(),
+  })).optional(),
+});
+export type PiecesConfigForm = z.infer<typeof piecesConfigSchema>;
+
+/** Config gol (fără abateri) → undefined, ca inputJson să rămână curat. */
+export function prunePiecesConfig(cfg: PiecesConfigForm | undefined): PiecesConfigForm | undefined {
+  if (!cfg) return undefined;
+  const overrides = Object.fromEntries(
+    Object.entries(cfg.overrides ?? {}).filter(([, ov]) =>
+      ov.removed || ov.materialId || ov.lengthMm !== undefined || ov.widthMm !== undefined
+      || Object.keys(ov.edges ?? {}).length > 0),
+  );
+  const out: PiecesConfigForm = {
+    ...(cfg.top && cfg.top.variant !== 'PLIN' ? { top: cfg.top } : {}),
+    ...(Object.keys(overrides).length > 0 ? { overrides } : {}),
+    ...((cfg.free?.length ?? 0) > 0 ? { free: cfg.free } : {}),
+  };
+  return Object.keys(out).length > 0 ? out : undefined;
+}
 
 /** Blatul are un formular propriu, minimal: fără carcasă/fronturi/feronerie.
  *  widthMm = lungime (rularea pe perete), depthMm = adâncime (față–spate). */

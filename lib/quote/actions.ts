@@ -6,7 +6,15 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { formDataToObject } from '@/lib/catalog/schemas';
 import { formAction } from '@/lib/forms/form-action';
-import { blatFormSchema, cabinetFormSchema, extraPartSchema, toBlatInput, toCabinetInput } from './cabinet-form';
+import {
+  blatFormSchema,
+  cabinetFormSchema,
+  extraPartSchema,
+  piecesConfigSchema,
+  prunePiecesConfig,
+  toBlatInput,
+  toCabinetInput,
+} from './cabinet-form';
 import { hardwareAdjustmentsSchema, pruneAdjustments } from './hardware-adjustments';
 import { buildSnapshot } from './snapshot';
 import { isFrozenStatus } from './basis';
@@ -237,7 +245,11 @@ export const addCabinet = formAction(async (projectId: string, assemblyId: strin
 
 export const updateCabinetData = formAction(async (cabinetId: string, data: Record<string, string>) => {
   const d = cabinetFormSchema.parse(data);
-  const input = toCabinetInput(d);
+  // configurator 3D: configurația de piese (slot capac/override-uri/piese libere) vine în același submit
+  const pieces = data.piecesJson !== undefined && data.piecesJson !== ''
+    ? prunePiecesConfig(piecesConfigSchema.parse(JSON.parse(data.piecesJson)))
+    : undefined;
+  const input = toCabinetInput(d, pieces);
   // feronerie v4: abaterile per rând (tabelul de feronerie) vin în același submit
   const adjustments = data.hardwareAdjustmentsJson !== undefined
     ? pruneAdjustments(hardwareAdjustmentsSchema.parse(JSON.parse(data.hardwareAdjustmentsJson || '{}')))
