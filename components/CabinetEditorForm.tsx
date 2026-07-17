@@ -66,10 +66,10 @@ const MDF_COLOR_CATEGORY_OPTIONS: FieldOption[] = [
 ];
 
 const TYPE_OPTIONS: FieldOption[] = [
-  { value: 'BAZA', label: 'Corp bază' },
-  { value: 'SUSPENDAT', label: 'Corp suspendat' },
-  { value: 'INALT', label: 'Corp înalt' },
-  { value: 'COLT', label: 'Corp de colț' },
+  { value: 'BAZA', label: 'Bază' },
+  { value: 'SUSPENDAT', label: 'Suspendat' },
+  { value: 'INALT', label: 'Înalt' },
+  { value: 'COLT', label: 'De colț' },
 ];
 
 const FRONT_TYPE_OPTIONS: FieldOption[] = [
@@ -144,6 +144,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const [piecesCfg, setPiecesCfg] = useState<PiecesConfigForm>(initialPieces ?? {});
   // piesa selectată în viewportul 3D / coloana contextuală; null = coloana arată BOM-ul corpului
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [hoveredKey, setHoveredKey] = useState<string | null>(null);
   const [addingFree, setAddingFree] = useState(false);
   const handleSelectPiece = (k: string | null) => { setSelectedKey(k); setAddingFree(false); };
   // produse create pe loc din combobox — vizibile imediat, până le aduce refresh-ul din snapshot
@@ -950,7 +951,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
 
       <div className="hidden xl:sticky xl:top-6 xl:block h-[calc(100vh-7rem)] min-h-[420px] overflow-hidden rounded-xl bg-card ring-1 ring-border">
         {live && !live.expandError ? (
-          <Scene3D pieces={live.pieces} selectedKey={selectedKey} onSelect={handleSelectPiece} materialKindById={materialKindById} />
+          <Scene3D pieces={live.pieces} selectedKey={selectedKey} hoveredKey={hoveredKey} onSelect={handleSelectPiece} onHover={setHoveredKey} materialKindById={materialKindById} />
         ) : (
           <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
             {pieceViewportPlaceholder}
@@ -973,7 +974,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
 
         {live && !live.expandError && (
           <div className="h-[420px] overflow-hidden rounded-xl bg-card ring-1 ring-border xl:hidden">
-            <Scene3D pieces={live.pieces} selectedKey={selectedKey} onSelect={handleSelectPiece} materialKindById={materialKindById} />
+            <Scene3D pieces={live.pieces} selectedKey={selectedKey} hoveredKey={hoveredKey} onSelect={handleSelectPiece} onHover={setHoveredKey} materialKindById={materialKindById} />
           </div>
         )}
 
@@ -984,6 +985,8 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             onSelect={handleSelectPiece}
             cfg={piecesCfg}
             onCfgChange={setPiecesCfg}
+            hoveredKey={hoveredKey}
+            onHover={setHoveredKey}
             materials={pickerMaterials}
             edgeBands={snapshot.edgeBands}
             addingFree={addingFree}

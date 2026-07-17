@@ -8,7 +8,9 @@ export function PieceList(props: {
   pieces: PieceInstance[];
   cfg: PiecesConfigForm;
   selectedKey: string | null;
+  hoveredKey?: string | null;
   onSelect: (key: string) => void;
+  onHover?: (key: string | null) => void;
   onRestore: (key: string) => void;
   onAddFree: () => void;
 }) {
@@ -20,7 +22,12 @@ export function PieceList(props: {
       {props.pieces.map((pc) => (
         <button
           key={pc.key} type="button" onClick={() => props.onSelect(pc.key)}
-          className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm hover:bg-muted/60 ${props.selectedKey === pc.key ? 'bg-accent-blue/10 ring-1 ring-accent-blue' : ''}`}
+          onMouseEnter={() => props.onHover?.(pc.key)}
+          onMouseLeave={() => props.onHover?.(null)}
+          className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm hover:bg-muted/60 ${
+            props.selectedKey === pc.key ? 'bg-accent-blue/10 ring-1 ring-accent-blue'
+            : props.hoveredKey === pc.key ? 'bg-accent-blue/10' : ''
+          }`}
         >
           <span className="flex items-center gap-1.5">
             {(pc.manual && Object.keys(pc.manual).length > 0) && <span className="h-1.5 w-1.5 rounded-full bg-accent-blue" />}

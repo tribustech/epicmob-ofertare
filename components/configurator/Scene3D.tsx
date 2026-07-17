@@ -10,18 +10,24 @@ const KIND_COLORS: Record<string, string> = {
 const S = 1 / 1000; // mm → unități scenă (metri)
 const fmt = (n: number) => String(Math.round(n * 10) / 10);
 
-function PieceMesh({ pc, color, selected, onSelect }: {
-  pc: PieceInstance; color: string; selected: boolean; onSelect: (key: string) => void;
+function PieceMesh({ pc, color, selected, hovered, onSelect, onHover }: {
+  pc: PieceInstance; color: string; selected: boolean; hovered: boolean;
+  onSelect: (key: string) => void; onHover: (key: string | null) => void;
 }) {
   const p = pc.placement!;
   return (
     <mesh
       position={[(p.x + p.w / 2) * S, (p.y + p.h / 2) * S, (p.z + p.d / 2) * S]}
       onClick={(e) => { e.stopPropagation(); onSelect(pc.key); }}
+      onPointerOver={(e) => { e.stopPropagation(); onHover(pc.key); document.body.style.cursor = 'pointer'; }}
+      onPointerOut={() => { onHover(null); document.body.style.cursor = ''; }}
     >
       <boxGeometry args={[p.w * S, p.h * S, p.d * S]} />
-      <meshStandardMaterial color={selected ? '#5b8def' : color} transparent opacity={selected ? 0.95 : 0.92} />
-      <Edges color={selected ? '#2b5fd9' : '#8a6d45'} lineWidth={selected ? 2 : 1} />
+      <meshStandardMaterial
+        color={selected ? '#5b8def' : hovered ? '#93b3f0' : color}
+        transparent opacity={selected ? 0.95 : 0.92}
+      />
+      <Edges color={selected || hovered ? '#2b5fd9' : '#8a6d45'} lineWidth={selected ? 2 : hovered ? 1.5 : 1} />
       {selected && (
         <Html center distanceFactor={1.6} position={[0, p.h * S / 2 + 0.04, 0]}>
           <div className="pointer-events-none whitespace-nowrap rounded bg-foreground/90 px-2 py-0.5 font-mono text-[11px] text-background shadow">
@@ -33,10 +39,12 @@ function PieceMesh({ pc, color, selected, onSelect }: {
   );
 }
 
-export default function Scene3D({ pieces, selectedKey, onSelect, materialKindById }: {
+export default function Scene3D({ pieces, selectedKey, hoveredKey, onSelect, onHover, materialKindById }: {
   pieces: PieceInstance[];
   selectedKey: string | null;
+  hoveredKey: string | null;
   onSelect: (key: string | null) => void;
+  onHover: (key: string | null) => void;
   materialKindById: Record<string, string>;
 }) {
   const placed = pieces.filter((p) => p.placement);
@@ -55,7 +63,8 @@ export default function Scene3D({ pieces, selectedKey, onSelect, materialKindByI
       <group position={[-cx, -cy, 0]}>
         {placed.map((pc) => (
           <PieceMesh
-            key={pc.key} pc={pc} selected={pc.key === selectedKey} onSelect={onSelect}
+            key={pc.key} pc={pc} selected={pc.key === selectedKey} hovered={pc.key === hoveredKey && pc.key !== selectedKey}
+            onSelect={onSelect} onHover={onHover}
             color={KIND_COLORS[materialKindById[pc.materialId] ?? 'PAL'] ?? '#c9a87c'}
           />
         ))}

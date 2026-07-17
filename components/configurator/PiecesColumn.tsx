@@ -26,6 +26,8 @@ export function PiecesColumn(props: {
   onSelect: (key: string | null) => void;
   cfg: PiecesConfigForm;
   onCfgChange: (next: PiecesConfigForm) => void;
+  hoveredKey?: string | null;
+  onHover?: (key: string | null) => void;
   materials: ConfiguratorCatalogItem[];
   edgeBands: ConfiguratorCatalogItem[];
   addingFree: boolean;
@@ -80,6 +82,8 @@ export function PiecesColumn(props: {
           pieces={props.pieces}
           cfg={props.cfg}
           selectedKey={null}
+          hoveredKey={props.hoveredKey}
+          onHover={props.onHover}
           onSelect={(k) => props.onSelect(k)}
           onRestore={(key) => props.onCfgChange({ ...props.cfg, overrides: omit(props.cfg.overrides, key) })}
           onAddFree={props.onAddFree}
