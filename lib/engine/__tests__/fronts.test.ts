@@ -16,17 +16,17 @@ function sertareInput(overrides: Partial<CabinetInput> = {}): CabinetInput {
 }
 
 describe('expandFronts — uși', () => {
-  it('o ușă: W−4 × H−4, MDF vopsit fără cant', () => {
+  it('o ușă: W−2 × H−2, MDF vopsit fără cant', () => {
     const { pieces, fronts } = expandFronts(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
     const parts = toParts(pieces);
     expect(parts).toHaveLength(1);
     expect(parts[0]).toMatchObject({
-      name: 'Ușă', lengthMm: 716, widthMm: 596, qty: 1, materialId: 'mdf-vopsit', edges: {},
+      name: 'Ușă', lengthMm: 718, widthMm: 598, qty: 1, materialId: 'mdf-vopsit', edges: {},
     });
-    expect(fronts).toEqual([{ kind: 'USA', widthMm: 596, heightMm: 716 }]);
+    expect(fronts).toEqual([{ kind: 'USA', widthMm: 598, heightMm: 718 }]);
   });
 
-  it('două uși: (600−4−3)/2 = 296.5 fiecare; PAL cu cant pe 4 laturi', () => {
+  it('două uși: (600−2−2)/2 = 298 fiecare; PAL cu cant pe 4 laturi', () => {
     const input = bazaInput({
       doors: 2, frontMaterialId: 'pal-alb',
       edgeBands: { carcassFrontEdgeId: 'abs-04', frontPerimeterId: 'abs-1' },
@@ -34,7 +34,7 @@ describe('expandFronts — uși', () => {
     const { pieces } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
     const parts = toParts(pieces);
     expect(parts[0]).toMatchObject({
-      widthMm: 296.5, qty: 2,
+      widthMm: 298, qty: 2,
       edges: { l1: 'abs-1', l2: 'abs-1', w1: 'abs-1', w2: 'abs-1' },
     });
   });
@@ -64,15 +64,15 @@ describe('expandFronts — uși', () => {
 });
 
 describe('expandFronts — sertare', () => {
-  it('3 fronturi egale: (720−4−6)/3 ≈ 236.67', () => {
+  it('3 fronturi egale: (720−2−4)/3 = 238', () => {
     const heights = drawerFrontHeights(sertareInput(), DEFAULT_CONSTRUCTION);
     expect(heights).toHaveLength(3);
-    expect(heights[0]).toBeCloseTo(236.67, 1);
+    expect(heights[0]).toBeCloseTo(238, 1);
 
     const { pieces, fronts } = expandFronts(sertareInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
     const parts = toParts(pieces);
     expect(parts).toHaveLength(1); // qty 3 pe o singură linie de piesă identică
-    expect(parts[0]).toMatchObject({ name: 'Front sertar', widthMm: 596, qty: 3 });
+    expect(parts[0]).toMatchObject({ name: 'Front sertar', widthMm: 598, qty: 3 });
     expect(fronts.filter((f) => f.kind === 'SERTAR')).toHaveLength(3);
   });
 
@@ -90,8 +90,8 @@ describe('expandFronts — panou orb (COLT)', () => {
     const { pieces } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
     const blind = pieces.find((p) => p.name === 'Panou orb')!;
     const door = pieces.find((p) => p.name === 'Ușă')!;
-    expect(blind).toMatchObject({ widthMm: 100, lengthMm: 716 });
-    expect(door.widthMm).toBeCloseTo(496, 5); // 600 − 4 − 100
+    expect(blind).toMatchObject({ widthMm: 100, lengthMm: 718 });
+    expect(door.widthMm).toBeCloseTo(498, 5); // 600 − 2 − 100
   });
 
   it('folosește lățimea implicită din constante când blindPanelWidthMm lipsește', () => {

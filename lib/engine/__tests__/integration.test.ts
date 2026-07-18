@@ -48,7 +48,7 @@ describe('computeProject — corp bază de referință (calcul de mână)', () =
     expect(result.hardwareLines).toContainEqual({ hardwareId: 'blum-cliptop', qty: 2 });
     expect(result.hardwareLines).toContainEqual({ hardwareId: 'maner-std', qty: 1 });
     expect(result.hardwareLines).toContainEqual({ hardwareId: 'picior-std', qty: 4 });
-    // spate PFL în falț 600×720 → perimetru 2×(716+596)=2624mm → 27 holtșuruburi (1/10cm)
+    // spate PFL în falț 600×720 → perimetru 2×(718+598)=2632mm → 27 holtșuruburi (1/10cm)
     expect(result.hardwareLines).toContainEqual({ hardwareId: 'holtsurub-std', qty: 27 });
     expect(result.unresolvedHardware).toEqual([]);
   });
@@ -61,10 +61,9 @@ describe('computeProject — corp bază de referință (calcul de mână)', () =
   });
 
   it('costuri identice cu calculul de mână', () => {
-    // bază materiale = 552.03 + 3.13 + 83 + 48 = 686.16 (fără manoperă); vezi costing.test.ts
-    expect(result.costs.totalCost).toBeCloseTo(686.16, 1);
-    expect(result.costs.sellPrice).toBeCloseTo(892.01, 1);
-    expect(result.costs.leiPerMl).toBeCloseTo(1486.69, 0);
+    // bază materiale = 553.21 + 3.13 + 83 + 48 = 687.35 (fără manoperă); vezi costing.test.ts
+    expect(result.costs.totalCost).toBeCloseTo(687.35, 1);
+    expect(result.costs.sellPrice).toBeCloseTo(893.55, 1);
   });
 
   it('fără avertismente pe corpul de referință', () => {

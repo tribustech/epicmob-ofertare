@@ -3,8 +3,8 @@ import { DEFAULT_CONSTRUCTION } from '../constants';
 
 describe('DEFAULT_CONSTRUCTION', () => {
   it('are valorile implicite din spec', () => {
-    expect(DEFAULT_CONSTRUCTION.frontGapMm).toBe(3);
-    expect(DEFAULT_CONSTRUCTION.outerGapMm).toBe(2);
+    expect(DEFAULT_CONSTRUCTION.frontGapMm).toBe(2);
+    expect(DEFAULT_CONSTRUCTION.outerGapMm).toBe(1);
     expect(DEFAULT_CONSTRUCTION.shelfSetbackMm).toBe(30);
     expect(DEFAULT_CONSTRUCTION.backRebateMm).toBe(4);
     expect(DEFAULT_CONSTRUCTION.slideNominalsMm).toContain(450);

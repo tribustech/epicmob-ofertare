@@ -4,8 +4,8 @@ import type { CabinetType, ConstructionConstants } from './types';
 export const LEGGED_TYPES = new Set<CabinetType>(['BAZA', 'INALT', 'COLT']);
 
 export const DEFAULT_CONSTRUCTION: ConstructionConstants = {
-  frontGapMm: 3,
-  outerGapMm: 2,
+  frontGapMm: 2,
+  outerGapMm: 1,
   shelfSetbackMm: 30,
   backRebateMm: 4,
   boardDensityKgPerSqmPerMm: 0.695,

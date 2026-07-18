@@ -34,10 +34,10 @@ describe('expandDrawerBoxes — PAL_BOX', () => {
   it('cutie PAL: laterale, față/spate, fund PFL', () => {
     const { pieces } = expandDrawerBoxes(sertareInput('PAL_BOX'), TEST_CATALOGS, cc);
     const parts = toParts(pieces);
-    // per sertar; front ≈ 236.67 → boxH = 236.67 − 60 = 176.67; boxW = 600 − 36 − 26 = 538
+    // per sertar; front = 238 → boxH = 238 − 60 = 178; boxW = 600 − 36 − 26 = 538
     const sides = parts.find((p) => p.name === 'Laterală sertar')!;
     expect(sides.lengthMm).toBe(500);           // = nominală glisieră
-    expect(sides.widthMm).toBeCloseTo(176.67, 1);
+    expect(sides.widthMm).toBeCloseTo(178, 1);
     expect(sides.qty).toBe(6);                  // 2 × 3 sertare
 
     const fb = parts.find((p) => p.name === 'Față/Spate cutie sertar')!;

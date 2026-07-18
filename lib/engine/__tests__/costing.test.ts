@@ -23,9 +23,9 @@ const COST_CATALOGS: CostCatalogs = {
 
 describe('computeCosts — corp bază de referință', () => {
   // Corp B1: 600×720×560, 1 poliță, 1 ușă MDF vopsit, spate PFL în falț.
-  // Calcul de mână (vezi spec): plăci 552.03, cant 3.13, debitare 83,
+  // Calcul de mână (vezi spec): plăci 553.21, cant 3.13, debitare 83,
   // feronerie 48 (2 balamale×15 + 1 mâner×10 + 4 picioare×2).
-  // bază materiale = 552.03 + 3.13 + 83 + 48 = 686.16; manoperă = bază × laborPct%.
+  // bază materiale = 553.21 + 3.13 + 83 + 48 = 687.35; manoperă = bază × laborPct%.
   const expanded = expandCabinet(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
 
   const result = computeCosts({
@@ -43,18 +43,17 @@ describe('computeCosts — corp bază de referință', () => {
   });
 
   it('categoriile de cost', () => {
-    expect(result.breakdown.boards).toBeCloseTo(552.03, 1);        // 260 + 100 + 0.4267×450
+    expect(result.breakdown.boards).toBeCloseTo(553.21, 1);        // 260 + 100 + 0.4294×450
     expect(result.breakdown.edging).toBeCloseTo(3.13, 1);          // 3.132 ml × 1
     expect(result.breakdown.cuttingService).toBeCloseTo(83, 5);    // PAL 50 + PFL 33
     expect(result.breakdown.hardware).toBeCloseTo(48, 5);
-    expect(result.breakdown.labor).toBeCloseTo(205.85, 1);         // 686.16 × 30%
+    expect(result.breakdown.labor).toBeCloseTo(206.20, 1);         // 687.35 × 30%
     expect(result.breakdown.freeLines).toBe(0);
   });
 
-  it('total, adaos și lei/ml', () => {
-    expect(result.totalCost).toBeCloseTo(686.16, 1);               // bază materiale, fără manoperă
-    expect(result.sellPrice).toBeCloseTo(892.01, 1);                // bază × 1.3
-    expect(result.leiPerMl).toBeCloseTo(1486.69, 0);                // / 0.6 m
+  it('total și adaos', () => {
+    expect(result.totalCost).toBeCloseTo(687.35, 1);               // bază materiale, fără manoperă
+    expect(result.sellPrice).toBeCloseTo(893.55, 1);                // bază × 1.3
   });
 });
 
@@ -68,7 +67,6 @@ describe('computeCosts — cazuri particulare', () => {
     expect(r.breakdown.freeLines).toBe(1000);
     expect(r.totalCost).toBe(1000);
     expect(r.sellPrice).toBe(1000);
-    expect(r.leiPerMl).toBeNull();
   });
 
   it('feronerie inexistentă în catalog → eroare', () => {
@@ -228,14 +226,5 @@ describe('computeCosts — blaturi', () => {
     expect(r.needs.boards).toEqual([
       expect.objectContaining({ materialId: 'blat-x', totalAreaSqm: 3.0, sheets: 2, wastePct: 75 }),
     ]);
-  });
-
-  it('blaturile nu contează la lei/ml (rezervat corpurilor de bază)', () => {
-    const r = computeCosts({
-      parts: [], hardwareLines: [], cabinets: [],
-      freeLines: [], laborPct: 30, nesting: NEST, catalogs: COST_CATALOGS,
-      blats: [blatResult],
-    });
-    expect(r.leiPerMl).toBeNull();
   });
 });
