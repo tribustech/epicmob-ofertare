@@ -57,8 +57,10 @@ function cabinetInputToFormValues(input: CabinetInput, cc: ConstructionConstants
     backMount: input.back.mount,
     carcassFrontEdgeId: input.edgeBands.carcassFrontEdgeId,
     frontPerimeterId: input.edgeBands.frontPerimeterId ?? '',
+    // COLT: lățimea panoului orb trebuie populată indiferent de frontType (uși/sertare/fără),
+    // altfel câmpul ascuns pleacă gol din formular și toCabinetInput pierde valoarea la re-salvare.
     falsStangaMm: input.falseFronts?.stangaMm != null ? String(input.falseFronts.stangaMm)
-      : input.type === 'COLT' && input.doors > 0
+      : input.type === 'COLT'
         ? String(input.blindPanelWidthMm ?? cc.blindPanelDefaultWidthMm)
         : '',
     falsDreaptaMm: input.falseFronts?.dreaptaMm != null ? String(input.falseFronts.dreaptaMm) : '',

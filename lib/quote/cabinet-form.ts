@@ -142,7 +142,11 @@ export function toCabinetInput(d: CabinetFormData, pieces?: PiecesConfigForm): C
       carcassFrontEdgeId: d.carcassFrontEdgeId,
       frontPerimeterId: d.frontPerimeterId ?? null,
     },
-    falseFronts: d.frontType === 'USI' && (d.falsStangaMm !== undefined || d.falsDreaptaMm !== undefined)
+    // COLT e caz special legacy (panou orb): lățimea falsului trebuie să supraviețuiască
+    // round-trip-ului formularului chiar și când câmpurile sunt ascunse (SERTARE/FARA) —
+    // motorul (resolveFalseFronts) reduce fronturile de sertar cu ea la corpurile de colț.
+    falseFronts: (d.frontType === 'USI' || d.type === 'COLT')
+      && (d.falsStangaMm !== undefined || d.falsDreaptaMm !== undefined)
       ? { stangaMm: d.falsStangaMm, dreaptaMm: d.falsDreaptaMm }
       : undefined,
     // uși ridicabile doar la suspendat (set Aventos în loc de balamale)
