@@ -39,6 +39,9 @@ export function PiecesColumn(props: {
   onHoverEdge?: (side: EdgeSide | null) => void;
   hoveredEdge?: EdgeSide | null;
   materialGrainById?: Record<string, boolean>;
+  hiddenKeys?: Set<string>;
+  onToggleVisibility?: (key: string) => void;
+  onShowAll?: () => void;
   materials: ConfiguratorCatalogItem[];
   edgeBands: ConfiguratorCatalogItem[];
   addingFree: boolean;
@@ -107,6 +110,9 @@ export function PiecesColumn(props: {
           selectedKey={null}
           hoveredKey={props.hoveredKey}
           onHover={props.onHover}
+          hiddenKeys={props.hiddenKeys}
+          onToggleVisibility={props.onToggleVisibility}
+          onShowAll={props.onShowAll}
           onSelect={(k) => props.onSelect(k)}
           onRestore={(key) => props.onCfgChange({ ...props.cfg, overrides: omit(props.cfg.overrides, key) })}
           onAddFree={props.onAddFree}

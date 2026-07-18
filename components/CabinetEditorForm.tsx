@@ -146,6 +146,13 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   // piesa selectată în viewportul 3D / coloana contextuală; null = coloana arată BOM-ul corpului
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+  // filtru de vizualizare 3D: piesele ascunse cu „ochiul" (nu afectează calculul/debitarea)
+  const [hiddenKeys, setHiddenKeys] = useState<Set<string>>(() => new Set());
+  const toggleVisibility = (key: string) => setHiddenKeys((prev) => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
   // hover pe rândul unui cant din PiecePanel → evidențiază muchia respectivă pe piesa selectată în 3D
   const [hoveredEdge, setHoveredEdge] = useState<EdgeSide | null>(null);
   const [addingFree, setAddingFree] = useState(false);
@@ -316,6 +323,11 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const invalid = !parsed.success;
   // piesa selectată poate dispărea din live.pieces la regenerare (schimbare corp) — cade pe lista BOM, nu crapă
   const selectedPiece = live?.pieces.find((p) => p.key === selectedKey) ?? null;
+  // scena 3D primește doar piesele nemarcate ca ascunse (lista/BOM-ul le arată pe toate)
+  const visiblePieces = useMemo(
+    () => (live ? live.pieces.filter((p) => !hiddenKeys.has(p.key)) : []),
+    [live, hiddenKeys],
+  );
 
   const materialName = (mid: string) => snapshot.materials.find((m) => m.id === mid)?.name ?? mid;
   const bandName = (bid?: string) => (bid ? (snapshot.edgeBands.find((e) => e.id === bid)?.name ?? bid) : '');
@@ -972,7 +984,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
       <div className="hidden xl:sticky xl:top-6 xl:block h-[calc(100vh-7rem)] min-h-[420px] overflow-hidden rounded-xl bg-card ring-1 ring-border">
         {live && !live.expandError ? (
           <Scene3D
-            pieces={live.pieces} selectedKey={selectedKey} hoveredKey={hoveredKey}
+            pieces={visiblePieces} selectedKey={selectedKey} hoveredKey={hoveredKey}
             hoveredEdge={selectedKey ? hoveredEdge : null}
             onSelect={handleSelectPiece} onHover={setHoveredKey}
             materialKindById={materialKindById} materialGrainById={materialGrainById}
@@ -1000,7 +1012,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
         {live && !live.expandError && (
           <div className="h-[420px] overflow-hidden rounded-xl bg-card ring-1 ring-border xl:hidden">
             <Scene3D
-            pieces={live.pieces} selectedKey={selectedKey} hoveredKey={hoveredKey}
+            pieces={visiblePieces} selectedKey={selectedKey} hoveredKey={hoveredKey}
             hoveredEdge={selectedKey ? hoveredEdge : null}
             onSelect={handleSelectPiece} onHover={setHoveredKey}
             materialKindById={materialKindById} materialGrainById={materialGrainById}
@@ -1020,6 +1032,9 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             onHoverEdge={setHoveredEdge}
             hoveredEdge={hoveredEdge}
             materialGrainById={materialGrainById}
+            hiddenKeys={hiddenKeys}
+            onToggleVisibility={toggleVisibility}
+            onShowAll={() => setHiddenKeys(new Set())}
             materials={pickerMaterials}
             edgeBands={snapshot.edgeBands}
             addingFree={addingFree}
