@@ -10,7 +10,7 @@ export function findMaterial(catalogs: Catalogs, id: string) {
 }
 
 /** Construiește derivarea unei dimensiuni; termenii cu 0 (ex. picior absent) se elimină. */
-function dim(label: string, terms: DimTerm[]): DimCalc {
+export function dim(label: string, terms: DimTerm[]): DimCalc {
   const kept = terms.filter((t) => t.valueMm !== 0);
   return { label, resultMm: kept.reduce((s, t) => s + t.valueMm, 0), terms: kept };
 }

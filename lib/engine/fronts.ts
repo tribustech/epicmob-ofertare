@@ -1,7 +1,7 @@
-import { assertPositiveDim, findMaterial } from './carcass';
+import { assertPositiveDim, dim, findMaterial } from './carcass';
 import { LEGGED_TYPES } from './constants';
 import type {
-  CabinetInput, Catalogs, ConstructionConstants, FrontInfo, MaterialKind, PieceInstance, Warning,
+  CabinetInput, Catalogs, ConstructionConstants, DimTerm, FrontInfo, MaterialKind, PieceInstance, Warning,
 } from './types';
 
 export function drawerFrontHeights(
@@ -90,6 +90,24 @@ export function expandFronts(
     frontH += input.handle.frontExtensionMm; // front prelungit ca să ai de unde deschide
   }
 
+  const frontHTerms: DimTerm[] = [
+    { label: 'înălțime corp', valueMm: input.heightMm },
+    ...(legDeduct > 0 ? [{ label: 'picior', valueMm: -legDeduct }] : []),
+    { label: 'luft sus + jos', valueMm: -2 * cc.outerGapMm },
+    ...(handleType === 'GOLA' ? [{ label: 'profil GOLA', valueMm: -cc.golaFrontDeductMm }] : []),
+    ...(handleType === 'FARA' && input.handle?.frontExtensionMm && input.doors > 0
+      ? [{ label: 'prelungire front', valueMm: input.handle.frontExtensionMm }] : []),
+  ];
+  const frontHCalc = dim('Înălțime', frontHTerms);
+
+  const widthTermsBase: DimTerm[] = [
+    { label: 'lățime corp', valueMm: input.widthMm },
+    ...(fS > 0 ? [{ label: 'fals stânga', valueMm: -fS }] : []),
+    ...(fD > 0 ? [{ label: 'fals dreapta', valueMm: -fD }] : []),
+    { label: 'luft stânga', valueMm: -luftS },
+    { label: 'luft dreapta', valueMm: -luftD },
+  ];
+
   const pieces: PieceInstance[] = [];
   const fronts: FrontInfo[] = [];
   const warnings: Warning[] = [];
@@ -103,6 +121,13 @@ export function expandFronts(
       widthMm: assertPositiveDim(nominal - cc.frontGapMm / 2, `front fals ${side}`, input.label),
       materialId: material.id,
       edges: perim, edgeAxis: FRONT_AXES,
+      calc: {
+        length: frontHCalc,
+        width: dim('Lățime', [
+          { label: 'fals nominal', valueMm: nominal },
+          { label: 'luft spre front', valueMm: -cc.frontGapMm / 2 },
+        ]),
+      },
     });
   }
 
@@ -113,12 +138,28 @@ export function expandFronts(
       ? heights.map((h, i) => assertPositiveDim(h - cc.golaFrontDeductMm, `front sertar ${i + 1} (GOLA)`, input.label))
       : heights;
     // regruparea înălțimilor identice într-o singură linie de piesă se face în toParts
+    const n = input.drawers!.count;
     adjusted.forEach((h, i) => {
       pieces.push({
         key: `front-sertar:${i}`, cabinetLabel: input.label, name: 'Front sertar',
         label: `Front sertar ${i + 1}`,
         lengthMm: h, widthMm: usableW, materialId: material.id,
         edges: perim, edgeAxis: FRONT_AXES,
+        calc: {
+          ...(input.drawers!.frontHeightsMm ? {} : {
+            length: dim('Înălțime', [
+              { label: 'înălțime corp', valueMm: input.heightMm },
+              ...(legDeduct > 0 ? [{ label: 'picior', valueMm: -legDeduct }] : []),
+              { label: 'luft sus + jos', valueMm: -2 * cc.outerGapMm },
+              ...(n > 1 ? [
+                { label: `${n - 1}× luft între fronturi`, valueMm: -(n - 1) * cc.frontGapMm },
+                { label: `partea celorlalte ${n - 1} fronturi`, valueMm: -(heights[i]) * (n - 1) },
+              ] : []),
+              ...(handleType === 'GOLA' ? [{ label: 'profil GOLA', valueMm: -cc.golaFrontDeductMm }] : []),
+            ]),
+          }),
+          width: dim('Lățime', widthTermsBase),
+        },
       });
       fronts.push({ kind: 'SERTAR', widthMm: usableW, heightMm: h });
     });
@@ -132,6 +173,16 @@ export function expandFronts(
         label: input.doors > 1 ? `Ușă ${i + 1}` : 'Ușă',
         lengthMm: frontH, widthMm: doorW, materialId: material.id,
         edges: perim, edgeAxis: FRONT_AXES,
+        calc: {
+          length: frontHCalc,
+          width: dim('Lățime', [
+            ...widthTermsBase,
+            ...(input.doors > 1 ? [
+              { label: `${input.doors - 1}× luft între uși`, valueMm: -(input.doors - 1) * cc.frontGapMm },
+              { label: `partea celorlalte ${input.doors - 1} uși`, valueMm: -doorW * (input.doors - 1) },
+            ] : []),
+          ]),
+        },
       });
       fronts.push({ kind: 'USA', widthMm: doorW, heightMm: frontH });
     }
