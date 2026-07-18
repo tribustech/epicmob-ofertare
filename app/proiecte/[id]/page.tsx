@@ -279,14 +279,6 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                         <div className="text-xl font-bold">{fmtLei(quote.costs.sellPrice)}</div>
                       </CardContent>
                     </Card>
-                    {quote.costs.leiPerMl !== null && (
-                      <Card size="sm" className="col-span-2">
-                        <CardContent>
-                          <div className="text-xs text-muted-foreground">Echivalent lei/ml corpuri de bază</div>
-                          <div className="text-lg font-semibold">{fmtNum(quote.costs.leiPerMl, 0)} lei/ml</div>
-                        </CardContent>
-                      </Card>
-                    )}
                   </div>
 
                   <Table>

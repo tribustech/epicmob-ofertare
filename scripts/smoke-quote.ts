@@ -43,7 +43,6 @@ async function main() {
       piese: quote.parts.length,
       costTotal: quote.costs.totalCost.toFixed(2),
       pretVanzare: quote.costs.sellPrice.toFixed(2),
-      leiPerMl: quote.costs.leiPerMl?.toFixed(0),
     });
   } finally {
     await prisma.project.delete({ where: { id: project.id } });
