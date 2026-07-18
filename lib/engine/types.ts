@@ -114,7 +114,12 @@ export interface CabinetInput {
     carcassFrontEdgeId: string;    // cant muchii frontale carcasă (uzual ABS 0.4)
     frontPerimeterId: string | null; // cant fronturi PAL (uzual ABS 1); MDF vopsit = fără
   };
-  blindPanelWidthMm?: number;      // doar COLT; implicit cc.blindPanelDefaultWidthMm
+  /** fronturi false verticale (piese fixe, fără feronerie): la ras cu marginea corpului,
+   *  −frontGapMm/2 spre frontul vecin. Setabile doar la corpuri cu uși. */
+  falseFronts?: { stangaMm?: number; dreaptaMm?: number };
+  /** LEGACY (pre-fronturi-false): panoul orb de COLȚ — citit doar ca fallback
+   *  pentru inputJson-uri nemigrate; se mapează pe falseFronts.stangaMm. */
+  blindPanelWidthMm?: number;
   /** uși pe corp suspendat: ridicabilă = set Aventos în loc de balamale; lipsă = balamale */
   doorOpening?: 'BALAMALE' | 'RIDICABILA';
   hardwareSel?: {
@@ -153,7 +158,7 @@ export const EDGE_SIDE_LABELS: Record<EdgeSide, string> = {
 };
 
 /** Cheie stabilă de bucată: 'laterala:0', 'blat-corp', 'pazie-fata', 'polita:2',
- *  'usa:0', 'front-sertar:1', 'panou-orb', 'sertar:0:laterala:1', 'libera:<id>'. */
+ *  'usa:0', 'front-sertar:1', 'fals:stanga' | 'fals:dreapta', 'sertar:0:laterala:1', 'libera:<id>'. */
 export type PieceKey = string;
 
 export interface PieceOverride {

@@ -116,8 +116,8 @@ export function CabinetIsoSvg({ input, cc }: { input: CabinetInput; cc: Construc
               [f.xMm, f.yMm, 0], [f.xMm + f.wMm, f.yMm, 0],
               [f.xMm + f.wMm, f.yMm + f.hMm, 0], [f.xMm, f.yMm + f.hMm, 0],
             ])}
-            fill={f.kind === 'PANOU_ORB' ? 'url(#hatch)' : '#cdd7e1'}
-            fillOpacity={f.kind === 'PANOU_ORB' ? 1 : 0.6}
+            fill={f.kind === 'FALS' ? 'url(#hatch)' : '#cdd7e1'}
+            fillOpacity={f.kind === 'FALS' ? 1 : 0.6}
             stroke={stroke} strokeWidth="1.5" strokeLinejoin="round"
           />
           {f.jStrip && (

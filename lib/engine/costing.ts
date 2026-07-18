@@ -4,7 +4,7 @@ import { findMaterial } from './carcass';
 import { computeMaterialNeeds, type BoardNeed, type EdgingNeed } from './needs';
 import type { NestParams } from './nesting';
 import type {
-  CabinetInput, CabinetType, Catalogs, CuttingRate, FreeLine,
+  CabinetInput, Catalogs, CuttingRate, FreeLine,
   HardwareItem, HardwareLine, Part,
 } from './types';
 
@@ -46,8 +46,8 @@ export interface CostCatalogs extends Catalogs {
 
 // numele pieselor de front produse de expandFronts — le identificăm ca să le
 // scoatem din costul de placă/cant și să le cotăm separat pe fronturi vopsite
-export const FRONT_PART_NAMES = new Set(['Ușă', 'Front sertar', 'Panou orb']);
-// doar ușile și fronturile de sertar poartă mâner (contează la frezare); panoul orb nu
+export const FRONT_PART_NAMES = new Set(['Ușă', 'Front sertar', 'Front fals']);
+// doar ușile și fronturile de sertar poartă mâner (contează la frezare); frontul fals nu
 export const HANDLE_FRONT_PART_NAMES = new Set(['Ușă', 'Front sertar']);
 export const FRONT_THICKNESS_MM = 18;
 
@@ -64,13 +64,10 @@ export interface CostResult {
   breakdown: CostBreakdown;
   totalCost: number;
   sellPrice: number;
-  leiPerMl: number | null;
   needs: { boards: BoardNeed[]; edging: EdgingNeed[] };
   // avertizări neblocante (ex. „preț la cerere" pentru un front vopsit fără cotă în catalog)
   warnings?: string[];
 }
-
-const BASE_RUN_TYPES = new Set<CabinetType>(['BAZA', 'COLT']);
 
 export function computeCosts(args: {
   parts: Part[];
@@ -215,13 +212,8 @@ export function computeCosts(args: {
   const totalCost = materialBase + freeLines;
   const sellPrice = materialBase + labor + freeLines;
 
-  const baseRunM = args.cabinets
-    .filter((c) => BASE_RUN_TYPES.has(c.type))
-    .reduce((sum, c) => sum + c.widthMm, 0) / 1000;
-  const leiPerMl = baseRunM > 0 ? sellPrice / baseRunM : null;
-
   return {
-    breakdown, totalCost, sellPrice, leiPerMl, needs,
+    breakdown, totalCost, sellPrice, needs,
     ...(warnings.length > 0 ? { warnings } : {}),
   };
 }

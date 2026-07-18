@@ -24,6 +24,21 @@ export function drawerFrontHeights(
   return Array.from({ length: drawers.count }, () => usable / drawers.count);
 }
 
+/** Falsurile rezolvate (0 = lipsă). Corpurile vechi de COLȚ fără falseFronts cad pe
+ *  blindPanelWidthMm (legacy) sau pe defaultul din setări — păstrează comportamentul
+ *  panoului orb, inclusiv la COLȚ cu sertare. */
+export function resolveFalseFronts(
+  input: CabinetInput, cc: ConstructionConstants,
+): { stangaMm: number; dreaptaMm: number } {
+  if (input.falseFronts) {
+    return { stangaMm: input.falseFronts.stangaMm ?? 0, dreaptaMm: input.falseFronts.dreaptaMm ?? 0 };
+  }
+  if (input.type === 'COLT') {
+    return { stangaMm: input.blindPanelWidthMm ?? cc.blindPanelDefaultWidthMm, dreaptaMm: 0 };
+  }
+  return { stangaMm: 0, dreaptaMm: 0 };
+}
+
 export function expandFronts(
   input: CabinetInput,
   catalogs: Catalogs,
@@ -51,14 +66,16 @@ export function expandFronts(
     ? { sus: bandId, jos: bandId, stanga: bandId, dreapta: bandId }
     : {};
 
-  if (input.blindPanelWidthMm !== undefined && input.blindPanelWidthMm < 0) {
-    throw new Error(
-      `Corpul ${input.label}: blindPanelWidthMm nu poate fi negativ (${input.blindPanelWidthMm}mm)`,
-    );
+  const { stangaMm: fS, dreaptaMm: fD } = resolveFalseFronts(input, cc);
+  if (fS < 0 || fD < 0) {
+    throw new Error(`Corpul ${input.label}: frontul fals nu poate fi negativ`);
   }
-  const blindW = input.type === 'COLT' ? (input.blindPanelWidthMm ?? cc.blindPanelDefaultWidthMm) : 0;
+  // fals = piesă fixă la ras cu marginea: pe partea lui nu se scade luftul exterior,
+  // ci jumătate din luftul dintre fronturi (spre frontul vecin)
+  const luftS = fS > 0 ? cc.frontGapMm / 2 : cc.outerGapMm;
+  const luftD = fD > 0 ? cc.frontGapMm / 2 : cc.outerGapMm;
   const usableW = assertPositiveDim(
-    input.widthMm - 2 * cc.outerGapMm - blindW, 'lățime utilă fronturi', input.label,
+    input.widthMm - fS - fD - luftS - luftD, 'lățime utilă fronturi', input.label,
   );
   // corpul stă pe picior: fronturile scad la fel ca lateralele (vezi expandCarcass)
   const legDeduct = legHeightMm && LEGGED_TYPES.has(input.type) ? legHeightMm : 0;
@@ -77,10 +94,14 @@ export function expandFronts(
   const fronts: FrontInfo[] = [];
   const warnings: Warning[] = [];
 
-  if (blindW > 0) {
+  for (const [side, nominal] of [['stanga', fS], ['dreapta', fD]] as const) {
+    if (nominal <= 0) continue;
     pieces.push({
-      key: 'panou-orb', cabinetLabel: input.label, name: 'Panou orb', label: 'Panou orb',
-      lengthMm: frontH, widthMm: blindW, materialId: material.id,
+      key: `fals:${side}`, cabinetLabel: input.label, name: 'Front fals',
+      label: side === 'stanga' ? 'Front fals stânga' : 'Front fals dreapta',
+      lengthMm: frontH,
+      widthMm: assertPositiveDim(nominal - cc.frontGapMm / 2, `front fals ${side}`, input.label),
+      materialId: material.id,
       edges: perim, edgeAxis: FRONT_AXES,
     });
   }

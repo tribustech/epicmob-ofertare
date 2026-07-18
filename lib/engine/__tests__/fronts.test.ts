@@ -84,29 +84,36 @@ describe('expandFronts — sertare', () => {
   });
 });
 
-describe('expandFronts — panou orb (COLT)', () => {
-  it('adaugă panoul orb și scade lățimea ușii', () => {
+describe('expandFronts — fronturi false', () => {
+  it('fals stânga: piesă nominal−1, la ras; ușa pe lățimea rămasă', () => {
+    const input = bazaInput({ falseFronts: { stangaMm: 100 } });
+    const { pieces, fronts } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const fals = pieces.find((p) => p.key === 'fals:stanga')!;
+    const door = pieces.find((p) => p.name === 'Ușă')!;
+    expect(fals).toMatchObject({ name: 'Front fals', widthMm: 99, lengthMm: 718 });
+    expect(door.widthMm).toBeCloseTo(498, 5); // 600 − 100 − 1 − 1
+    expect(fronts).toHaveLength(1); // falsul NU e FrontInfo (fără balamale)
+  });
+
+  it('COLT legacy: blindPanelWidthMm devine fals stânga', () => {
     const input = bazaInput({ type: 'COLT', blindPanelWidthMm: 100 });
     const { pieces } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
-    const blind = pieces.find((p) => p.name === 'Panou orb')!;
-    const door = pieces.find((p) => p.name === 'Ușă')!;
-    expect(blind).toMatchObject({ widthMm: 100, lengthMm: 718 });
-    expect(door.widthMm).toBeCloseTo(498, 5); // 600 − 2 − 100
+    expect(pieces.find((p) => p.key === 'fals:stanga')!.widthMm).toBe(99);
   });
 
-  it('folosește lățimea implicită din constante când blindPanelWidthMm lipsește', () => {
+  it('COLT legacy fără valoare: defaultul din constante', () => {
     const input = bazaInput({ type: 'COLT' });
     const { pieces } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
-    expect(pieces.find((p) => p.name === 'Panou orb')!.widthMm).toBe(100);
+    expect(pieces.find((p) => p.key === 'fals:stanga')!.widthMm).toBe(99);
   });
 
-  it('blindPanelWidthMm ≥ widthMm → eroare (ușă imposibilă)', () => {
-    const input = bazaInput({ type: 'COLT', blindPanelWidthMm: 600 });
+  it('fals ≥ lățimea corpului → eroare', () => {
+    const input = bazaInput({ falseFronts: { stangaMm: 600 } });
     expect(() => expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION)).toThrow(/imposibilă/i);
   });
 
-  it('blindPanelWidthMm negativ → eroare', () => {
-    const input = bazaInput({ type: 'COLT', blindPanelWidthMm: -10 });
+  it('fals negativ → eroare', () => {
+    const input = bazaInput({ falseFronts: { stangaMm: -10 } });
     expect(() => expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION)).toThrow(/negativ/i);
   });
 });

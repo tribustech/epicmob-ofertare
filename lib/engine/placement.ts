@@ -4,7 +4,7 @@
 // piciorul nu se randează), z: 0→D spate→față (fronturile la z=D, adâncime FRONT_THICKNESS_MM).
 import { LEGGED_TYPES } from './constants';
 import { findMaterial } from './carcass';
-import { drawerFrontHeights } from './fronts';
+import { drawerFrontHeights, resolveFalseFronts } from './fronts';
 import { pickSlideNominal } from './drawers';
 import { FRONT_THICKNESS_MM } from './costing';
 import type { CabinetInput, Catalogs, ConstructionConstants, PieceInstance } from './types';
@@ -32,9 +32,10 @@ export function assignPlacements(
   const isVopsit = input.frontKind === 'MDF_VOPSIT' && !!input.mdfFront;
   const hasFronts = (input.frontMaterialId !== null || isVopsit)
     && (input.doors > 0 || (input.drawers?.count ?? 0) > 0);
-  const blindW = input.type === 'COLT' && hasFronts
-    ? (input.blindPanelWidthMm ?? cc.blindPanelDefaultWidthMm) : 0;
-  const frontX0 = g + blindW;
+  const { stangaMm: fS, dreaptaMm: fD } = hasFronts
+    ? resolveFalseFronts(input, cc) : { stangaMm: 0, dreaptaMm: 0 };
+  // ușile/sertarele încep după piesa de fals (nominal − gap/2) + luftul spre ea
+  const frontX0 = fS > 0 ? fS + cc.frontGapMm / 2 : g;
   const isGola = input.handle?.type === 'GOLA';
   const frontTopY = carcassH - g - (isGola ? cc.golaFrontDeductMm : 0);
 
@@ -87,8 +88,11 @@ export function assignPlacements(
           w: pc.widthMm, h: pc.lengthMm, d: th,
         };
         break;
-      case pc.key === 'panou-orb':
-        pc.placement = { x: g, y: frontTopY - pc.lengthMm, z: D, w: pc.widthMm, h: pc.lengthMm, d: FRONT_THICKNESS_MM };
+      case pc.key === 'fals:stanga':
+        pc.placement = { x: 0, y: frontTopY - pc.lengthMm, z: D, w: pc.widthMm, h: pc.lengthMm, d: FRONT_THICKNESS_MM };
+        break;
+      case pc.key === 'fals:dreapta':
+        pc.placement = { x: W - pc.widthMm, y: frontTopY - pc.lengthMm, z: D, w: pc.widthMm, h: pc.lengthMm, d: FRONT_THICKNESS_MM };
         break;
       case /^usa:\d+$/.test(pc.key): {
         const i = Number(pc.key.split(':')[1]);

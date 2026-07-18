@@ -1,4 +1,5 @@
 import type { CabinetInput, ConstructionConstants } from '@/lib/engine';
+import { resolveFalseFronts } from '@/lib/engine/fronts';
 
 export type HandleMarkKind = 'BARA' | 'BUTON' | 'INGROPAT' | 'PUSH';
 
@@ -7,7 +8,7 @@ export interface IsoRect {
 }
 
 export interface IsoFrontRect extends IsoRect {
-  kind: 'USA' | 'SERTAR' | 'PANOU_ORB';
+  kind: 'USA' | 'SERTAR' | 'FALS';
   handle?: { xMm: number; yMm: number; kind: HandleMarkKind; vertical: boolean };
   jStrip?: IsoRect; // banda frezată J pe muchia de prindere
 }
@@ -35,9 +36,12 @@ export function buildIsoModel(input: CabinetInput, cc: ConstructionConstants): C
   const isVopsit = input.frontKind === 'MDF_VOPSIT' && !!input.mdfFront;
   const hasFronts = (input.frontMaterialId !== null || isVopsit) && (input.doors > 0 || drawerCount > 0);
 
-  const blindW = input.type === 'COLT' && hasFronts ? (input.blindPanelWidthMm ?? cc.blindPanelDefaultWidthMm) : 0;
-  const frontX0 = g + blindW;
-  const usableW = W - 2 * g - blindW;
+  const { stangaMm: fS, dreaptaMm: fD } = hasFronts
+    ? resolveFalseFronts(input, cc) : { stangaMm: 0, dreaptaMm: 0 };
+  const luftS = fS > 0 ? gap / 2 : g;
+  const luftD = fD > 0 ? gap / 2 : g;
+  const frontX0 = fS > 0 ? fS + gap / 2 : g;
+  const usableW = W - fS - fD - luftS - luftD;
   const frontH = H - 2 * g;
 
   const handleType = input.handle?.type;
@@ -61,9 +65,8 @@ export function buildIsoModel(input: CabinetInput, cc: ConstructionConstants): C
   const doorJStrip = (x: number, w: number): IsoRect =>
     ({ xMm: x, yMm: doorY + doorH - J_STRIP_MM, wMm: w, hMm: J_STRIP_MM });
 
-  if (blindW > 0) {
-    fronts.push({ kind: 'PANOU_ORB', xMm: g, yMm: doorY, wMm: blindW, hMm: doorH });
-  }
+  if (fS > 0) fronts.push({ kind: 'FALS', xMm: 0, yMm: doorY, wMm: fS - gap / 2, hMm: doorH });
+  if (fD > 0) fronts.push({ kind: 'FALS', xMm: W - (fD - gap / 2), yMm: doorY, wMm: fD - gap / 2, hMm: doorH });
 
   if (hasFronts && drawerCount > 0) {
     const heights = input.drawers!.frontHeightsMm

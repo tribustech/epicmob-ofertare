@@ -37,10 +37,10 @@ describe('expandCabinet', () => {
     expect(r.hardware.some((h) => h.category === 'PICIOR')).toBe(false);
   });
 
-  it('COLT: include panou orb', () => {
+  it('COLT: include front fals (legacy panou orb)', () => {
     const input = bazaInput({ type: 'COLT' });
     const r = expandCabinet(input, TEST_CATALOGS, cc);
-    expect(r.parts.some((p) => p.name === 'Panou orb')).toBe(true);
+    expect(r.parts.some((p) => p.name === 'Front fals')).toBe(true);
   });
 
   it('INALT 2100mm: 4 balamale pe ușă', () => {
