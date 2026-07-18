@@ -422,7 +422,6 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   }
 
   const type = values.type;
-  const isColt = type === 'COLT';
   const backEnabled = values.backEnabled === 'true';
 
   const [openSections, setOpenSections] = useState<Set<string>>(() => new Set(['dimensiuni']));
@@ -475,14 +474,14 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   // secțiunea fiecărui câmp — pentru marcajul roșu din headerele accordion-ului
   const FIELD_SECTION: Record<string, keyof typeof sectionComplete> = {
     label: 'dimensiuni', type: 'dimensiuni', widthMm: 'dimensiuni', heightMm: 'dimensiuni', depthMm: 'dimensiuni',
-    blindPanelWidthMm: 'dimensiuni', mountTop: 'dimensiuni', mountBottom: 'dimensiuni',
+    mountTop: 'dimensiuni', mountBottom: 'dimensiuni',
     carcassMaterialId: 'materiale', carcassFrontEdgeId: 'materiale', frontKind: 'materiale', frontMaterialId: 'materiale',
     frontPerimeterId: 'materiale', mdfSupplierId: 'materiale', mdfModelId: 'materiale', mdfFinish: 'materiale',
     mdfFaces: 'materiale', mdfRalCode: 'materiale', mdfColorCategory: 'materiale',
     frontType: 'fronturi', doors: 'fronturi', withShelves: 'fronturi', shelves: 'fronturi',
     shelfMaterialId: 'fronturi', shelfDecorMatters: 'fronturi', shelfDecorAxis: 'fronturi',
     drawersCount: 'fronturi', drawersSystem: 'fronturi', drawersBottomMaterialId: 'fronturi', drawerFrontHeightsMm: 'fronturi',
-    tandemboxHeightMm: 'fronturi', doorOpening: 'fronturi',
+    tandemboxHeightMm: 'fronturi', doorOpening: 'fronturi', falsStangaMm: 'fronturi', falsDreaptaMm: 'fronturi',
     handleMode: 'fronturi', handleType: 'fronturi', frontExtensionMm: 'fronturi',
     backEnabled: 'spate', backMaterialId: 'spate', backMount: 'spate',
   };
@@ -545,15 +544,24 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             </div>
             <div className="grid gap-2">
               <Label className={fieldLabelCls}>Tip corp</Label>
-              <SegmentedControl value={type} onChange={(v) => set('type', v)} options={TYPE_OPTIONS} />
+              <SegmentedControl
+                value={type}
+                onChange={(v) => {
+                  markTouched('type');
+                  setValues((prev) => ({
+                    ...prev, type: v,
+                    // COLȚ nou pe fronturi cu uși: precompletăm falsul stânga cu defaultul de „panou orb"
+                    ...(v === 'COLT' && prev.frontType === 'USI' && !prev.falsStangaMm
+                      ? { falsStangaMm: String(cc.blindPanelDefaultWidthMm) } : {}),
+                  }));
+                }}
+                options={TYPE_OPTIONS}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <NumField label="Lățime L (mm)" value={values.widthMm} onChange={onWidthChange} error={showError('widthMm')} />
               <NumField label="Înălțime H (mm)" value={values.heightMm} onChange={onHeightChange} error={showError('heightMm')} />
               <NumField label="Adâncime A (mm)" value={values.depthMm} onChange={(v) => set('depthMm', v)} error={showError('depthMm')} />
-              {isColt && (
-                <NumField label="Panou orb (mm)" value={values.blindPanelWidthMm} onChange={(v) => set('blindPanelWidthMm', v)} error={showError('blindPanelWidthMm')} />
-              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -647,6 +655,10 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                 <p className="text-xs text-muted-foreground">
                   Convenție atelier: până în 600mm lățime → 1 ușă; peste → 2 uși.
                 </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <NumField label="Fals stânga (mm)" value={values.falsStangaMm} onChange={(v) => set('falsStangaMm', v)} error={showError('falsStangaMm')} />
+                  <NumField label="Fals dreapta (mm)" value={values.falsDreaptaMm} onChange={(v) => set('falsDreaptaMm', v)} error={showError('falsDreaptaMm')} />
+                </div>
                 <div className="space-y-3 rounded-lg border p-3">
                   <Label className={fieldLabelCls}>Polițe</Label>
                   <div className="flex items-center gap-2">

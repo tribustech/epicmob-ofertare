@@ -37,7 +37,8 @@ export const cabinetFormSchema = z
     backMount: z.enum(['FALT', 'APLICAT']),
     carcassFrontEdgeId: z.string().min(1, 'Alege cantul carcasei'),
     frontPerimeterId: optStr,
-    blindPanelWidthMm: z.preprocess(emptyToUndefined, posNum.optional()),
+    falsStangaMm: z.preprocess(emptyToUndefined, posNum.optional()),
+    falsDreaptaMm: z.preprocess(emptyToUndefined, posNum.optional()),
     drawersCount: intNonNeg.default(0),
     drawersSystem: z.enum(['PAL_BOX', 'TANDEMBOX']).default('TANDEMBOX'),
     drawersBottomMaterialId: optStr,
@@ -79,6 +80,11 @@ export const cabinetFormSchema = z
   .refine((d) => !d.backEnabled || !!d.backMaterialId, {
     message: 'Alege materialul pentru spate',
     path: ['backMaterialId'],
+  })
+  .refine((d) => d.frontType !== 'USI'
+    || (d.falsStangaMm ?? 0) + (d.falsDreaptaMm ?? 0) < d.widthMm, {
+    message: 'Fronturile false depășesc lățimea corpului',
+    path: ['falsStangaMm'],
   });
 
 export type CabinetFormData = z.infer<typeof cabinetFormSchema>;
@@ -136,7 +142,9 @@ export function toCabinetInput(d: CabinetFormData, pieces?: PiecesConfigForm): C
       carcassFrontEdgeId: d.carcassFrontEdgeId,
       frontPerimeterId: d.frontPerimeterId ?? null,
     },
-    blindPanelWidthMm: d.type === 'COLT' ? d.blindPanelWidthMm : undefined,
+    falseFronts: d.frontType === 'USI' && (d.falsStangaMm !== undefined || d.falsDreaptaMm !== undefined)
+      ? { stangaMm: d.falsStangaMm, dreaptaMm: d.falsDreaptaMm }
+      : undefined,
     // uși ridicabile doar la suspendat (set Aventos în loc de balamale)
     doorOpening: d.frontType === 'USI' && d.type === 'SUSPENDAT' && d.doorOpening === 'RIDICABILA'
       ? 'RIDICABILA'

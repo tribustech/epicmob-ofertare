@@ -23,7 +23,7 @@ const CONSTRUCTION_LABELS: Record<string, string> = {
   legsPerCabinet: 'Picioare per corp',
   shelfSpanWarnMm: 'Avertizare poliță peste (mm)',
   doorMaxWidthMm: 'Avertizare ușă peste (mm)',
-  blindPanelDefaultWidthMm: 'Lățime implicită panou orb (mm)',
+  blindPanelDefaultWidthMm: 'Front fals implicit la colț (mm)',
 };
 
 export default async function SetariPage() {

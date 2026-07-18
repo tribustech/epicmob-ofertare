@@ -10,7 +10,7 @@ const base = {
   carcassMaterialId: 'pal', frontMaterialId: 'pal',
   backEnabled: 'true', backMaterialId: 'pfl', backMount: 'FALT',
   carcassFrontEdgeId: 'abs04', frontPerimeterId: '',
-  blindPanelWidthMm: '',
+  falsStangaMm: '', falsDreaptaMm: '',
   drawersCount: '0', drawersSystem: 'TANDEMBOX',
   drawersBottomMaterialId: '', drawerFrontHeightsMm: '',
   hingeId: '', slideId: '', tandemboxHeightMm: '',
@@ -138,10 +138,12 @@ describe('cabinetFormSchema + toCabinetInput', () => {
     expect(input.back).toEqual({ enabled: true, materialId: 'pfl', mount: 'FALT' });
   });
 
-  it('blindPanelWidthMm se păstrează doar la COLT', () => {
-    const baza = toCabinetInput(cabinetFormSchema.parse({ ...base, blindPanelWidthMm: '120' }));
-    expect(baza.blindPanelWidthMm).toBeUndefined();
-    const colt = toCabinetInput(cabinetFormSchema.parse({ ...base, type: 'COLT', blindPanelWidthMm: '120' }));
-    expect(colt.blindPanelWidthMm).toBe(120);
+  it('falseFronts se emit doar la fronturi cu uși', () => {
+    const usi = toCabinetInput(cabinetFormSchema.parse({ ...base, falsStangaMm: '120' }));
+    expect(usi.falseFronts).toEqual({ stangaMm: 120, dreaptaMm: undefined });
+    const sertare = toCabinetInput(cabinetFormSchema.parse({
+      ...base, frontType: 'SERTARE', drawersCount: '2', falsStangaMm: '120',
+    }));
+    expect(sertare.falseFronts).toBeUndefined();
   });
 });

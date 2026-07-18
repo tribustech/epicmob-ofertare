@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
-import type { CabinetInput } from '@/lib/engine';
+import type { CabinetInput, ConstructionConstants } from '@/lib/engine';
 import { addExtraPart, removeExtraPart, updateBlat, updateCabinetData } from '@/lib/quote/actions';
 import { normalizeCabinetInput } from '@/lib/quote/normalize-input';
 import { normalizeHardwareJson } from '@/lib/quote/hardware-adjustments';
 import type { ExtraPart } from '@/lib/quote/cabinet-form';
+import { parseConstruction } from '@/lib/catalog/convert';
 import { HANDLE_TYPE_OPTIONS } from '@/lib/quote/handle';
 import { buildHardwareSelOptions, loadCorpEditorData, optionsWithCurrent } from '@/lib/quote/corp-editor-data';
 import { CabinetEditorForm } from '@/components/CabinetEditorForm';
@@ -23,7 +24,7 @@ function isInactiveId(rows: { id: string; active: boolean }[], id: string | null
   return !!id && rows.some((r) => r.id === id && !r.active);
 }
 
-function cabinetInputToFormValues(input: CabinetInput): Record<string, string> {
+function cabinetInputToFormValues(input: CabinetInput, cc: ConstructionConstants): Record<string, string> {
   const frontType = input.drawers && input.drawers.count > 0 ? 'SERTARE' : input.doors > 0 ? 'USI' : 'FARA';
   return {
     label: input.label,
@@ -56,7 +57,11 @@ function cabinetInputToFormValues(input: CabinetInput): Record<string, string> {
     backMount: input.back.mount,
     carcassFrontEdgeId: input.edgeBands.carcassFrontEdgeId,
     frontPerimeterId: input.edgeBands.frontPerimeterId ?? '',
-    blindPanelWidthMm: input.blindPanelWidthMm != null ? String(input.blindPanelWidthMm) : '',
+    falsStangaMm: input.falseFronts?.stangaMm != null ? String(input.falseFronts.stangaMm)
+      : input.type === 'COLT' && input.doors > 0
+        ? String(input.blindPanelWidthMm ?? cc.blindPanelDefaultWidthMm)
+        : '',
+    falsDreaptaMm: input.falseFronts?.dreaptaMm != null ? String(input.falseFronts.dreaptaMm) : '',
     drawersCount: String(input.drawers?.count ?? 0),
     drawersSystem: input.drawers?.system ?? 'TANDEMBOX',
     drawersBottomMaterialId: input.drawers?.bottomMaterialId ?? '',
@@ -86,6 +91,7 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
     frontSupplierOptions, frontModelOptions, ralColors,
   } = editorData;
   const legHeightMm = assembly?.legHeightMm ?? null;
+  const cc = parseConstruction(snapshot.settings.constructionJson);
   const activeMaterials = materials.filter((m) => m.active);
   const materialName = (mid: string) => materials.find((m) => m.id === mid)?.name ?? mid;
 
@@ -205,7 +211,7 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
         )}
 
         <CabinetEditorForm
-          initial={cabinetInputToFormValues(input)}
+          initial={cabinetInputToFormValues(input, cc)}
           snapshot={snapshot}
           laborPct={project.laborPct}
           yieldFactor={project.yieldFactor}
