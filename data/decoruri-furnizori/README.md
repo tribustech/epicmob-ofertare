@@ -8,8 +8,49 @@ Date extrase din site-urile furnizorilor pentru a putea căuta decoruri și comp
 
 ## Fișiere
 
-- `decoruri.json` — dataset complet, gata de import/seed
+- `catalog-decoruri.json` — **CATALOG VIZUAL** pe cele 3 branduri țintă (Egger, Kastamonu, AGT), cu imagine locală + preț dealer. Vezi mai jos.
+- `../../public/decoruri/galerie.html` — **galerie vizuală** căutabilă (deschide direct în browser)
+- `../../public/decoruri/{egger,kastamonu,agt}/*.jpg` — thumbnail-uri 300px per decor
+- `decoruri.json` — datasetul brut de prețuri per furnizor (Darel + Trady, toate brandurile)
 - `decoruri.csv` — același dataset pentru Excel / verificare manuală
+
+## catalog-decoruri.json (Egger + Kastamonu + AGT, cu imagini)
+
+**640 produse** pe cele 3 branduri cerute — **451 plăci** (PAL/MDF) + **189 blaturi** de bucătărie.
+Fiecare rând: `brand, cod_decor, cod_normalizat, denumire, structura, image` (cale locală `/decoruri/...`
+sau null), `image_source_url, pret_ron, pret_furnizor, tip`. Blaturile au în plus
+`dimensiuni, grosime_mm, latime_mm, categorie`.
+
+`tip`: `placa` (PAL/MDF panou) · `blat` (blat de bucătărie) · `panou_spate` (splashback Kastamonu).
+Galeria are filtru Plăci/Blaturi. Blaturile sunt un produs separat (se ofertează per lungime,
+lățimi 600/635/650/920mm, grosimi 12/20/28/38mm) — de tratat distinct de plăci în app.
+
+**Blaturi:** Egger 100 (Darel: 600mm, 650mm, laminat compact) + Kastamonu 89 (Trady: blaturi +
+panouri de spate). Toate cu imagine + preț.
+
+Prețul e atașat pe `cod_normalizat` din datasetul de dealeri (Egger←Darel, Kastamonu←Trady).
+
+Acoperire (extragere 2026-07-14):
+
+| Brand | Decoruri | Cu imagine | Cu preț | Sursă imagini |
+|---|---:|---:|---:|---|
+| Egger | 156 | 151 | 149 | palhause.ro + darel.ro |
+| Kastamonu | 160 | 149 | 147 | palhause.ro + trady.ro |
+| AGT | 135 | 134 | 66 | woodcadesign.com + trady.ro |
+| **Total** | **451** | **434** | **362** | |
+
+Imaginile lipsă (palhause dă placeholder) au fost completate din paginile de produs ale dealerilor:
+Egger din darel.ro (Magento, thumbnail 170px), Kastamonu + AGT din trady.ro
+(Odoo: `https://trady.ro/web/image/product.template/{id}/image_1024`). Kastamonu extins de la 80 la 160
+(acoperirea Trady). Prețurile AGT legate pe cod numeric de la Trady (`AGT-3094` → `3094`).
+
+**Goluri rămase:** 17 fără imagine (Egger W980 ST2/SM nu există pe darel; câteva variante TM;
+~11 Kastamonu). AGT are 66/135 cu preț — restul sunt decoruri din catalogul AGT (woodca) pe care
+Trady nu le ține pe stoc, deci n-au preț la dealerii noștri.
+
+Regenerare (scripturi în `scripts/`): `build_catalog.py` (download+resize+merge pe cod) →
+`merge_agt_prices.py` → `fill_agt_images.py` / `fill_kasta.py` / `fill_egger.py` → `build_gallery.py`.
+Datele brute per sursă sunt în `raw/`.
 
 ## Schema fiecărui rând
 

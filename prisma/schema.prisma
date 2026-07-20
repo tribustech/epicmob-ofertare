@@ -143,6 +143,14 @@ model Assembly {
   name        String
   legHeightMm Float     @default(100)
   sortOrder   Int       @default(0)
+  // dimensiunile camerei pentru „Așezare 3D" (null = neconfigurat, se folosesc valori implicite)
+  roomWidthMm  Float?
+  roomDepthMm  Float?
+  roomHeightMm Float?
+  // elemente fixe (grinzi, stâlpi, pereți parțiali, cutii) pentru „Așezare 3D"
+  fixedElementsJson String @default("[]")
+  // pereții camerei ca segmente independente (null = se folosesc cei impliciți din W×D)
+  roomWallsJson     String?
   cabinets    Cabinet[]
 }
 
@@ -156,5 +164,10 @@ model Cabinet {
   inputJson      String
   hardwareJson   String?
   extraPartsJson String    @default("[]")
+  // poziția în „Așezare 3D" a ansamblului (null = neașezat, se auto-aranjează la deschidere)
+  posXMm         Float?
+  posZMm         Float?
+  posYMm         Float?
+  rotDeg         Int?
   updatedAt      DateTime  @updatedAt
 }

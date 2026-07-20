@@ -198,6 +198,62 @@ export const deleteAssembly = formAction(async (assemblyId: string) => {
   revalidatePath(`/proiecte/${a.projectId}`);
 });
 
+const layoutSchema = z.object({
+  room: z.object({ W: z.number().positive(), D: z.number().positive(), H: z.number().positive() }),
+  items: z.array(z.object({
+    id: z.string(),
+    cx: z.number().finite(), cz: z.number().finite(), by: z.number().finite(),
+    rotDeg: z.number().int(),
+  })),
+  fixed: z.array(z.object({
+    id: z.string(), kind: z.enum(['GRINDA', 'STALP', 'PERETE', 'CUTIE', 'GEAM']),
+    w: z.number().positive(), h: z.number().positive(), d: z.number().positive(),
+    cx: z.number().finite(), cz: z.number().finite(), by: z.number().finite(), rot: z.number().finite(),
+  })).default([]),
+  walls: z.array(z.object({
+    id: z.string(), axis: z.enum(['x', 'z']),
+    at: z.number().finite(), lo: z.number().finite(), hi: z.number().finite(), h: z.number().positive(),
+  })).default([]),
+});
+
+// salvează așezarea 3D a unui ansamblu (dimensiuni cameră + poziția fiecărui corp).
+// Apelat din editorul client cu un payload JSON, nu dintr-un <form>.
+export async function saveAssemblyLayout(
+  assemblyId: string, payload: unknown,
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    const d = layoutSchema.parse(payload);
+    const assembly = await prisma.assembly.findUnique({
+      where: { id: assemblyId }, select: { projectId: true },
+    });
+    if (!assembly) throw new Error('Ansamblul nu există');
+    // doar corpurile care aparțin ansamblului pot fi actualizate
+    const valid = new Set(
+      (await prisma.cabinet.findMany({ where: { assemblyId }, select: { id: true } })).map((c) => c.id),
+    );
+    const items = d.items.filter((it) => valid.has(it.id));
+    await prisma.$transaction([
+      prisma.assembly.update({
+        where: { id: assemblyId },
+        data: {
+          roomWidthMm: d.room.W, roomDepthMm: d.room.D, roomHeightMm: d.room.H,
+          fixedElementsJson: JSON.stringify(d.fixed),
+          roomWallsJson: d.walls.length ? JSON.stringify(d.walls) : null,
+        },
+      }),
+      ...items.map((it) => prisma.cabinet.update({
+        where: { id: it.id },
+        data: { posXMm: it.cx, posZMm: it.cz, posYMm: it.by, rotDeg: it.rotDeg },
+      })),
+    ]);
+    revalidatePath(`/proiecte/${assembly.projectId}`);
+    return { ok: true };
+  } catch (e) {
+    if (e instanceof z.ZodError) return { error: 'Date invalide' };
+    return { error: e instanceof Error ? e.message : 'Eroare la salvare' };
+  }
+}
+
 export const addCabinet = formAction(async (projectId: string, assemblyId: string, type: CabinetType = 'BAZA') => {
   const assembly = await prisma.assembly.findUnique({ where: { id: assemblyId } });
   if (!assembly || assembly.projectId !== projectId) {

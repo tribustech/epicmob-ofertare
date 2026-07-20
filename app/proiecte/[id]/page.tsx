@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Copy } from 'lucide-react';
+import { Boxes, Copy } from 'lucide-react';
 import type { Assembly } from '@prisma/client';
 import { legHeightByCabinet, loadProject, toQuoteInput, tryComputeQuote, type LoadedCabinet } from '@/lib/quote/load';
 import type { CabinetIssue } from '@/lib/quote/compute';
@@ -350,7 +350,14 @@ function AssemblyCard({ projectId, assembly, cabinets, issues }: {
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <CardTitle>{assembly.name} <span className="font-normal text-muted-foreground">· picioare {fmtNum(assembly.legHeightMm, 0)} mm</span></CardTitle>
-          <DeleteButton action={deleteAssembly.bind(null, assembly.id)} label="Șterge ansamblul" />
+          <div className="flex items-center gap-1.5">
+            <Button asChild variant="outline" size="sm" title="Așezare 3D a corpurilor">
+              <Link href={`/proiecte/${projectId}/ansamblu/${assembly.id}/asezare`}>
+                <Boxes /> Așezare 3D
+              </Link>
+            </Button>
+            <DeleteButton action={deleteAssembly.bind(null, assembly.id)} label="Șterge ansamblul" />
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
