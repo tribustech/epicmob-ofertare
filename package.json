@@ -4,7 +4,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "vercel-build": "prisma generate && prisma migrate deploy && next build",
+    "postinstall": "prisma generate",
     "start": "next start",
+    "db:up": "docker start epicmob-pg || docker run -d --name epicmob-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=epicmob -p 5433:5432 postgres:16",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:migrate": "prisma migrate dev",
