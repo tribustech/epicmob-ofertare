@@ -42,16 +42,50 @@ const freeLineSchema = z.object({
   amount: z.coerce.number().finite(),
 });
 
-const assemblySchema = z.object({
-  name: z.string().trim().min(1, 'Numele ansamblului lipsește'),
-  legHeightMm: z.coerce.number().positive(),
-});
-
 const optFreeText = z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().trim().optional());
 const optFreeNumber = z.preprocess(
   (v) => (v === '' || v == null ? undefined : v),
   z.coerce.number().positive().optional(),
 );
+
+// tip ansamblu + parametri de blat (bucătărie / comodă cu blat), partajați de add + update.
+const ASSEMBLY_KINDS = ['FARA_BLAT', 'CU_BLAT', 'BUCATARIE'] as const;
+const assemblyBlatFields = {
+  kind: z.enum(ASSEMBLY_KINDS).default('FARA_BLAT'),
+  baseHeightMm: optFreeNumber,
+  blatMaterialId: optFreeText,
+  blatDepthMm: optFreeNumber,
+  upperHeightMm: optFreeNumber,
+};
+type AssemblyBlatInput = {
+  kind: (typeof ASSEMBLY_KINDS)[number];
+  baseHeightMm?: number; blatMaterialId?: string; blatDepthMm?: number; upperHeightMm?: number;
+};
+// la CU_BLAT/BUCATARIE cerem material + adâncime + înălțime bază; la FARA_BLAT nimic.
+const requireBlatFields = (d: AssemblyBlatInput) =>
+  d.kind === 'FARA_BLAT' || (d.baseHeightMm != null && !!d.blatMaterialId && d.blatDepthMm != null);
+// golește câmpurile de blat când tipul nu le folosește (comutarea la FARA_BLAT le curăță).
+function normalizeAssemblyBlat(d: AssemblyBlatInput) {
+  const hasBlat = d.kind !== 'FARA_BLAT';
+  return {
+    kind: d.kind,
+    baseHeightMm: hasBlat ? d.baseHeightMm ?? null : null,
+    blatMaterialId: hasBlat ? d.blatMaterialId ?? null : null,
+    blatDepthMm: hasBlat ? d.blatDepthMm ?? null : null,
+    upperHeightMm: d.kind === 'BUCATARIE' ? d.upperHeightMm ?? null : null,
+  };
+}
+
+const assemblySchema = z
+  .object({
+    name: z.string().trim().min(1, 'Numele ansamblului lipsește'),
+    legHeightMm: z.coerce.number().positive(),
+    ...assemblyBlatFields,
+  })
+  .refine(requireBlatFields, {
+    message: 'Completează materialul, adâncimea și înălțimea bazei pentru blat',
+    path: ['blatMaterialId'],
+  });
 
 const newAssemblySchema = z
   .object({
@@ -59,14 +93,24 @@ const newAssemblySchema = z
     name: optFreeText,
     legHeightPreset: z.enum(ASSEMBLY_LEG_HEIGHT_PRESETS),
     legHeightMm: optFreeNumber,
+    ...assemblyBlatFields,
   })
   .transform((d) => ({
     name: d.name && d.name.length > 0 ? d.name : d.namePreset,
     legHeightMm: d.legHeightMm ?? Number(d.legHeightPreset),
+    kind: d.kind,
+    baseHeightMm: d.baseHeightMm,
+    blatMaterialId: d.blatMaterialId,
+    blatDepthMm: d.blatDepthMm,
+    upperHeightMm: d.upperHeightMm,
   }))
   .refine((d) => d.name !== 'Altul', {
     message: 'Alege un nume — preselecția „Altul" cere numele liber completat',
     path: ['name'],
+  })
+  .refine(requireBlatFields, {
+    message: 'Completează materialul, adâncimea și înălțimea bazei pentru blat',
+    path: ['blatMaterialId'],
   });
 
 export const createProject = formAction(async (fd: FormData) => {
@@ -181,13 +225,18 @@ export const removeFreeLine = formAction(async (projectId: string, index: number
 export const addAssembly = formAction(async (projectId: string, fd: FormData) => {
   const d = newAssemblySchema.parse(formDataToObject(fd));
   const count = await prisma.assembly.count({ where: { projectId } });
-  await prisma.assembly.create({ data: { projectId, name: d.name, legHeightMm: d.legHeightMm, sortOrder: count } });
+  await prisma.assembly.create({
+    data: { projectId, name: d.name, legHeightMm: d.legHeightMm, sortOrder: count, ...normalizeAssemblyBlat(d) },
+  });
   revalidatePath(`/proiecte/${projectId}`);
 });
 
 export const updateAssembly = formAction(async (assemblyId: string, fd: FormData) => {
   const d = assemblySchema.parse(formDataToObject(fd));
-  const a = await prisma.assembly.update({ where: { id: assemblyId }, data: { name: d.name, legHeightMm: d.legHeightMm } });
+  const a = await prisma.assembly.update({
+    where: { id: assemblyId },
+    data: { name: d.name, legHeightMm: d.legHeightMm, ...normalizeAssemblyBlat(d) },
+  });
   revalidatePath(`/proiecte/${a.projectId}`);
 });
 

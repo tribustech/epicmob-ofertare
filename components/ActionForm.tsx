@@ -1,9 +1,10 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import type { FormState } from '@/lib/forms/form-action';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useModalClose } from '@/components/modal-close';
 
 export function ActionForm(props: {
   action: (fd: FormData) => Promise<FormState>;
@@ -11,10 +12,17 @@ export function ActionForm(props: {
   className?: string;
   confirm?: string;
 }) {
-  const [state, dispatch] = useActionState(
+  const [state, dispatch, isPending] = useActionState(
     async (_prev: FormState, fd: FormData) => props.action(fd),
     {} as FormState,
   );
+  // dacă formularul e într-un modal, îl închidem la submit reușit (pending true→false fără eroare)
+  const closeModal = useModalClose();
+  const wasPending = useRef(false);
+  useEffect(() => {
+    if (wasPending.current && !isPending && !state.error) closeModal?.();
+    wasPending.current = isPending;
+  }, [isPending, state, closeModal]);
   return (
     <form
       action={dispatch}

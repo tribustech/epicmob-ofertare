@@ -23,4 +23,6 @@ export const DEFAULT_CONSTRUCTION: ConstructionConstants = {
   golaFrontDeductMm: 35,
   frontExtensionDefaultMm: 30,
   pazieDefaultWidthMm: 100,
+  subBlatClearanceMm: 25,
+  subBlatDoorMm: 20,
 };

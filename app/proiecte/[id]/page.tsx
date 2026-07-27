@@ -15,6 +15,9 @@ import { ASSEMBLY_LEG_HEIGHT_PRESETS, ASSEMBLY_NAME_PRESETS } from '@/lib/quote/
 import { isCabinetInputComplete } from '@/lib/quote/cabinet-form';
 import { ActionForm } from '@/components/ActionForm';
 import { DeleteButton } from '@/components/DeleteButton';
+import { AssemblyKindFields } from '@/components/AssemblyKindFields';
+import { AssemblyAddModal, AssemblyCardShell } from '@/components/AssemblyShell';
+import type { MaterialPickerItem } from '@/components/MaterialPicker';
 import { NumberInput, Select, SubmitButton, TextInput } from '@/components/forms';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -75,6 +78,15 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
     where: { active: true, category: { in: ['MANER', 'ACCESORIU'] } },
     orderBy: { name: 'asc' },
   });
+  const blatMaterials = await prisma.material.findMany({
+    where: { active: true, category: 'BLAT' },
+    orderBy: { name: 'asc' },
+  });
+  const blatMaterialItems = blatMaterials.map((m) => ({
+    id: m.id, name: m.name, kind: m.kind, thicknessMm: m.thicknessMm, brand: m.brand,
+    category: m.category, imageUrl: m.imageUrl, decorCode: m.decorCode,
+    pricePerSheet: m.pricePerSheet, pricePerSqm: m.pricePerSqm, pricingMode: m.pricingMode, active: m.active,
+  }));
 
   const basis = await getQuoteBasis(project);
   const computed = basis.kind !== 'MISSING'
@@ -122,28 +134,27 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                 assembly={a}
                 cabinets={cabinetsByAssembly.get(a.id) ?? []}
                 issues={issueByCabinetId}
+                blatMaterials={blatMaterialItems}
               />
             ))}
             {assemblies.length === 0 && (
               <p className="text-sm text-muted-foreground">Niciun ansamblu încă — adaugă primul mai jos.</p>
             )}
 
-            <Card>
-              <CardHeader><CardTitle>Ansamblu nou</CardTitle></CardHeader>
-              <CardContent>
-                <ActionForm action={addAssembly.bind(null, project.id)} className="grid grid-cols-2 items-end gap-2 md:grid-cols-4">
-                  <Select name="namePreset" label="Tip (preselecție)" options={NAME_PRESET_OPTIONS} defaultValue={NAME_PRESET_OPTIONS[0].value} />
-                  <TextInput name="name" label="Nume liber (opțional)" required={false} />
-                  <Select name="legHeightPreset" label="Picioare (preselecție)" options={LEG_HEIGHT_PRESET_OPTIONS} defaultValue={LEG_HEIGHT_PRESET_OPTIONS[0].value} />
-                  <NumberInput name="legHeightMm" label="Picioare — valoare liberă (mm)" required={false} step="1" />
-                  <div className="col-span-2 md:col-span-4"><SubmitButton>Adaugă ansamblu</SubmitButton></div>
-                </ActionForm>
-                <p className="mt-2 text-xs text-muted-foreground">
+            <AssemblyAddModal>
+              <ActionForm action={addAssembly.bind(null, project.id)} className="grid items-end gap-3 sm:grid-cols-2">
+                <Select name="namePreset" label="Tip (preselecție)" options={NAME_PRESET_OPTIONS} defaultValue={NAME_PRESET_OPTIONS[0].value} />
+                <TextInput name="name" label="Nume liber (opțional)" required={false} />
+                <Select name="legHeightPreset" label="Picioare (preselecție)" options={LEG_HEIGHT_PRESET_OPTIONS} defaultValue={LEG_HEIGHT_PRESET_OPTIONS[0].value} />
+                <NumberInput name="legHeightMm" label="Picioare — valoare liberă (mm)" required={false} step="1" />
+                <AssemblyKindFields blatMaterials={blatMaterialItems} />
+                <p className="text-xs text-muted-foreground sm:col-span-2">
                   Regulă: dacă un câmp liber e completat, el câștigă; altfel se folosește preselecția
                   (pentru nume, „Altul" cere numele liber).
                 </p>
-              </CardContent>
-            </Card>
+                <div className="sm:col-span-2"><SubmitButton>Adaugă ansamblu</SubmitButton></div>
+              </ActionForm>
+            </AssemblyAddModal>
           </section>
 
           {unassigned.length > 0 && (
@@ -342,43 +353,60 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
   );
 }
 
-function AssemblyCard({ projectId, assembly, cabinets, issues }: {
+const ASSEMBLY_KIND_LABELS: Record<string, string> = {
+  FARA_BLAT: '', CU_BLAT: 'cu blat', BUCATARIE: 'bucătărie',
+};
+
+function AssemblyCard({ projectId, assembly, cabinets, issues, blatMaterials }: {
   projectId: string; assembly: Assembly; cabinets: LoadedCabinet[]; issues: Map<string, CabinetIssue>;
+  blatMaterials: MaterialPickerItem[];
 }) {
+  const kindLabel = ASSEMBLY_KIND_LABELS[assembly.kind] ?? '';
+  const blatSummary = assembly.kind !== 'FARA_BLAT' && assembly.baseHeightMm != null && assembly.blatDepthMm != null
+    ? ` · ${kindLabel}: bază ${fmtNum(assembly.baseHeightMm, 0)} / blat A${fmtNum(assembly.blatDepthMm, 0)} mm`
+    : kindLabel ? ` · ${kindLabel}` : '';
+  const editForm = (
+    <ActionForm action={updateAssembly.bind(null, assembly.id)} className="grid items-end gap-3 sm:grid-cols-2">
+      <TextInput name="name" label="Nume" defaultValue={assembly.name} />
+      <NumberInput name="legHeightMm" label="Picioare (mm)" defaultValue={assembly.legHeightMm} step="1" />
+      <AssemblyKindFields
+        blatMaterials={blatMaterials}
+        defaults={{
+          kind: assembly.kind,
+          baseHeightMm: assembly.baseHeightMm,
+          blatMaterialId: assembly.blatMaterialId,
+          blatDepthMm: assembly.blatDepthMm,
+          upperHeightMm: assembly.upperHeightMm,
+        }}
+      />
+      <div className="sm:col-span-2"><SubmitButton>Salvează</SubmitButton></div>
+    </ActionForm>
+  );
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between gap-2">
-          <CardTitle>{assembly.name} <span className="font-normal text-muted-foreground">· picioare {fmtNum(assembly.legHeightMm, 0)} mm</span></CardTitle>
-          <div className="flex items-center gap-1.5">
-            <Button asChild variant="outline" size="sm" title="Așezare 3D a corpurilor">
-              <Link href={`/proiecte/${projectId}/ansamblu/${assembly.id}/asezare`}>
-                <Boxes /> Așezare 3D
-              </Link>
-            </Button>
-            <DeleteButton action={deleteAssembly.bind(null, assembly.id)} label="Șterge ansamblul" />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <ActionForm action={updateAssembly.bind(null, assembly.id)} className="grid grid-cols-2 items-end gap-2 md:grid-cols-4">
-          <TextInput name="name" label="Nume" defaultValue={assembly.name} />
-          <NumberInput name="legHeightMm" label="Picioare (mm)" defaultValue={assembly.legHeightMm} step="1" />
-          <div><SubmitButton>Salvează</SubmitButton></div>
+    <AssemblyCardShell
+      name={assembly.name}
+      metaText={`· picioare ${fmtNum(assembly.legHeightMm, 0)} mm${blatSummary}`}
+      threeDSlot={(
+        <Button asChild variant="outline" size="sm" title="Așezare 3D a corpurilor">
+          <Link href={`/proiecte/${projectId}/ansamblu/${assembly.id}/asezare`}>
+            <Boxes /> Așezare 3D
+          </Link>
+        </Button>
+      )}
+      deleteSlot={<DeleteButton action={deleteAssembly.bind(null, assembly.id)} label="Șterge ansamblul" />}
+      editForm={editForm}
+    >
+      <CabinetsTable projectId={projectId} cabinets={cabinets} issues={issues} />
+
+      <div className="flex gap-2">
+        <ActionForm action={addCabinet.bind(null, projectId, assembly.id, 'BAZA')}>
+          <SubmitButton>Adaugă corp</SubmitButton>
         </ActionForm>
-
-        <CabinetsTable projectId={projectId} cabinets={cabinets} issues={issues} />
-
-        <div className="flex gap-2">
-          <ActionForm action={addCabinet.bind(null, projectId, assembly.id, 'BAZA')}>
-            <SubmitButton>Adaugă corp</SubmitButton>
-          </ActionForm>
-          <ActionForm action={addCabinet.bind(null, projectId, assembly.id, 'BLAT')}>
-            <SubmitButton>Adaugă blat</SubmitButton>
-          </ActionForm>
-        </div>
-      </CardContent>
-    </Card>
+        <ActionForm action={addCabinet.bind(null, projectId, assembly.id, 'BLAT')}>
+          <SubmitButton>Adaugă blat</SubmitButton>
+        </ActionForm>
+      </div>
+    </AssemblyCardShell>
   );
 }
 

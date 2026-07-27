@@ -17,6 +17,7 @@ import type {
 import { buildHardwareDefaults, parseConstruction, toCostCatalogs } from '@/lib/catalog/convert';
 import { setMaterialHasGrain } from '@/lib/catalog/actions';
 import { pickLegId } from '@/lib/quote/legs';
+import { deriveSubBlatDims, type SubBlatParams } from '@/lib/quote/sub-blat';
 import type { FormState } from '@/lib/forms/form-action';
 import { fmtNum } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -112,6 +113,10 @@ export interface CabinetEditorFormProps {
   laborPct: number;
   yieldFactor: number;
   legHeightMm: number | null;
+  /** parametrii de blat ai ansamblului (bucătărie / comodă cu blat); null = ansamblu fără blat */
+  subBlatParams?: SubBlatParams | null;
+  /** BUCATARIE: prefill înălțime la corpurile SUSPENDAT; null = fără prefill */
+  upperHeightMm?: number | null;
   bandOptions: {
     carcassFront: FieldOption[];
     frontPerimeter: FieldOption[];
@@ -132,6 +137,7 @@ export interface CabinetEditorFormProps {
 export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const {
     initial, snapshot, laborPct, yieldFactor, legHeightMm,
+    subBlatParams, upperHeightMm,
     bandOptions, hardwareAdjustments, extraParts,
     extraPartsSlot, extraPartsSummary,
     frontSupplierOptions, frontModelOptions, ralColors,
@@ -272,6 +278,40 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     next[i] = Number(v);
     set('drawerFrontHeightsMm', next.join(', '));
   };
+  // corp „sub blat" (doar BAZA în ansamblu cu blat): derivă înălțimea + adâncimea din blatul
+  // ansamblului. Event-driven (la bifare / „↺ auto"), nu reactiv — câmpurile rămân editabile.
+  const subBlatAvailable = subBlatParams != null && values.type === 'BAZA';
+  const subBlatOn = subBlatAvailable && values.subBlat === 'true';
+  const setDerivedSubBlat = (
+    prev: Record<string, string>,
+    which: 'both' | 'height' | 'depth',
+  ): Record<string, string> => {
+    const d = deriveSubBlatDims(subBlatParams!, legHeightMm ?? 0, cc);
+    const next = { ...prev };
+    if (which !== 'depth') {
+      next.heightMm = String(d.heightMm);
+      const n = Math.max(0, Math.trunc(Number(prev.drawersCount) || 0));
+      if (prev.frontType === 'SERTARE' && n > 0 && !heightsTouched) {
+        next.drawerFrontHeightsMm = equalHeights(d.heightMm - legDeduct, n).join(', ');
+      }
+    }
+    if (which !== 'height') next.depthMm = String(d.depthMm);
+    return next;
+  };
+  const onToggleSubBlat = (checked: boolean) => {
+    if (!checked || subBlatParams == null) {
+      setValues((prev) => ({ ...prev, subBlat: checked ? 'true' : 'false' }));
+      // debifat → revenim la capac plin (implicit)
+      if (!checked) setPiecesCfg((prev) => ({ ...prev, top: { ...prev.top, variant: 'PLIN' } }));
+      return;
+    }
+    setValues((prev) => ({ ...setDerivedSubBlat(prev, 'both'), subBlat: 'true' }));
+    // corp sub blat = fără capac, cu pazii (apare și în configurator, și în 3D)
+    setPiecesCfg((prev) => ({ ...prev, top: { ...prev.top, variant: 'PAZII' } }));
+  };
+  const reAutoSubBlat = (which: 'height' | 'depth') =>
+    setValues((prev) => setDerivedSubBlat(prev, which));
+
   const usableDrawerH = Number(values.heightMm) - legDeduct - 2 * cc.outerGapMm - (drawersCount - 1) * cc.frontGapMm;
   const drawerSum = drawerHeights.reduce((a, b) => a + b, 0);
   const drawerSumMismatch = drawersCount > 0 && drawerHeights.length === drawersCount
@@ -553,16 +593,50 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                     // COLȚ nou pe fronturi cu uși: precompletăm falsul stânga cu defaultul de „panou orb"
                     ...(v === 'COLT' && prev.frontType === 'USI' && !prev.falsStangaMm
                       ? { falsStangaMm: String(cc.blindPanelDefaultWidthMm) } : {}),
+                    // „sub blat" e valabil doar la BAZA — se dezactivează la alt tip
+                    ...(v !== 'BAZA' ? { subBlat: 'false' } : {}),
+                    // BUCATARIE: precompletăm înălțimea corpului suspendat, cât timp e goală
+                    ...(v === 'SUSPENDAT' && upperHeightMm != null && !prev.heightMm
+                      ? { heightMm: String(upperHeightMm) } : {}),
                   }));
                 }}
                 options={TYPE_OPTIONS}
               />
             </div>
+            {subBlatAvailable && (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="subBlat"
+                  checked={values.subBlat === 'true'}
+                  onCheckedChange={(c) => onToggleSubBlat(c === true)}
+                />
+                <Label htmlFor="subBlat" className="font-normal">
+                  Sub blat{' '}
+                  <span className="text-muted-foreground">— înălțimea și adâncimea se calculează din blat</span>
+                </Label>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <NumField label="Lățime L (mm)" value={values.widthMm} onChange={onWidthChange} error={showError('widthMm')} />
               <NumField label="Înălțime H (mm)" value={values.heightMm} onChange={onHeightChange} error={showError('heightMm')} />
               <NumField label="Adâncime A (mm)" value={values.depthMm} onChange={(v) => set('depthMm', v)} error={showError('depthMm')} />
             </div>
+            {subBlatOn && subBlatParams && (
+              <div className="space-y-1 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                <p>
+                  <span className="font-medium text-foreground">Adâncime {values.depthMm}</span> = blat {subBlatParams.blatDepthMm} − {cc.subBlatClearanceMm} luft − {cc.subBlatDoorMm} ușă
+                  <span className="text-muted-foreground"> (spatele/PFL îl scade motorul separat din laterale → nu se dublează)</span>
+                </p>
+                <p>
+                  <span className="font-medium text-foreground">Înălțime {values.heightMm}</span> = bază {subBlatParams.baseHeightMm} − {legHeightMm ?? 0} picioare − {subBlatParams.blatThicknessMm} grosime blat
+                </p>
+                <p>Fără capac — corpul primește pazii (vizibile în configurator + 3D). Câmpurile rămân editabile.</p>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 pt-0.5">
+                  <button type="button" className="text-accent-blue-foreground hover:underline" onClick={() => reAutoSubBlat('height')}>↺ recalculează înălțimea</button>
+                  <button type="button" className="text-accent-blue-foreground hover:underline" onClick={() => reAutoSubBlat('depth')}>↺ recalculează adâncimea</button>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <SelectField label="Blat corp (sus)" value={values.mountTop} onChange={(v) => set('mountTop', v)} options={MOUNT_OPTIONS} />

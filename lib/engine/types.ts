@@ -65,6 +65,10 @@ export interface ConstructionConstants {
   golaFrontDeductMm: number;         // GOLA: scurtarea fronturilor (profilul ocupă din înălțime)
   frontExtensionDefaultMm: number;   // „fără mâner": prelungirea implicită a frontului
   pazieDefaultWidthMm: number;       // lățimea implicită a paziilor (capac tip pazii)
+  // corpuri „sub blat": adâncime EXTERIOARĂ corp = adâncime blat − luft sub blat − ușă
+  // (spatele PFL + holtșurubul se scad separat de motor din laterale — nu se dublează aici)
+  subBlatClearanceMm: number;        // luft sub blat (consola frontală a blatului)
+  subBlatDoorMm: number;             // ușă (frontul din față)
 }
 
 export type CabinetType = 'BAZA' | 'SUSPENDAT' | 'INALT' | 'COLT' | 'BLAT';
@@ -94,6 +98,9 @@ export interface CabinetInput {
   heightMm: number;
   depthMm: number;
   mount?: { top?: PanelMount; bottom?: PanelMount }; // lipsă = încadrat (comportamentul istoric)
+  /** doar type === 'BAZA' în ansamblu cu blat: corp „sub blat" — editorul derivă înălțimea/adâncimea
+   *  din parametrii de blat ai ansamblului. Marker pentru UI; dimensiunile efective rămân în height/depth. */
+  subBlat?: boolean;
   shelves: number;
   /** materialul polițelor (lipsă = materialul carcasei) și axa decorului
    *  ('LR' stânga–dreapta = istoric; 'FB' față–spate = piesa rotită la debitare);

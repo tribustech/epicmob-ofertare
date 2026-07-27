@@ -94,6 +94,31 @@ export async function quickCreateHardware(
     return { error: e instanceof Error ? e.message : 'Nu s-a putut crea produsul' };
   }
 }
+/** Quick-create al unui material de blat (din configuratorul de ansamblu). Blat = placă
+ *  PER_SHEET; câmpurile esențiale pentru calcul: grosime, dimensiuni placă, preț/placă. */
+export async function quickCreateBlatMaterial(data: {
+  name: string; thicknessMm: number; sheetLengthMm: number; sheetWidthMm: number; pricePerSheet: number;
+}): Promise<{ id?: string; error?: string }> {
+  try {
+    const name = data.name.trim();
+    if (!name) return { error: 'Denumirea lipsește' };
+    if (![data.thicknessMm, data.sheetLengthMm, data.sheetWidthMm, data.pricePerSheet].every((n) => Number.isFinite(n) && n > 0)) {
+      return { error: 'Completează grosimea, dimensiunile plăcii și prețul (valori > 0)' };
+    }
+    const row = await prisma.material.create({
+      data: {
+        name, kind: 'PAL', category: 'BLAT', thicknessMm: data.thicknessMm,
+        sheetLengthMm: data.sheetLengthMm, sheetWidthMm: data.sheetWidthMm,
+        pricingMode: 'PER_SHEET', pricePerSheet: data.pricePerSheet, active: true, hasGrain: false,
+      },
+    });
+    revalidatePath('/cataloage/materiale');
+    return { id: row.id };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Nu s-a putut crea blatul' };
+  }
+}
+
 export const updateHardware = formAction(async (id: string, fd: FormData) => {
   await prisma.hardwareItem.update({ where: { id }, data: hardwareData(fd) });
   revalidatePath('/cataloage/feronerie');

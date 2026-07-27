@@ -111,19 +111,24 @@ manual pe înălțime/adâncime, dimensiunile se derivă din parametrii de blat 
 - La SUSPENDAT (`kind === BUCATARIE` cu `upperHeightMm`): înălțimea se **pre-completează**
   o dată (prefill simplu, editabil), fără checkbox, fără legătură live.
 
-## Motor / data flow (partea sensibilă)
+## Motor / data flow — DEVIERE de la abordarea inițială (decisă la implementare)
 
-Motorul lucrează per-corp și nu cunoaște ansamblul. Ca la `withResolvedHandle`, adaug un
-pas pur **`withResolvedSubBlat(input, assemblyBlat)`** care, când `subBlat === true` și
-nu există override manual, injectează `depthMm` / `heightMm` derivate **înainte** de
-`expandCabinet`. `assemblyBlat` = `{ baseHeightMm, legHeightMm, blatThicknessMm, blatDepthMm }`.
+**NU derivăm în motor.** Spre deosebire de mâner (moștenit din proiect la runtime, nestocat
+per corp), **înălțimea și adâncimea SUNT deja stocate per corp**. Deci derivarea trăiește în
+**editorul de corp** (client), folosind pattern-ul `touched` deja existent: la bifarea
+„Sub blat" (sau la „↺ auto" per câmp) formularul calculează dimensiunile din parametrii de
+blat ai ansamblului și le scrie în input; câmpurile rămân editabile (override = touched).
 
-**Trebuie apelat pe TOATE drumurile spre expand** (identic cu bug-ul de mâner prins de 2
-ori la review):
-- `computeQuote` (`lib/quote/compute.ts`)
-- estimarea live din editor (`lib/quote/estimate.ts`)
-- preview-ul live client-side din pagina corpului
-- pagina corpului / orice `expandCabinet`
+Motorul rămâne **neatins** — citește `heightMm` / `depthMm` ca azi. Asta elimină complet
+riscul „am uitat un drum → sub-tarifare" (bug-ul de mâner prins de 2 ori) fiindcă e o singură
+sursă de adevăr: dimensiunile stocate. Singura schimbare de plumbing: **loader-ul
+`corp-editor-data.ts` trece parametrii de blat ai ansamblului** (baseHeightMm, blatDepthMm,
+grosimea rezolvată din blatMaterialId) în formular. Funcția pură `deriveSubBlatDims(...)`
+primește test unit.
+
+Consecință acceptată: dacă schimbi blatul ansamblului DUPĂ ce ai corpuri sub blat, ele NU se
+re-derivă automat (redeschizi corpul + „↺ auto"). La L/U toate corpurile de jos au aceeași
+înălțime oricum, deci le derivezi identic la creare.
 
 Dacă un drum e uitat → preț/dimensiuni greșite silențios.
 

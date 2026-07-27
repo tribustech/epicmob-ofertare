@@ -72,6 +72,8 @@ export type LayoutItem = {
   shelves: number; // nr. polițe (arătate doar la corpurile fără fronturi, ca să se vadă fața)
   cx: number; cz: number; by: number; // centru X/Z + cota de jos (mm)
   rot: number;     // radiani, multiplu de 90°
+  topOpen?: boolean;     // corp „sub blat"/pazii: fără capac plin — se randează cu vârful deschis
+  pazieWidthMm?: number; // lățimea barelor de pazie (când topOpen din pazii); lipsă = capac absent
 };
 
 // peretele cel mai apropiat de (cx,cz) în raza `maxDist`, cu partea dinspre cameră (inner)
@@ -342,16 +344,30 @@ export function defaultRoom(items: Pick<LayoutItem, 'w' | 'd' | 'legMm'>[]): Lay
 
 // așază corpurile fără poziție salvată într-un rând pe peretele din spate, în ordine,
 // începând după corpurile deja poziționate
-export function autoLayout(positioned: LayoutItem[], loose: LayoutItem[], room: LayoutRoom): LayoutItem[] {
+// `blatTopMm` = fața de sus a blatului (înălțime corpuri bază); când e dat, blatul se așază cu
+// VÂRFUL acolo (fund = blatTopMm − grosime), ca să stea exact pe corpurile de jos.
+export function autoLayout(
+  positioned: LayoutItem[], loose: LayoutItem[], room: LayoutRoom, blatTopMm?: number | null,
+): LayoutItem[] {
   let x = positioned.reduce((mx, c) => Math.max(mx, c.cx + foot(c).fw / 2), 0);
   return loose.map((c) => {
     const { fw, fd } = foot(c);
     const cx = clampX(x + fw / 2, fw, room);
     x += fw;
-    // blatul pornește la cota de blat (stă peste bazele standard); alte corpuri fără picioare = suspendate
-    const by = hasLegs(c) ? 0 : c.type === 'BLAT' ? BLAT_MOUNT : DEFAULT_MOUNT;
+    // blatul stă peste bazele standard; alte corpuri fără picioare = suspendate
+    const by = hasLegs(c)
+      ? 0
+      : c.type === 'BLAT'
+        ? (blatTopMm != null ? Math.max(0, blatTopMm - c.h) : BLAT_MOUNT)
+        : DEFAULT_MOUNT;
     return { ...c, cx, cz: fd / 2, by: clampBy(c, by, room) };
   });
+}
+
+/** Cota de jos implicită a unui blat: dacă ansamblul are „înălțime corpuri bază", vârful
+ *  blatului stă acolo (fund = baseHeight − grosime); altfel cota tipică BLAT_MOUNT. */
+export function blatBottomFor(thicknessMm: number, blatTopMm?: number | null): number {
+  return blatTopMm != null ? Math.max(0, blatTopMm - thicknessMm) : BLAT_MOUNT;
 }
 
 const clampX = (cx: number, fw: number, room: LayoutRoom) =>

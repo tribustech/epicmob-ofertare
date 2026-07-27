@@ -104,6 +104,20 @@ function OpenBody({ c }: { c: LayoutItem }) {
   return <group>{parts}</group>;
 }
 
+// corp „sub blat" (fără capac): două bare de pazie sus (față + spate), gol între ele.
+function Pazii({ c }: { c: LayoutItem }) {
+  if (!c.topOpen || !c.pazieWidthMm) return null;
+  const pw = c.pazieWidthMm;
+  const yTop = (c.h / 2 - 9) * S;
+  const bar = (key: string, z: number) => (
+    <mesh key={key} position={[0, yTop, z]} raycast={() => null}>
+      <boxGeometry args={[Math.max(20, c.w - 24) * S, 18 * S, pw * S]} />
+      <meshStandardMaterial color="#bda06f" />
+    </mesh>
+  );
+  return <group>{bar('front', (c.d / 2 - pw / 2) * S)}{bar('back', (-c.d / 2 + pw / 2) * S)}</group>;
+}
+
 function CabMesh({ c, hovered, active, interactive, onDown, onHover }: {
   c: LayoutItem; hovered: boolean; active: boolean; interactive: boolean;
   onDown: (e: ThreeEvent<PointerEvent>, b: Box) => void; onHover: (id: string | null) => void;
@@ -119,15 +133,17 @@ function CabMesh({ c, hovered, active, interactive, onDown, onHover }: {
         onPointerOut={interactive ? () => { onHover(null); document.body.style.cursor = ''; } : undefined}
       >
         <boxGeometry args={[c.w * S, c.h * S, c.d * S]} />
-        <meshStandardMaterial color={active ? '#5b8def' : hovered ? '#93b3f0' : COLORS[c.type] ?? '#c9a87c'} transparent opacity={(c.type === 'BLAT' ? 0.95 : c.front ? 0.94 : 0.55) * dim} />
+        <meshStandardMaterial color={active ? '#5b8def' : hovered ? '#93b3f0' : COLORS[c.type] ?? '#c9a87c'} transparent opacity={(c.type === 'BLAT' ? 0.95 : c.topOpen ? 0.32 : c.front ? 0.94 : 0.55) * dim} depthWrite={!c.topOpen} />
         <Edges color={active || hovered ? '#2b5fd9' : '#8a6d45'} lineWidth={active ? 2.5 : 1} />
       </mesh>
       {/* blatul e o placă simplă — fără fronturi, fără polițe/spate */}
       {c.type === 'BLAT' ? null : c.front ? <FrontFace c={c} /> : <OpenBody c={c} />}
+      {/* corp fără capac: barele de pazie în locul capacului */}
+      <Pazii c={c} />
       {(hovered || active) && (
         <Html center distanceFactor={2.6} position={[0, c.h * S / 2 + 0.05, 0]}>
           <div className="pointer-events-none whitespace-nowrap rounded bg-foreground/90 px-2 py-0.5 font-mono text-[11px] text-background shadow">
-            {c.label} · {c.w}×{c.h}×{c.d} · {radToDeg(c.rot)}° · h={Math.round(c.by)}mm
+            {c.label} · {c.w}×{c.h}×{c.d} · {radToDeg(c.rot)}° · jos {Math.round(c.by)} → sus {Math.round(c.by + c.legMm + c.h)}mm
           </div>
         </Html>
       )}

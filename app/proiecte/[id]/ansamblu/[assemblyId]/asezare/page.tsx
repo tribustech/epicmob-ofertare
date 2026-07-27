@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { normalizeCabinetInput } from '@/lib/quote/normalize-input';
-import { autoLayout, BLAT_MOUNT, defaultRoom, degToRad, DEFAULT_MOUNT, type FixedItem, type Front, type LayoutItem, type LayoutRoom } from '@/lib/quote/layout';
+import { autoLayout, blatBottomFor, defaultRoom, degToRad, DEFAULT_MOUNT, type FixedItem, type Front, type LayoutItem, type LayoutRoom } from '@/lib/quote/layout';
 import type { CabinetInput } from '@/lib/engine';
 import AssemblyLayout3D from '@/components/configurator/AssemblyLayout3D';
 
@@ -39,6 +39,9 @@ export default async function AsezarePage({ params }: { params: Promise<{ id: st
 
   // construiește corpurile plasabile (fără corpuri incomplete). Blatul intră ca placă:
   // grosimea (heightMm, ~38mm din specificațiile materialului) e înălțimea plăcii; îl așază operatorul.
+  // fața de sus a blatului = „înălțime corpuri bază"; blatul se așază cu vârful acolo
+  const blatTopMm = assembly.kind !== 'FARA_BLAT' && assembly.baseHeightMm != null ? assembly.baseHeightMm : null;
+
   const positioned: LayoutItem[] = [];
   const loose: LayoutItem[] = [];
   for (const c of assembly.cabinets) {
@@ -47,16 +50,20 @@ export default async function AsezarePage({ params }: { params: Promise<{ id: st
     // blatul cere doar lungime + adâncime; grosimea cade pe 38mm dacă lipsește (blaturi vechi)
     if (!(input.widthMm > 0 && input.depthMm > 0 && (isBlat || input.heightMm > 0))) continue;
     const legMm = FLOOR_TYPES.has(input.type) ? assembly.legHeightMm : 0;
+    // corp „sub blat"/pazii → fără capac plin (se randează cu vârful deschis + bare de pazie)
+    const topVar = input.pieces?.top?.variant ?? (input.subBlat ? 'PAZII' : 'PLIN');
     const item: LayoutItem = {
       id: c.id, label: input.label, type: input.type,
       w: input.widthMm, h: isBlat && input.heightMm <= 0 ? 38 : input.heightMm, d: input.depthMm, legMm,
       front: frontOf(input), shelves: input.shelves ?? 0,
       cx: 0, cz: 0, by: 0, rot: 0,
+      topOpen: !isBlat && (topVar === 'PAZII' || topVar === 'ABSENT'),
+      pazieWidthMm: topVar === 'PAZII' ? (input.pieces?.top?.pazieWidthMm ?? 100) : undefined,
     };
     if (c.posXMm != null && c.posZMm != null) {
       positioned.push({
         ...item, cx: c.posXMm, cz: c.posZMm,
-        by: c.posYMm ?? (legMm > 0 ? 0 : isBlat ? BLAT_MOUNT : DEFAULT_MOUNT),
+        by: c.posYMm ?? (legMm > 0 ? 0 : isBlat ? blatBottomFor(item.h, blatTopMm) : DEFAULT_MOUNT),
         rot: degToRad(c.rotDeg ?? 0),
       });
     } else {
@@ -71,7 +78,7 @@ export default async function AsezarePage({ params }: { params: Promise<{ id: st
     try { room.walls = JSON.parse(assembly.roomWallsJson); } catch { /* folosim pereții impliciți */ }
   }
 
-  const items = [...positioned, ...autoLayout(positioned, loose, room)];
+  const items = [...positioned, ...autoLayout(positioned, loose, room, blatTopMm)];
 
   let fixed: FixedItem[] = [];
   try { fixed = JSON.parse(assembly.fixedElementsJson) as FixedItem[]; } catch { fixed = []; }

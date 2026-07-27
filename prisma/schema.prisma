@@ -143,6 +143,12 @@ model Assembly {
   name        String
   legHeightMm Float     @default(100)
   sortOrder   Int       @default(0)
+  // tip ansamblu: FARA_BLAT (default) | CU_BLAT (comodă/baie/living) | BUCATARIE (+ suspendate)
+  kind           String  @default("FARA_BLAT")
+  baseHeightMm   Float?  // „Înălțime corpuri bază" (≈900) — folosită la derivarea corpurilor „sub blat"
+  blatMaterialId String? // material de blat (Material.category='BLAT') → dă grosimea la derivarea înălțimii
+  blatDepthMm    Float?  // adâncimea blatului (≈600) → derivă adâncimea corpurilor „sub blat"
+  upperHeightMm  Float?  // doar BUCATARIE: prefill înălțime la corpurile SUSPENDAT
   // dimensiunile camerei pentru „Așezare 3D" (null = neconfigurat, se folosesc valori implicite)
   roomWidthMm  Float?
   roomDepthMm  Float?

@@ -35,6 +35,7 @@ function cabinetInputToFormValues(input: CabinetInput, cc: ConstructionConstants
     widthMm: input.widthMm ? String(input.widthMm) : '',
     heightMm: input.heightMm ? String(input.heightMm) : '',
     depthMm: input.depthMm ? String(input.depthMm) : '',
+    subBlat: input.subBlat ? 'true' : 'false',
     // chiuvetă (uși, 0 polițe): câmpul pornește de la 1 ca bifarea „Cu polițe" să aibă o valoare;
     // la FARA păstrăm 0 real (etajera fără polițe rămâne fără)
     shelves: String(input.shelves > 0 ? input.shelves : input.doors > 0 ? 1 : 0),
@@ -94,6 +95,14 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
   } = editorData;
   const legHeightMm = assembly?.legHeightMm ?? null;
   const cc = parseConstruction(snapshot.settings.constructionJson);
+
+  // parametrii de blat ai ansamblului (bucătărie / comodă cu blat) → derivarea corpurilor „sub blat"
+  const hasBlat = assembly?.kind === 'CU_BLAT' || assembly?.kind === 'BUCATARIE';
+  const blatMat = assembly?.blatMaterialId ? materials.find((m) => m.id === assembly.blatMaterialId) : null;
+  const subBlatParams = hasBlat && assembly?.baseHeightMm != null && assembly?.blatDepthMm != null && blatMat
+    ? { baseHeightMm: assembly.baseHeightMm, blatDepthMm: assembly.blatDepthMm, blatThicknessMm: blatMat.thicknessMm }
+    : null;
+  const upperHeightMm = assembly?.kind === 'BUCATARIE' ? assembly.upperHeightMm ?? null : null;
   const activeMaterials = materials.filter((m) => m.active);
   const materialName = (mid: string) => materials.find((m) => m.id === mid)?.name ?? mid;
 
@@ -218,6 +227,8 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
           laborPct={project.laborPct}
           yieldFactor={project.yieldFactor}
           legHeightMm={legHeightMm}
+          subBlatParams={subBlatParams}
+          upperHeightMm={upperHeightMm}
           bandOptions={{
             carcassFront: optionsWithCurrent(edgeBands, input.edgeBands.carcassFrontEdgeId),
             frontPerimeter: optionsWithCurrent(edgeBands, input.edgeBands.frontPerimeterId),

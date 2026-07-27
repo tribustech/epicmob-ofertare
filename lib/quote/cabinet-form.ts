@@ -14,6 +14,7 @@ export const cabinetFormSchema = z
     widthMm: posNum,
     heightMm: posNum,
     depthMm: posNum,
+    subBlat: checkbox,
     mountTop: z.enum(['INCADRAT', 'APLICAT']).default('INCADRAT'),
     mountBottom: z.enum(['INCADRAT', 'APLICAT']).default('INCADRAT'),
     frontType: z.enum(['USI', 'SERTARE', 'FARA']),
@@ -106,6 +107,7 @@ export function toCabinetInput(d: CabinetFormData, pieces?: PiecesConfigForm): C
     widthMm: d.widthMm,
     heightMm: d.heightMm,
     depthMm: d.depthMm,
+    subBlat: d.type === 'BAZA' && d.subBlat ? true : undefined,
     mount: { top: d.mountTop, bottom: d.mountBottom },
     shelves,
     shelf: shelves > 0 && (d.shelfMaterialId || d.shelfDecorMatters)
