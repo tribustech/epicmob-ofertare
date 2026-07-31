@@ -14,6 +14,41 @@ const Q = Math.PI / 2;
 // perete ca segment independent: linie axabilă la `at`, întinsă pe [lo,hi] pe cealaltă axă, înălțime h
 export type WallSeg = { id: string; axis: 'x' | 'z'; at: number; lo: number; hi: number; h: number };
 export type LayoutRoom = { W: number; D: number; H: number; walls?: WallSeg[] };
+export const WALL_DIMENSION_STEP = 1;
+
+export function parseDimensionDraft(raw: string): number | null {
+  if (raw.trim() === '') return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+}
+
+export function moveWallTo(wall: WallSeg, cx: number, cz: number): WallSeg {
+  const half = (wall.hi - wall.lo) / 2;
+  return wall.axis === 'x'
+    ? { ...wall, at: cx, lo: cz - half, hi: cz + half }
+    : { ...wall, at: cz, lo: cx - half, hi: cx + half };
+}
+
+export function resizeWall(wall: WallSeg, dimension: 'len' | 'h', value: number): WallSeg {
+  const mm = Math.max(1, Math.round(Number.isFinite(value) ? value : 1));
+  return dimension === 'h' ? { ...wall, h: mm } : { ...wall, hi: wall.lo + mm };
+}
+
+export type LayoutDeleteAction = { kind: 'wall'; id: string } | { kind: 'fixed' } | null;
+
+export function layoutDeleteAction({
+  key, selectedWallId, hasSelectedFixed, isEditing,
+}: {
+  key: string; selectedWallId: string | null; hasSelectedFixed: boolean; isEditing: boolean;
+}): LayoutDeleteAction {
+  if (isEditing) return null;
+  if (key === 'Backspace') return selectedWallId ? { kind: 'wall', id: selectedWallId } : null;
+  if (key === 'Delete') {
+    if (selectedWallId) return { kind: 'wall', id: selectedWallId };
+    if (hasSelectedFixed) return { kind: 'fixed' };
+  }
+  return null;
+}
 
 // pereții impliciți (spate/stânga/dreapta) generați din dreptunghiul W×D
 export function defaultWalls(W: number, D: number, H: number): WallSeg[] {
@@ -158,7 +193,8 @@ export function foot(c: Pick<LayoutItem, 'w' | 'd' | 'rot'>): { fw: number; fd: 
 // bandă), dar coliziunea împinge doar elementele din aceeași bandă verticală (blatul stă peste).
 export function place(
   me: Pick<LayoutItem, 'w' | 'd' | 'rot' | 'by' | 'h' | 'legMm'>, cx: number, cz: number,
-  others: Pick<LayoutItem, 'w' | 'd' | 'rot' | 'cx' | 'cz' | 'by' | 'h' | 'legMm'>[], room: LayoutRoom, snap = true,
+  others: Pick<LayoutItem, 'w' | 'd' | 'rot' | 'cx' | 'cz' | 'by' | 'h' | 'legMm'>[], room: LayoutRoom,
+  snap = true, constrainToWalls = true,
 ): { cx: number; cz: number } {
   const { fw, fd } = foot(me);
   const hw = fw / 2, hd = fd / 2;
@@ -217,9 +253,10 @@ export function place(
     if (!pushed) break;
   }
 
-  // clamp în dreptunghiul care încadrează pereții (nu iese din cameră)
-  cx = Math.min(Math.max(cx, b0.minX + hw), b0.maxX - hw);
-  cz = Math.min(Math.max(cz, b0.minZ + hd), b0.maxZ - hd);
+  if (constrainToWalls) {
+    cx = Math.min(Math.max(cx, b0.minX + hw), b0.maxX - hw);
+    cz = Math.min(Math.max(cz, b0.minZ + hd), b0.maxZ - hd);
+  }
   return { cx, cz };
 }
 

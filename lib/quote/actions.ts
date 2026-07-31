@@ -19,15 +19,10 @@ import { hardwareAdjustmentsSchema, pruneAdjustments } from './hardware-adjustme
 import { buildSnapshot } from './snapshot';
 import { isFrozenStatus } from './basis';
 import { ASSEMBLY_LEG_HEIGHT_PRESETS, ASSEMBLY_NAME_PRESETS } from './assembly-presets';
+import { parseProjectDetails } from './project-details';
 import type { CabinetInput, CabinetType } from '@/lib/engine';
 
 const optStr = z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().optional());
-
-const projectFormSchema = z.object({
-  name: z.string().trim().min(1, 'Numele proiectului lipsește'),
-  clientName: optStr,
-  clientContact: optStr,
-});
 
 const projectSettingsSchema = z.object({
   laborPct: z.coerce.number().nonnegative(),
@@ -114,7 +109,7 @@ const newAssemblySchema = z
   });
 
 export const createProject = formAction(async (fd: FormData) => {
-  const d = projectFormSchema.parse(formDataToObject(fd));
+  const d = parseProjectDetails(formDataToObject(fd));
   const settings = await prisma.appSettings.findUnique({ where: { id: 1 } });
   if (!settings) throw new Error('Setările lipsesc — rulează npm run db:seed');
   const project = await prisma.project.create({
@@ -128,6 +123,21 @@ export const createProject = formAction(async (fd: FormData) => {
   });
   revalidatePath('/proiecte');
   redirect(`/proiecte/${project.id}`);
+});
+
+export const updateProjectDetails = formAction(async (id: string, fd: FormData) => {
+  const d = parseProjectDetails(formDataToObject(fd));
+  await prisma.project.update({
+    where: { id },
+    data: {
+      name: d.name,
+      clientName: d.clientName ?? null,
+      clientContact: d.clientContact ?? null,
+    },
+  });
+  revalidatePath('/proiecte');
+  revalidatePath(`/proiecte/${id}`);
+  revalidatePath(`/proiecte/${id}/oferta`);
 });
 
 export const updateProjectSettings = formAction(async (id: string, fd: FormData) => {

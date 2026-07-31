@@ -1,5 +1,75 @@
 import { describe, expect, it } from 'vitest';
+import * as layoutModule from '../layout';
 import { AUTO_ORIENT, autoLayout, bandsOverlap, BLAT_MOUNT, clampBy, defaultRoom, defaultWalls, doorSlots, foot, overlapBox, place, radToDeg, snapGuides, wallOrient, wallPin, wallsBounds, type LayoutItem, type LayoutRoom } from '../layout';
+
+type DeleteAction = { kind: 'wall'; id: string } | { kind: 'fixed' } | null;
+type DeleteArgs = { key: string; selectedWallId: string | null; hasSelectedFixed: boolean; isEditing: boolean };
+const layoutDeleteAction = (args: DeleteArgs): DeleteAction | undefined =>
+  (layoutModule as unknown as { layoutDeleteAction?: (value: DeleteArgs) => DeleteAction }).layoutDeleteAction?.(args);
+type WallSeg = { id: string; axis: 'x' | 'z'; at: number; lo: number; hi: number; h: number };
+const moveWallTo = (wall: WallSeg, cx: number, cz: number): WallSeg | undefined =>
+  (layoutModule as unknown as { moveWallTo?: (value: WallSeg, x: number, z: number) => WallSeg }).moveWallTo?.(wall, cx, cz);
+const resizeWall = (wall: WallSeg, dimension: 'len' | 'h', value: number): WallSeg | undefined =>
+  (layoutModule as unknown as { resizeWall?: (w: WallSeg, d: 'len' | 'h', v: number) => WallSeg }).resizeWall?.(wall, dimension, value);
+const parseDimensionDraft = (raw: string): number | null | undefined =>
+  (layoutModule as unknown as { parseDimensionDraft?: (value: string) => number | null }).parseDimensionDraft?.(raw);
+
+describe('layoutDeleteAction — ștergere din tastatură', () => {
+  it('Backspace șterge peretele selectat', () => {
+    expect(layoutDeleteAction({
+      key: 'Backspace', selectedWallId: 'wall-1', hasSelectedFixed: false, isEditing: false,
+    })).toEqual({ kind: 'wall', id: 'wall-1' });
+  });
+
+  it('Backspace nu șterge corpuri sau elemente fixe', () => {
+    expect(layoutDeleteAction({
+      key: 'Backspace', selectedWallId: null, hasSelectedFixed: true, isEditing: false,
+    })).toBeNull();
+  });
+
+  it('Backspace nu șterge peretele când utilizatorul editează un câmp', () => {
+    expect(layoutDeleteAction({
+      key: 'Backspace', selectedWallId: 'wall-1', hasSelectedFixed: false, isEditing: true,
+    })).toBeNull();
+  });
+
+  it('Delete păstrează ștergerea existentă pentru perete și element fix', () => {
+    expect(layoutDeleteAction({
+      key: 'Delete', selectedWallId: 'wall-1', hasSelectedFixed: false, isEditing: false,
+    })).toEqual({ kind: 'wall', id: 'wall-1' });
+    expect(layoutDeleteAction({
+      key: 'Delete', selectedWallId: null, hasSelectedFixed: true, isEditing: false,
+    })).toEqual({ kind: 'fixed' });
+  });
+});
+
+describe('poziționare liberă în editorul 3D', () => {
+  it('permite unui corp să rămână în afara conturului format de pereți', () => {
+    expect(place(base(), -900, 3500, [], room, false, false)).toEqual({ cx: -900, cz: 3500 });
+  });
+
+  it('mută un perete pe X/Z păstrând axa și lungimea', () => {
+    expect(moveWallTo({ id: 'w', axis: 'x', at: 0, lo: 100, hi: 900, h: 2600 }, 1400, 1800))
+      .toEqual({ id: 'w', axis: 'x', at: 1400, lo: 1400, hi: 2200, h: 2600 });
+    expect(moveWallTo({ id: 'w', axis: 'z', at: 0, lo: 100, hi: 900, h: 2600 }, 1400, 1800))
+      .toEqual({ id: 'w', axis: 'z', at: 1800, lo: 1000, hi: 1800, h: 2600 });
+  });
+});
+
+describe('dimensiuni pereți la milimetru', () => {
+  it('păstrează dimensiuni exacte care nu sunt rotunjite la sute', () => {
+    const wall = { id: 'w', axis: 'x' as const, at: 0, lo: 100, hi: 900, h: 2600 };
+    expect(resizeWall(wall, 'len', 2737)).toEqual({ ...wall, hi: 2837 });
+    expect(resizeWall(wall, 'h', 2487)).toEqual({ ...wall, h: 2487 });
+    expect((layoutModule as unknown as { WALL_DIMENSION_STEP?: number }).WALL_DIMENSION_STEP).toBe(1);
+  });
+
+  it('permite golirea temporară a câmpului înainte de introducerea unei valori', () => {
+    expect(parseDimensionDraft('')).toBeNull();
+    expect(parseDimensionDraft('2737')).toBe(2737);
+    expect(parseDimensionDraft('abc')).toBeNull();
+  });
+});
 
 const base = (over: Partial<LayoutItem> = {}): LayoutItem => ({
   id: 'x', label: 'B', type: 'BAZA', w: 600, h: 720, d: 560, legMm: 100, front: null, shelves: 0,

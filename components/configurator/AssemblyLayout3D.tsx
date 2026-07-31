@@ -12,7 +12,7 @@ import * as THREE from 'three';
 import { saveAssemblyLayout } from '@/lib/quote/actions';
 import {
   clampBy, doorSlots, FIXED_KINDS, hasLegs, newFixed, overlaps, place, radToDeg,
-  roomWalls, snapGuides, wallOrient, wallPin, wallsBounds,
+  roomWalls, snapGuides, wallOrient, layoutDeleteAction, moveWallTo, parseDimensionDraft, resizeWall, WALL_DIMENSION_STEP,
   type FixedItem, type FixedKind, type LayoutItem, type LayoutRoom, type SnapGuide, type WallSeg,
 } from '@/lib/quote/layout';
 import type { CabinetType } from '@/lib/engine';
@@ -182,8 +182,9 @@ function FixedMesh({ f, hovered, active, interactive, onDown, onHover }: {
 }
 
 // un perete-segment independent: inert în modul normal, selectabil + click-dreapta în editare
-function Wall({ w, editRoom, selected, hovered, onSelect, onHover, onContext }: {
+function Wall({ w, editRoom, selected, hovered, onDown, onSelect, onHover, onContext }: {
   w: WallSeg; editRoom: boolean; selected: boolean; hovered: boolean;
+  onDown: (e: ThreeEvent<PointerEvent>, wall: WallSeg) => void;
   onSelect: (id: string) => void; onHover: (id: string | null) => void;
   onContext: (id: string, clientX: number, clientY: number) => void;
 }) {
@@ -194,7 +195,7 @@ function Wall({ w, editRoom, selected, hovered, onSelect, onHover, onContext }: 
   const color = selected ? '#93b3f0' : hovered ? '#cdd7e6' : '#e7e3db';
   return (
     <mesh position={position} rotation={[0, w.axis === 'x' ? Q : 0, 0]}
-      onPointerDown={editRoom ? (e) => { e.stopPropagation(); onSelect(w.id); } : undefined}
+      onPointerDown={editRoom ? (e) => { e.stopPropagation(); onDown(e, w); } : undefined}
       onContextMenu={editRoom ? (e) => { e.stopPropagation(); e.nativeEvent.preventDefault(); onSelect(w.id); onContext(w.id, e.nativeEvent.clientX, e.nativeEvent.clientY); } : undefined}
       onPointerOver={editRoom ? (e) => { e.stopPropagation(); onHover(w.id); document.body.style.cursor = 'pointer'; } : undefined}
       onPointerOut={editRoom ? () => { onHover(null); document.body.style.cursor = ''; } : undefined}
@@ -208,8 +209,9 @@ function Wall({ w, editRoom, selected, hovered, onSelect, onHover, onContext }: 
   );
 }
 
-function Walls({ walls, editRoom, selectedWall, onSelectWall, onContext }: {
+function Walls({ walls, editRoom, selectedWall, onWallDown, onSelectWall, onContext }: {
   walls: WallSeg[]; editRoom: boolean; selectedWall: string | null;
+  onWallDown: (e: ThreeEvent<PointerEvent>, wall: WallSeg) => void;
   onSelectWall: (id: string) => void; onContext: (id: string, x: number, y: number) => void;
 }) {
   const [hover, setHover] = useState<string | null>(null);
@@ -217,21 +219,22 @@ function Walls({ walls, editRoom, selectedWall, onSelectWall, onContext }: {
     <>
       {walls.map((w) => (
         <Wall key={w.id} w={w} editRoom={editRoom} selected={w.id === selectedWall}
-          hovered={w.id === hover} onSelect={onSelectWall} onHover={setHover} onContext={onContext} />
+          hovered={w.id === hover} onDown={onWallDown} onSelect={onSelectWall} onHover={setHover} onContext={onContext} />
       ))}
     </>
   );
 }
 
-function Editor({ items, fixed, room, selectedId, onSelect, onSnapshot, onDrag, editRoom, selectedWall, onSelectWall, onWallContext }: {
+function Editor({ items, fixed, room, selectedId, onSelect, onSnapshot, onDrag, onWallDrag, editRoom, selectedWall, onSelectWall, onWallContext }: {
   items: LayoutItem[]; fixed: FixedItem[]; room: LayoutRoom;
   selectedId: string | null; onSelect: (id: string | null) => void; onSnapshot: () => void;
   onDrag: (id: string, cx: number, cz: number, rot: number) => void;
+  onWallDrag: (id: string, cx: number, cz: number) => void;
   editRoom: boolean; selectedWall: string | null; onSelectWall: (id: string) => void;
   onWallContext: (id: string, x: number, y: number) => void;
 }) {
   const { camera, gl, controls } = useThree();
-  const dragRef = useRef<{ id: string; offX: number; offZ: number; moved: boolean } | null>(null);
+  const dragRef = useRef<{ kind: 'box' | 'wall'; id: string; offX: number; offZ: number; moved: boolean } | null>(null);
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [guides, setGuides] = useState<SnapGuide[]>([]); // linii de aliniere active în timpul tragerii
 
@@ -240,8 +243,7 @@ function Editor({ items, fixed, room, selectedId, onSelect, onSnapshot, onDrag, 
   boxesRef.current = [...items, ...fixed];
 
   const walls = roomWalls(room);
-  const b = useMemo(() => wallsBounds(walls), [walls]);
-  const cx0 = (b.minX + b.maxX) / 2, cz0 = (b.minZ + b.maxZ) / 2; // centrul camerei (din pereți)
+  const cx0 = room.W / 2, cz0 = room.D / 2;
 
   const plane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), []);
   const raycaster = useMemo(() => new THREE.Raycaster(), []);
@@ -258,20 +260,22 @@ function Editor({ items, fixed, room, selectedId, onSelect, onSnapshot, onDrag, 
 
   const onMove = useCallback((e: PointerEvent) => {
     const d = dragRef.current; if (!d) return;
-    const me = boxesRef.current.find((b) => b.id === d.id); if (!me) return;
     if (!d.moved) { d.moved = true; onSnapshot(); }
     const { x, z } = floorPoint(e.clientX, e.clientY);
     const rawCx = x - d.offX, rawCz = z - d.offZ;
+    if (d.kind === 'wall') {
+      onWallDrag(d.id, rawCx, rawCz);
+      return;
+    }
+    const me = boxesRef.current.find((b) => b.id === d.id); if (!me) return;
     // corpurile se auto-orientează spate-la-perete; elementele fixe își păstrează rotația
     const rot = isFixed(me) ? me.rot : wallOrient(rawCx, rawCz, room, me.rot);
-    // suspendatul rămâne lipit de peretele cel mai apropiat (alunecă pe el); restul se trag liber pe podea
-    const pinned = !isFixed(me) && me.type === 'SUSPENDAT' ? wallPin({ ...me, rot }, rawCx, rawCz, room) : { cx: rawCx, cz: rawCz };
     // snapping vede toate elementele; coliziunea filtrează intern pe bandă
     const others = boxesRef.current.filter((b) => b.id !== d.id);
-    const s = place({ ...me, rot }, pinned.cx, pinned.cz, others, room);
+    const s = place({ ...me, rot }, rawCx, rawCz, others, room, true, false);
     onDrag(d.id, s.cx, s.cz, rot);
     setGuides(snapGuides({ ...me, rot }, s.cx, s.cz, others, room));
-  }, [floorPoint, room, onSnapshot, onDrag]);
+  }, [floorPoint, room, onSnapshot, onDrag, onWallDrag]);
 
   const onUp = useCallback(() => {
     dragRef.current = null;
@@ -286,16 +290,31 @@ function Editor({ items, fixed, room, selectedId, onSelect, onSnapshot, onDrag, 
     e.stopPropagation();
     onSelect(b.id);
     const { x, z } = floorPoint(e.clientX, e.clientY);
-    dragRef.current = { id: b.id, offX: x - b.cx, offZ: z - b.cz, moved: false };
+    dragRef.current = { kind: 'box', id: b.id, offX: x - b.cx, offZ: z - b.cz, moved: false };
     if (controls) (controls as unknown as { enabled: boolean }).enabled = false;
     document.body.style.cursor = 'grabbing';
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
   }, [controls, floorPoint, onMove, onUp, onSelect]);
 
+  const onWallDown = useCallback((e: ThreeEvent<PointerEvent>, wall: WallSeg) => {
+    e.stopPropagation();
+    onSelectWall(wall.id);
+    const { x, z } = floorPoint(e.clientX, e.clientY);
+    const mid = (wall.lo + wall.hi) / 2;
+    const cx = wall.axis === 'x' ? wall.at : mid;
+    const cz = wall.axis === 'x' ? mid : wall.at;
+    dragRef.current = { kind: 'wall', id: wall.id, offX: x - cx, offZ: z - cz, moved: false };
+    if (controls) (controls as unknown as { enabled: boolean }).enabled = false;
+    document.body.style.cursor = 'grabbing';
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }, [controls, floorPoint, onMove, onUp, onSelectWall]);
+
   return (
     <group position={[-cx0 * S, 0, -cz0 * S]}>
-      <Walls walls={walls} editRoom={editRoom} selectedWall={selectedWall} onSelectWall={onSelectWall} onContext={onWallContext} />
+      <Walls walls={walls} editRoom={editRoom} selectedWall={selectedWall}
+        onWallDown={onWallDown} onSelectWall={onSelectWall} onContext={onWallContext} />
       {items.map((c) => (
         <CabMesh key={c.id} c={c} hovered={c.id === hoverId && c.id !== selectedId} active={c.id === selectedId}
           interactive={!editRoom} onDown={onDown} onHover={setHoverId} />
@@ -343,9 +362,24 @@ const Sep = () => <div className="w-px shrink-0 self-stretch bg-neutral-200" />;
 function BarField({ label, value, step = 100, onChange }: {
   label: string; value: number; step?: number; onChange: (v: string) => void;
 }) {
+  const [draft, setDraft] = useState(String(value));
+  useEffect(() => {
+    setDraft(String(value));
+  }, [value]);
+  const commit = () => {
+    const parsed = parseDimensionDraft(draft);
+    if (parsed === null) setDraft(String(value));
+    else onChange(String(parsed));
+  };
   return (
     <label className="flex shrink-0 flex-col text-[10px] leading-tight text-neutral-500">{label}
-      <input type="number" step={step} value={value} onChange={(e) => onChange(e.target.value)}
+      <input type="text" inputMode="numeric" data-step={step} value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur();
+          if (e.key === 'Escape') { setDraft(String(value)); e.currentTarget.blur(); }
+        }}
         className="w-16 rounded border px-1 py-1 text-sm text-neutral-800" />
     </label>
   );
@@ -378,8 +412,7 @@ export default function AssemblyLayout3D({
 
   const num = (v: string, lo: number, hi: number) => Math.max(lo, Math.min(hi, Number(v) || 0));
   const walls = room.walls ?? [];
-  const bounds = wallsBounds(roomWalls(room));
-  const camDist = Math.max(bounds.maxX - bounds.minX, bounds.maxZ - bounds.minZ) * S;
+  const camDist = Math.max(room.W, room.D) * S;
   const selectedWallSeg = walls.find((w) => w.id === selectedWall) ?? null;
   const touch = () => { setDirty(true); setSaved(false); };
   const allBoxes = useMemo<Box[]>(() => [...items, ...fixed], [items, fixed]);
@@ -412,7 +445,7 @@ export default function AssemblyLayout3D({
     snapshot();
     const rotated = { ...me, rot: me.rot + Q };
     const others = allBoxes.filter((b) => b.id !== me.id);
-    const s = place(rotated, rotated.cx, rotated.cz, others, room);
+    const s = place(rotated, rotated.cx, rotated.cz, others, room, true, false);
     updateBox(me.id, { rot: rotated.rot, cx: s.cx, cz: s.cz });
   }, [selectedId, room, snapshot, updateBox, allBoxes]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -428,7 +461,7 @@ export default function AssemblyLayout3D({
     const me = all.find((b) => b.id === sel); if (!me) return;
     if (dir === 'left' || dir === 'right') {
       const others = all.filter((b) => b.id !== me.id);
-      const s = place(me, me.cx + (dir === 'right' ? step : -step), me.cz, others, rm, false);
+      const s = place(me, me.cx + (dir === 'right' ? step : -step), me.cz, others, rm, false, false);
       updateBox(me.id, { cx: s.cx, cz: s.cz });
     } else {
       updateBox(me.id, { by: clampBy(me, me.by + (dir === 'up' ? step : -step), rm) });
@@ -485,18 +518,25 @@ export default function AssemblyLayout3D({
 
   const updateWall = (id: string, patch: Partial<WallSeg>) =>
     setRoom((r) => ({ ...r, walls: (r.walls ?? []).map((w) => (w.id === id ? { ...w, ...patch } : w)) }));
+  const moveWall = useCallback((id: string, cx: number, cz: number) => {
+    setRoom((r) => ({
+      ...r,
+      walls: (r.walls ?? []).map((w) => (w.id === id ? moveWallTo(w, cx, cz) : w)),
+    }));
+    touch();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // fiecare perete e independent: lungimea = întinderea lui (hi−lo), înălțimea = h; nu afectează alt perete
   const changeWallDim = (which: 'len' | 'h', v: string) => {
     if (!selectedWallSeg) return;
-    const val = num(v, which === 'h' ? 2000 : 500, 12000);
-    updateWall(selectedWallSeg.id, which === 'h' ? { h: val } : { hi: selectedWallSeg.lo + val });
+    const value = Number(v);
+    if (!Number.isFinite(value)) return;
+    updateWall(selectedWallSeg.id, resizeWall(selectedWallSeg, which, value));
     touch();
   };
   const deleteWall = (id: string) => { snapshot(); setRoom((r) => ({ ...r, walls: (r.walls ?? []).filter((w) => w.id !== id) })); setSelectedWall(null); setMenu(null); };
   const addWall = () => {
     snapshot();
-    const b = wallsBounds(roomWalls(room));
-    const w: WallSeg = { id: crypto.randomUUID(), axis: 'x', at: (b.minX + b.maxX) / 2, lo: b.minZ, hi: b.maxZ, h: room.H };
+    const w: WallSeg = { id: crypto.randomUUID(), axis: 'x', at: room.W / 2, lo: 0, hi: room.D, h: room.H };
     setRoom((r) => ({ ...r, walls: [...(r.walls ?? []), w] }));
     selectWall(w.id);
   };
@@ -519,11 +559,26 @@ export default function AssemblyLayout3D({
   const KEY_DIR: Record<string, string> = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (document.activeElement?.tagName === 'INPUT') return;
+      const target = e.target;
+      const isEditing = target instanceof HTMLElement && (
+        target.isContentEditable || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT'
+      );
+      const deleteAction = layoutDeleteAction({
+        key: e.key,
+        selectedWallId: selectedWall,
+        hasSelectedFixed: selectedFixed !== null,
+        isEditing,
+      });
+      if (deleteAction) {
+        e.preventDefault();
+        if (deleteAction.kind === 'wall') deleteWall(deleteAction.id);
+        else deleteFixed();
+        return;
+      }
+      if (isEditing) return;
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); return; }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
       if (e.key === 'r' || e.key === 'R') rotate();
-      if (e.key === 'Delete') { if (selectedWall) deleteWall(selectedWall); else deleteFixed(); }
       // săgețile mută corpul pe podea; Shift = 100mm; o rafală ținută = un singur pas de undo
       const dname = KEY_DIR[e.key];
       if (dname && selectedId) {
@@ -577,8 +632,8 @@ export default function AssemblyLayout3D({
                     <span className="self-center px-1 text-xs font-medium text-slate-600">
                       Perete {selectedWall === 'back' ? 'spate' : selectedWall === 'left' ? 'stânga' : selectedWall === 'right' ? 'dreapta' : ''}
                     </span>
-                    <BarField label="lungime" value={Math.round(wallLen)} onChange={(v) => changeWallDim('len', v)} />
-                    <BarField label="înălțime" value={selectedWallSeg.h} onChange={(v) => changeWallDim('h', v)} />
+                    <BarField label="lungime" step={WALL_DIMENSION_STEP} value={wallLen} onChange={(v) => changeWallDim('len', v)} />
+                    <BarField label="înălțime" step={WALL_DIMENSION_STEP} value={selectedWallSeg.h} onChange={(v) => changeWallDim('h', v)} />
                     <button onClick={() => deleteWall(selectedWallSeg.id)} className="rounded-lg bg-red-50 px-2 py-2 text-xs text-red-600 hover:bg-red-100">Șterge</button>
                   </div>
                 </>
@@ -658,7 +713,7 @@ export default function AssemblyLayout3D({
           <Grid args={[16, 16]} cellSize={0.5} cellColor="#c9c4bb" sectionSize={1} sectionColor="#a8a29a"
             infiniteGrid fadeDistance={20} />
           <Editor items={items} fixed={fixed} room={room} selectedId={selectedId}
-            onSelect={selectBox} onSnapshot={snapshot} onDrag={onDrag}
+            onSelect={selectBox} onSnapshot={snapshot} onDrag={onDrag} onWallDrag={moveWall}
             editRoom={editRoom} selectedWall={selectedWall} onSelectWall={selectWall}
             onWallContext={(id, x, y) => setMenu({ id, x, y })} />
           <OrbitControls makeDefault enableDamping zoomToCursor target={[0, 0.7, 0]} />

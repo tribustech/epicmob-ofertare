@@ -9,7 +9,7 @@ import { HANDLE_TYPE_OPTIONS } from '@/lib/quote/handle';
 import { prisma } from '@/lib/db';
 import {
   addAssembly, addCabinet, addFreeLine, deleteAssembly, deleteCabinet, deleteProject,
-  duplicateCabinet, refreshFrozenPrices, removeFreeLine, updateAssembly, updateProjectSettings,
+  duplicateCabinet, refreshFrozenPrices, removeFreeLine, updateAssembly, updateProjectDetails, updateProjectSettings,
 } from '@/lib/quote/actions';
 import { ASSEMBLY_LEG_HEIGHT_PRESETS, ASSEMBLY_NAME_PRESETS } from '@/lib/quote/assembly-presets';
 import { isCabinetInputComplete } from '@/lib/quote/cabinet-form';
@@ -196,6 +196,18 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
         </div>
 
         <div className="space-y-6">
+          <Card>
+            <CardHeader><CardTitle>Detaliile proiectului</CardTitle></CardHeader>
+            <CardContent>
+              <ActionForm action={updateProjectDetails.bind(null, project.id)} className="grid gap-3">
+                <TextInput name="name" label="Numele proiectului" defaultValue={project.name} />
+                <TextInput name="clientName" label="Client" defaultValue={project.clientName ?? ''} required={false} />
+                <TextInput name="clientContact" label="Contact (telefon/email)" defaultValue={project.clientContact ?? ''} required={false} />
+                <div><SubmitButton>Salvează detaliile</SubmitButton></div>
+              </ActionForm>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader><CardTitle>Setările proiectului</CardTitle></CardHeader>
             <CardContent>
