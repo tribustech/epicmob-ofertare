@@ -31,7 +31,7 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
     );
   }
   const snapshot = basis.snapshot;
-  const { quote, error } = tryComputeQuote(toQuoteInput(project, cabinets, legHeightByCabinet(assemblies, cabinets)), snapshot);
+  const { quote, error } = tryComputeQuote(toQuoteInput(project, cabinets, legHeightByCabinet(assemblies, cabinets), assemblies), snapshot);
   if (!quote) return <p className="text-sm text-red-700">Eroare de calcul: {error}</p>;
 
   const materialById = (mid: string | null | undefined) =>

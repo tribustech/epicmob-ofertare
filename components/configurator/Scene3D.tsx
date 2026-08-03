@@ -6,6 +6,8 @@ import type { EdgeSide, PieceInstance, PiecePlacement } from '@/lib/engine';
 const KIND_COLORS: Record<string, string> = {
   PAL: '#c9a87c', MDF_MELAMINAT: '#d8cdb8', MDF_INFOLIAT: '#d8d3c8',
   MDF_VOPSIT: '#cfd4d8', PFL: '#b8a888',
+  STICLA_RAMA: '#b9e5f2',
+  STICLA_POLITA: '#c9edf5',
 };
 const S = 1 / 1000; // mm → unități scenă (metri)
 const fmt = (n: number) => String(Math.round(n * 10) / 10);
@@ -83,8 +85,40 @@ function GrainArrows({ position, rotation }: {
   );
 }
 
-function PieceMesh({ pc, color, selected, hovered, hoveredEdge, hasGrain, onSelect, onHover }: {
-  pc: PieceInstance; color: string; selected: boolean; hovered: boolean;
+/** Ramă vizibilă pe conturul unei piese de sticlă, indiferent de orientarea piesei. */
+function GlassFrame({ p }: { p: PiecePlacement }) {
+  const dims: Record<Axis3, number> = { x: p.w, y: p.h, z: p.d };
+  const thicknessAxis = AXES.reduce((a, b) => (dims[b] < dims[a] ? b : a));
+  const [horizontal, vertical] = AXES.filter((axis) => axis !== thicknessAxis);
+  const frameMm = Math.max(8, Math.min(30, dims[horizontal] / 4, dims[vertical] / 4));
+  const makeBar = (key: string, axis: Axis3, offsetAxis: Axis3, offset: number) => {
+    const size: Record<Axis3, number> = {
+      x: dims.x * S, y: dims.y * S, z: dims.z * S,
+    };
+    size[axis] = dims[axis] * S;
+    size[offsetAxis] = frameMm * S;
+    size[thicknessAxis] = Math.max(dims[thicknessAxis], 12) * S;
+    const position: Record<Axis3, number> = { x: 0, y: 0, z: 0 };
+    position[offsetAxis] = offset * (dims[offsetAxis] - frameMm) * S / 2;
+    return (
+      <mesh key={key} position={[position.x, position.y, position.z]} raycast={() => null}>
+        <boxGeometry args={[size.x, size.y, size.z]} />
+        <meshStandardMaterial color="#616a70" metalness={0.35} roughness={0.35} />
+      </mesh>
+    );
+  };
+  return (
+    <group>
+      {makeBar('frame-a1', horizontal, vertical, -1)}
+      {makeBar('frame-a2', horizontal, vertical, 1)}
+      {makeBar('frame-b1', vertical, horizontal, -1)}
+      {makeBar('frame-b2', vertical, horizontal, 1)}
+    </group>
+  );
+}
+
+function PieceMesh({ pc, kind, color, selected, hovered, hoveredEdge, hasGrain, onSelect, onHover }: {
+  pc: PieceInstance; kind: string; color: string; selected: boolean; hovered: boolean;
   hoveredEdge: EdgeSide | null; hasGrain: boolean;
   onSelect: (key: string) => void; onHover: (key: string | null) => void;
 }) {
@@ -93,6 +127,9 @@ function PieceMesh({ pc, color, selected, hovered, hoveredEdge, hasGrain, onSele
     ? edgeHighlightGeometry(p, hoveredEdge)
     : null;
   const grainMark = hasGrain ? grainMarkTransform(pc, p) : null;
+  const isGlass = kind === 'STICLA_RAMA';
+  const isGlassShelf = kind === 'STICLA_POLITA';
+  const isTransparentGlass = isGlass || isGlassShelf;
   return (
     <mesh
       position={[(p.x + p.w / 2) * S, (p.y + p.h / 2) * S, (p.z + p.d / 2) * S]}
@@ -103,9 +140,11 @@ function PieceMesh({ pc, color, selected, hovered, hoveredEdge, hasGrain, onSele
       <boxGeometry args={[p.w * S, p.h * S, p.d * S]} />
       <meshStandardMaterial
         color={selected ? '#5b8def' : hovered ? '#93b3f0' : color}
-        transparent opacity={selected ? 0.95 : 0.92}
+        transparent opacity={isTransparentGlass ? (selected || hovered ? 0.5 : 0.24) : selected ? 0.95 : 0.92}
+        depthWrite={!isTransparentGlass}
       />
-      <Edges color={selected || hovered ? '#2b5fd9' : '#8a6d45'} lineWidth={selected ? 2 : hovered ? 1.5 : 1} />
+      <Edges color={selected || hovered ? '#2b5fd9' : isTransparentGlass ? '#71858d' : '#8a6d45'} lineWidth={selected ? 2 : hovered ? 1.5 : 1} />
+      {isGlass && <GlassFrame p={p} />}
       {edgeHighlight && (
         <mesh position={edgeHighlight.position} raycast={() => null}>
           <boxGeometry args={edgeHighlight.size} />
@@ -144,14 +183,18 @@ export function PiecePreview3D({ piece, kind, hasGrain, hoveredEdge, thicknessMm
     ? edgeHighlightGeometry(p, hoveredEdge)
     : null;
   const grainMark = hasGrain ? grainMarkTransform(piece, p) : null;
+  const isGlass = kind === 'STICLA_RAMA';
+  const isGlassShelf = kind === 'STICLA_POLITA';
+  const isTransparentGlass = isGlass || isGlassShelf;
   return (
     <Canvas camera={{ position: [maxDim * 1.1, maxDim * 0.9, maxDim * 1.5], fov: 35 }}>
       <ambientLight intensity={0.9} />
       <directionalLight position={[3, 5, 4]} intensity={1.1} />
       <mesh>
         <boxGeometry args={[p.w * S, p.h * S, p.d * S]} />
-        <meshStandardMaterial color={KIND_COLORS[kind] ?? '#c9a87c'} transparent opacity={0.95} />
-        <Edges color="#8a6d45" />
+        <meshStandardMaterial color={KIND_COLORS[kind] ?? '#c9a87c'} transparent opacity={isTransparentGlass ? 0.24 : 0.95} depthWrite={!isTransparentGlass} />
+        <Edges color={isTransparentGlass ? '#71858d' : '#8a6d45'} />
+        {isGlass && <GlassFrame p={p} />}
         {edgeHighlight && (
           <mesh position={edgeHighlight.position} raycast={() => null}>
             <boxGeometry args={edgeHighlight.size} />
@@ -199,6 +242,7 @@ export default function Scene3D({
             hoveredEdge={pc.key === selectedKey ? (hoveredEdge ?? null) : null}
             hasGrain={materialGrainById?.[pc.materialId] ?? false}
             onSelect={onSelect} onHover={onHover}
+            kind={materialKindById[pc.materialId] ?? 'PAL'}
             color={KIND_COLORS[materialKindById[pc.materialId] ?? 'PAL'] ?? '#c9a87c'}
           />
         ))}

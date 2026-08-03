@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import type { CabinetInput, ConstructionConstants } from '@/lib/engine';
-import { addExtraPart, removeExtraPart, updateBlat, updateCabinetData } from '@/lib/quote/actions';
+import { addExtraPart, removeExtraPart, updateBlat, updateCabinetData, updateCabinetPlinth } from '@/lib/quote/actions';
 import { normalizeCabinetInput } from '@/lib/quote/normalize-input';
 import { normalizeHardwareJson } from '@/lib/quote/hardware-adjustments';
 import type { ExtraPart } from '@/lib/quote/cabinet-form';
@@ -217,6 +217,37 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
           <Alert className="border-amber-300 bg-amber-50 text-amber-800">
             <AlertDescription>
               Corpul folosește materiale/feronerie dezactivate — verifică selecturile marcate „(dezactivat)".
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {assembly?.plinthMode === 'CABINETS' && (
+          <Card>
+            <CardHeader><CardTitle>Plintă corp</CardTitle></CardHeader>
+            <CardContent>
+              <ActionForm action={updateCabinetPlinth.bind(null, cabinetId)} className="flex flex-wrap items-end gap-3">
+                <Select
+                  name="plinthEnabled"
+                  label="Piesă PAL de 100 mm"
+                  options={[
+                    { value: 'false', label: 'Fără plintă la acest corp' },
+                    { value: 'true', label: 'Adaugă plintă la acest corp' },
+                  ]}
+                  defaultValue={cab.plinthEnabled ? 'true' : 'false'}
+                />
+                <SubmitButton>Salvează plinta</SubmitButton>
+              </ActionForm>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Lungimea este egală cu lățimea corpului, iar materialul este cel al carcasei.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {assembly?.plinthMode === 'ASSEMBLY' && (
+          <Alert>
+            <AlertDescription>
+              Corpul este inclus automat în plinta ansamblului dacă este un corp de la sol.
             </AlertDescription>
           </Alert>
         )}

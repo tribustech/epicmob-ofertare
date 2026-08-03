@@ -10,6 +10,7 @@ export interface LoadedCabinet {
   id: string;
   sortOrder: number;
   assemblyId: string | null;
+  plinthEnabled: boolean;
   input: CabinetInput;
   hardwareAdjustments: HardwareAdjustments | null;
   extraParts: ExtraPart[];
@@ -32,6 +33,7 @@ export async function loadProject(id: string): Promise<{
     id: c.id,
     sortOrder: c.sortOrder,
     assemblyId: c.assemblyId,
+    plinthEnabled: c.plinthEnabled,
     input: normalizeCabinetInput(JSON.parse(c.inputJson)),
     hardwareAdjustments: normalizeHardwareJson(c.hardwareJson),
     extraParts: JSON.parse(c.extraPartsJson) as ExtraPart[],
@@ -55,17 +57,21 @@ export function toQuoteInput(
   project: { laborPct: number; freeLinesJson: string; handleType: string; handleItemId: string | null },
   cabinets: LoadedCabinet[],
   legHeightMap: Map<string, number> = new Map(),
+  assemblies: Assembly[] = [],
 ): QuoteInput {
   return {
     laborPct: project.laborPct,
     freeLines: JSON.parse(project.freeLinesJson),
     cabinets: cabinets.map((c) => ({
       id: c.id,
+      assemblyId: c.assemblyId,
+      plinthEnabled: c.plinthEnabled,
       input: c.input,
       hardwareAdjustments: c.hardwareAdjustments,
       extraParts: c.extraParts,
       legHeightMm: legHeightMap.get(c.id) ?? null,
     })),
+    assemblies: assemblies.map((a) => ({ id: a.id, name: a.name, plinthMode: a.plinthMode })),
     projectHandle: { type: project.handleType as HandleType, itemId: project.handleItemId },
   };
 }

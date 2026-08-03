@@ -77,8 +77,8 @@ export function wallsBounds(walls: WallSeg[]): { minX: number; maxX: number; min
 // falsLeftMm/falsRightMm = fronturi false (panouri fixe, ex. panoul orb de COLȚ) — ocupă din
 // lățime înaintea ușilor, ca la calculul real; 0/lipsă = fără fals pe latura respectivă.
 export type Front =
-  | { kind: 'doors'; count: number; falsLeftMm?: number; falsRightMm?: number }
-  | { kind: 'drawers'; count: number; heights?: number[] }
+  | { kind: 'doors'; count: number; falsLeftMm?: number; falsRightMm?: number; glass?: boolean }
+  | { kind: 'drawers'; count: number; heights?: number[]; glass?: boolean }
   | null;
 
 // împarte fața unui corp cu uși în panouri false (fixe, la margini) + uși (restul lățimii, egal).
@@ -103,13 +103,23 @@ export type LayoutItem = {
   type: CabinetType;
   w: number; h: number; d: number;
   legMm: number;   // înălțimea picioarelor (0 = fără — corpuri suspendate)
+  hasPlinth?: boolean;
   front: Front;    // uși/sertare/nimic
   shelves: number; // nr. polițe (arătate doar la corpurile fără fronturi, ca să se vadă fața)
+  glassShelves?: boolean; // polițe din sticlă clară, randate transparent
   cx: number; cz: number; by: number; // centru X/Z + cota de jos (mm)
   rot: number;     // radiani, multiplu de 90°
   topOpen?: boolean;     // corp „sub blat"/pazii: fără capac plin — se randează cu vârful deschis
   pazieWidthMm?: number; // lățimea barelor de pazie (când topOpen din pazii); lipsă = capac absent
 };
+
+export function legDepthPositions(depthMm: number, hasPlinth: boolean): { front: number; back: number } {
+  const regularInset = Math.max(0, depthMm / 2 - 30);
+  const front = hasPlinth
+    ? Math.max(-regularInset, depthMm / 2 - 55)
+    : regularInset;
+  return { front, back: -regularInset };
+}
 
 // peretele cel mai apropiat de (cx,cz) în raza `maxDist`, cu partea dinspre cameră (inner)
 export function nearestWall(
@@ -185,6 +195,58 @@ export const totalH = (c: Pick<LayoutItem, 'h' | 'legMm'>) => c.h + c.legMm;
 // amprenta pe podea ține cont de rotație: la 90°/270° lățimea și adâncimea se schimbă între ele
 export function foot(c: Pick<LayoutItem, 'w' | 'd' | 'rot'>): { fw: number; fd: number } {
   return Math.round(c.rot / Q) % 2 === 0 ? { fw: c.w, fd: c.d } : { fw: c.d, fd: c.w };
+}
+
+export type StackPlacement = { cx: number; cz: number; by: number; rot: number; targetId: string };
+
+// Când un suspendat este tras peste alt suspendat, îl stivuiește fără gol: întâi deasupra,
+// apoi dedesubt dacă nu încape. Spatele urmează exact planul vecinului, iar pe lățime se
+// aliniază la muchia cea mai apropiată (sau la centru).
+export function stackSuspended(
+  me: LayoutItem, rawCx: number, rawCz: number, others: LayoutItem[], room: LayoutRoom,
+): StackPlacement | null {
+  if (me.type !== 'SUSPENDAT') return null;
+  const candidates: Array<StackPlacement & { score: number }> = [];
+  const meHeight = totalH(me);
+
+  for (const target of others) {
+    if (target.type !== 'SUSPENDAT' || target.id === me.id) continue;
+    const quarter = ((Math.round(target.rot / Q) % 4) + 4) % 4;
+    const sideRaw = quarter % 2 === 0 ? rawCx : rawCz;
+    const depthRaw = quarter % 2 === 0 ? rawCz : rawCx;
+    const sideTarget = quarter % 2 === 0 ? target.cx : target.cz;
+    const depthTarget = quarter % 2 === 0 ? target.cz : target.cx;
+    if (Math.abs(sideRaw - sideTarget) >= (me.w + target.w) / 2) continue;
+    if (Math.abs(depthRaw - depthTarget) >= (me.d + target.d) / 2) continue;
+
+    const sidePositions = [
+      sideTarget,
+      sideTarget - target.w / 2 + me.w / 2,
+      sideTarget + target.w / 2 - me.w / 2,
+    ];
+    const snappedSide = sidePositions.reduce((best, value) =>
+      Math.abs(value - sideRaw) < Math.abs(best - sideRaw) ? value : best,
+    );
+    const targetBack = depthTarget + (quarter === 0 || quarter === 1 ? -target.d / 2 : target.d / 2);
+    const snappedDepth = targetBack + (quarter === 0 || quarter === 1 ? me.d / 2 : -me.d / 2);
+    const cx = quarter % 2 === 0 ? snappedSide : snappedDepth;
+    const cz = quarter % 2 === 0 ? snappedDepth : snappedSide;
+    const score = Math.hypot(cx - rawCx, cz - rawCz);
+    if (score > SNAP_NEIGH) continue;
+
+    const verticalOptions = [target.by + totalH(target), target.by - meHeight];
+    for (const by of verticalOptions) {
+      if (by < 0 || by + meHeight > room.H) continue;
+      const placed = { ...me, cx, cz, by, rot: target.rot };
+      if (others.some((other) => other.id !== target.id && overlapBox(placed, other) !== null)) continue;
+      candidates.push({ cx, cz, by, rot: target.rot, targetId: target.id, score });
+      break;
+    }
+  }
+
+  candidates.sort((a, b) => a.score - b.score || b.by - a.by);
+  const best = candidates[0];
+  return best ? { cx: best.cx, cz: best.cz, by: best.by, rot: best.rot, targetId: best.targetId } : null;
 }
 
 // snapping (perete + vecini, cap-la-cap și aliniere pe ambele axe) + coliziune cu pereții.

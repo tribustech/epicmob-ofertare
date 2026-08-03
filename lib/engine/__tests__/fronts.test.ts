@@ -49,6 +49,30 @@ describe('expandFronts — uși', () => {
     expect(parts[0]).toMatchObject({ materialId: 'mdf-infoliat', edges: {} });
   });
 
+  it('sticla cu ramă este front complet fără cant ABS', () => {
+    const catalogs = {
+      ...TEST_CATALOGS,
+      materials: [
+        ...TEST_CATALOGS.materials,
+        {
+          id: 'sticla-rama-standard', name: 'Sticlă cu ramă', kind: 'STICLA_RAMA',
+          thicknessMm: 20, sheetLengthMm: 3000, sheetWidthMm: 2000,
+          pricing: { mode: 'PER_SQM', pricePerSqm: 400 },
+        },
+      ],
+    } as typeof TEST_CATALOGS;
+    const input = bazaInput({
+      frontKind: 'STICLA_RAMA' as CabinetInput['frontKind'],
+      frontMaterialId: 'sticla-rama-standard',
+      edgeBands: { carcassFrontEdgeId: 'abs-04', frontPerimeterId: 'abs-1' },
+    });
+    const { pieces } = expandFronts(input, catalogs, DEFAULT_CONSTRUCTION);
+
+    expect(toParts(pieces)[0]).toMatchObject({
+      name: 'Ușă', materialId: 'sticla-rama-standard', edges: {},
+    });
+  });
+
   it('avertizează la ușă peste 650mm lățime', () => {
     const input = bazaInput({ widthMm: 700, doors: 1 });
     const { warnings } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);

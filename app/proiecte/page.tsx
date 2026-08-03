@@ -54,7 +54,7 @@ async function loadRows(): Promise<ProjectRow[]> {
         : liveSnapshot;
       if (snapshot) {
         const { quote } = tryComputeQuote(
-          toQuoteInput(project, cabinets, legHeightByCabinet(assemblies, cabinets)),
+          toQuoteInput(project, cabinets, legHeightByCabinet(assemblies, cabinets), assemblies),
           snapshot,
         );
         if (quote) {

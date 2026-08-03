@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cabinetFormSchema, toCabinetInput } from '../cabinet-form';
+import { cabinetFormSchema, piecesConfigSchema, prunePiecesConfig, toCabinetInput } from '../cabinet-form';
 
 const base = {
   label: 'C1', type: 'BAZA',
@@ -86,6 +86,20 @@ describe('cabinetFormSchema + toCabinetInput', () => {
     expect(input.mdfFront).toBeUndefined();
   });
 
+  it('front din sticlă cu ramă păstrează materialul ales și nu cere configurație MDF', () => {
+    const d = cabinetFormSchema.parse({
+      ...base,
+      frontKind: 'STICLA_RAMA',
+      frontMaterialId: 'sticla-rama-standard',
+      frontPerimeterId: '',
+    });
+    const input = toCabinetInput(d);
+
+    expect(input.frontKind).toBe('STICLA_RAMA');
+    expect(input.frontMaterialId).toBe('sticla-rama-standard');
+    expect(input.mdfFront).toBeUndefined();
+  });
+
   it('MDF vopsit fără model → eroare de validare', () => {
     const r = cabinetFormSchema.safeParse({
       ...base, frontType: 'USI', frontKind: 'MDF_VOPSIT', frontMaterialId: '',
@@ -115,6 +129,23 @@ describe('cabinetFormSchema + toCabinetInput', () => {
     expect(input.drawers).toBeUndefined();
     expect(input.frontMaterialId).toBeNull();
     expect(input.shelves).toBe(2);
+  });
+
+  it('păstrează arborele fagure în piecesJson și dezactivează polițele mobile', () => {
+    const pieces = piecesConfigSchema.parse({ honeycomb: { root: {
+      id: 'split-1', kind: 'split', axis: 'H', firstSizeMm: 300, sourceId: 'root',
+      materialId: 'sticla-polita-standard',
+      first: { id: 'bottom', kind: 'leaf' }, second: { id: 'top', kind: 'leaf' },
+    } } });
+    const pruned = prunePiecesConfig(pieces);
+    const input = toCabinetInput(cabinetFormSchema.parse({
+      ...base, shelves: '2', shelfMaterialId: 'sticla-polita-standard',
+    }), pruned);
+
+    expect(pruned?.honeycomb?.root).toMatchObject({ id: 'split-1', axis: 'H' });
+    expect(input.shelves).toBe(0);
+    expect(input.shelf?.materialId).toBe('sticla-polita-standard');
+    expect(input.pieces?.honeycomb?.root).toMatchObject({ id: 'split-1' });
   });
 
   // --- Cazuri păstrate din schema veche (adaptate la frontType/withShelves) ---

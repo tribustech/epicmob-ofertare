@@ -9,7 +9,7 @@ import type { CabinetInput, Catalogs, ConstructionConstants, ExpandedCabinet, Ma
 // mânerele frezate în front (profil J, îngropat) cer un material care se poate freza:
 // doar MDF vopsit/înfoliat — PAL/PFL nu se frezează, iar melaminatul ar expune miezul brut
 const MILLED_HANDLE_TYPES = new Set(['PROFIL_J', 'INGROPAT']);
-const UNMILLABLE_KINDS: MaterialKind[] = ['PAL', 'PFL', 'MDF_MELAMINAT'];
+const UNMILLABLE_KINDS: MaterialKind[] = ['PAL', 'PFL', 'MDF_MELAMINAT', 'STICLA_RAMA'];
 
 export function expandCabinet(
   input: CabinetInput,

@@ -13,6 +13,8 @@ const KIND_OPTIONS = [
   { value: 'MDF_MELAMINAT', label: 'MDF melaminat' },
   { value: 'MDF_INFOLIAT', label: 'MDF înfoliat' },
   { value: 'MDF_VOPSIT', label: 'MDF vopsit' },
+  { value: 'STICLA_RAMA', label: 'Sticlă cu ramă' },
+  { value: 'STICLA_POLITA', label: 'Sticlă pentru poliță' },
   { value: 'PFL', label: 'PFL / HDF' },
 ];
 const PRICING_OPTIONS = [
@@ -71,7 +73,7 @@ export default async function MaterialePage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-semibold tracking-tight">Materiale plăci</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Materiale</h1>
 
       <MaterialeGalerie materials={cards} />
 

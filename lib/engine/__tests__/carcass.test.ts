@@ -40,6 +40,15 @@ describe('expandCarcass', () => {
     expect(parts.find((p) => p.name === 'Spate')).toMatchObject({ lengthMm: 720, widthMm: 600 });
   });
 
+  it('polița de sticlă folosește materialul propriu și nu primește cant ABS', () => {
+    const input = bazaInput({ shelf: { materialId: 'sticla-polita-standard' } });
+    const parts = toParts(expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION).pieces);
+
+    const shelf = parts.find((p) => p.name === 'Poliță')!;
+    expect(shelf.materialId).toBe('sticla-polita-standard');
+    expect(shelf.edges).toEqual({});
+  });
+
   it('fără spate → nicio piesă Spate', () => {
     const input = bazaInput({ back: { enabled: false, mount: 'FALT' } });
     const parts = toParts(expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION).pieces);
@@ -50,6 +59,52 @@ describe('expandCarcass', () => {
     const input = bazaInput({ widthMm: 1000 });
     const { warnings } = expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
     expect(warnings.some((w) => w.code === 'SHELF_SPAN')).toBe(true);
+  });
+
+  it('generează polițe locale și separatoare structurale pentru fagure', () => {
+    const input = bazaInput({
+      shelves: 0,
+      pieces: { honeycomb: { root: {
+        id: 'separator-1', kind: 'split', axis: 'V', firstSizeMm: 280, sourceId: 'root',
+        first: { id: 'left', kind: 'leaf' },
+        second: {
+          id: 'shelf-1', kind: 'split', axis: 'H', firstSizeMm: 300,
+          sourceId: 'right', materialId: 'sticla-polita-standard',
+          first: { id: 'right-bottom', kind: 'leaf' },
+          second: { id: 'right-top', kind: 'leaf' },
+        },
+      } } },
+    });
+    const { pieces } = expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+
+    expect(pieces.find((piece) => piece.key === 'fagure:separator-1')).toMatchObject({
+      name: 'Separator vertical', lengthMm: 684, widthMm: 530, materialId: 'pal-alb',
+      placement: { x: 298, y: 18, w: 18, h: 684 },
+    });
+    expect(pieces.find((piece) => piece.key === 'fagure:shelf-1')).toMatchObject({
+      name: 'Poliță', lengthMm: 266, widthMm: 530, materialId: 'sticla-polita-standard', edges: {},
+      placement: { x: 316, y: 318, w: 266, h: 8 },
+    });
+  });
+
+  it('calculează avertizarea de deschidere pe segmentul sprijinit, nu pe tot corpul', () => {
+    const input = bazaInput({
+      widthMm: 1000, shelves: 0,
+      pieces: { honeycomb: { root: {
+        id: 'separator-1', kind: 'split', axis: 'V', firstSizeMm: 500, sourceId: 'root',
+        first: {
+          id: 'shelf-left', kind: 'split', axis: 'H', firstSizeMm: 300, sourceId: 'left',
+          first: { id: 'left-bottom', kind: 'leaf' }, second: { id: 'left-top', kind: 'leaf' },
+        },
+        second: {
+          id: 'shelf-right', kind: 'split', axis: 'H', firstSizeMm: 300, sourceId: 'right',
+          first: { id: 'right-bottom', kind: 'leaf' }, second: { id: 'right-top', kind: 'leaf' },
+        },
+      } } },
+    });
+    const { warnings } = expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+
+    expect(warnings.some((warning) => warning.code === 'SHELF_SPAN')).toBe(false);
   });
 
   it('aruncă eroare la material inexistent', () => {

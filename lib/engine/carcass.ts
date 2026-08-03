@@ -1,4 +1,5 @@
 import { LEGGED_TYPES } from './constants';
+import { layoutHoneycomb } from './honeycomb';
 import type {
   CabinetInput, Catalogs, ConstructionConstants, DimCalc, DimTerm, PanelMount, PieceInstance, Warning,
 } from './types';
@@ -128,9 +129,11 @@ export function expandCarcass(
     calc: { length: panelWCalc(mountBottom), width: depthCalc },
   });
 
-  if (input.shelves > 0) {
+  const honeycomb = input.pieces?.honeycomb;
+  if (input.shelves > 0 && !honeycomb) {
     const shelfW = assertPositiveDim(D - cc.shelfSetbackMm, 'lățime poliță', label);
     const shelfMat = input.shelf?.materialId ? findMaterial(catalogs, input.shelf.materialId) : carcass;
+    const shelfEdges = shelfMat.kind === 'STICLA_POLITA' ? {} : { fata: fe };
     const interiorCalc = dim('Lățime interioară', [{ label: 'lățime corp', valueMm: W }, grosime2x]);
     const shelfDepthCalc = dim('Adâncime', [
       { label: 'adâncime', valueMm: D },
@@ -143,7 +146,7 @@ export function expandCarcass(
         pieces.push({
           key: `polita:${i}`, cabinetLabel: label, name: 'Poliță', label: `Poliță ${i + 1}`,
           lengthMm: shelfW, widthMm: innerW, materialId: shelfMat.id,
-          edges: { fata: fe },
+          edges: shelfEdges,
           edgeAxis: { fata: 'W', spate: 'W', stanga: 'L', dreapta: 'L' },
           calc: { length: shelfDepthCalc, width: interiorCalc },
         });
@@ -151,10 +154,46 @@ export function expandCarcass(
         pieces.push({
           key: `polita:${i}`, cabinetLabel: label, name: 'Poliță', label: `Poliță ${i + 1}`,
           lengthMm: innerW, widthMm: shelfW, materialId: shelfMat.id,
-          edges: { fata: fe }, edgeAxis: SIDE_AXES_HORIZ,
+          edges: shelfEdges, edgeAxis: SIDE_AXES_HORIZ,
           calc: { length: interiorCalc, width: shelfDepthCalc },
         });
       }
+    }
+  }
+
+  if (honeycomb) {
+    const shelfDepth = assertPositiveDim(D - cc.shelfSetbackMm, 'adâncime poliță', label);
+    const interiorBottom = t;
+    const interiorTop = topVariant === 'ABSENT' ? sideH : sideH - t;
+    const interiorHeight = assertPositiveDim(interiorTop - interiorBottom, 'înălțime interioară', label);
+    const layout = layoutHoneycomb(
+      honeycomb.root,
+      { x: t, y: interiorBottom, width: innerW, height: interiorHeight },
+      (split) => split.axis === 'V'
+        ? t
+        : findMaterial(catalogs, split.materialId ?? input.shelf?.materialId ?? carcass.id).thicknessMm,
+    );
+
+    for (const divider of layout.dividers) {
+      const isShelf = divider.axis === 'H';
+      const material = isShelf
+        ? findMaterial(catalogs, divider.materialId ?? input.shelf?.materialId ?? carcass.id)
+        : carcass;
+      pieces.push({
+        key: `fagure:${divider.id}`,
+        cabinetLabel: label,
+        name: isShelf ? 'Poliță' : 'Separator vertical',
+        label: isShelf ? 'Poliță fagure' : 'Separator vertical fagure',
+        lengthMm: isShelf ? divider.width : divider.height,
+        widthMm: shelfDepth,
+        materialId: material.id,
+        edges: material.kind === 'STICLA_POLITA' ? {} : { fata: fe },
+        edgeAxis: isShelf ? SIDE_AXES_HORIZ : SIDE_AXES_VERT,
+        placement: {
+          x: divider.x, y: divider.y, z: pflThick + screw,
+          w: divider.width, h: divider.height, d: shelfDepth,
+        },
+      });
     }
   }
 
@@ -182,12 +221,30 @@ export function expandCarcass(
   }
 
   const warnings: Warning[] = [];
-  if (input.shelves > 0 && innerW > cc.shelfSpanWarnMm) {
+  if (input.shelves > 0 && !honeycomb && innerW > cc.shelfSpanWarnMm) {
     warnings.push({
       code: 'SHELF_SPAN',
       message: `Poliță cu deschidere ${innerW}mm — peste ${cc.shelfSpanWarnMm}mm, recomandat sprijin intermediar`,
       cabinetLabel: label,
     });
+  }
+  if (honeycomb) {
+    const interiorBottom = t;
+    const interiorTop = topVariant === 'ABSENT' ? sideH : sideH - t;
+    const layout = layoutHoneycomb(
+      honeycomb.root,
+      { x: t, y: interiorBottom, width: innerW, height: interiorTop - interiorBottom },
+      (split) => split.axis === 'V'
+        ? t
+        : findMaterial(catalogs, split.materialId ?? input.shelf?.materialId ?? carcass.id).thicknessMm,
+    );
+    for (const shelf of layout.dividers.filter((divider) => divider.axis === 'H' && divider.width > cc.shelfSpanWarnMm)) {
+      warnings.push({
+        code: 'SHELF_SPAN',
+        message: `Poliță cu deschidere ${shelf.width}mm — peste ${cc.shelfSpanWarnMm}mm, recomandat sprijin intermediar`,
+        cabinetLabel: label,
+      });
+    }
   }
 
   return { pieces, warnings };

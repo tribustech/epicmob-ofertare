@@ -10,7 +10,7 @@ datasource db {
 model Material {
   id            String   @id @default(cuid())
   name          String
-  kind          String   // PAL | MDF_VOPSIT | MDF_MELAMINAT | MDF_INFOLIAT | PFL
+  kind          String   // PAL | MDF_VOPSIT | MDF_MELAMINAT | MDF_INFOLIAT | PFL | STICLA_RAMA | STICLA_POLITA
   thicknessMm   Float
   sheetLengthMm Float
   sheetWidthMm  Float
@@ -142,6 +142,7 @@ model Assembly {
   project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   name        String
   legHeightMm Float     @default(100)
+  plinthMode String     @default("NONE") // NONE | ASSEMBLY | CABINETS
   sortOrder   Int       @default(0)
   // tip ansamblu: FARA_BLAT (default) | CU_BLAT (comodă/baie/living) | BUCATARIE (+ suspendate)
   kind           String  @default("FARA_BLAT")
@@ -170,6 +171,7 @@ model Cabinet {
   inputJson      String
   hardwareJson   String?
   extraPartsJson String    @default("[]")
+  plinthEnabled Boolean    @default(false)
   // poziția în „Așezare 3D" a ansamblului (null = neașezat, se auto-aranjează la deschidere)
   posXMm         Float?
   posZMm         Float?

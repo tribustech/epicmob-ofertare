@@ -14,6 +14,28 @@ async function main() {
   for (const m of materials) {
     await prisma.material.upsert({ where: { id: m.id }, update: m, create: m });
   }
+  // Produsul implicit pentru fronturile din sticlă. Nu suprascriem prețul la seed,
+  // astfel încât valoarea ajustată ulterior din Catalog > Materiale să fie păstrată.
+  await prisma.material.upsert({
+    where: { id: 'sticla-rama-standard' },
+    update: {},
+    create: {
+      id: 'sticla-rama-standard', name: 'Sticlă cu ramă (complet)', kind: 'STICLA_RAMA',
+      thicknessMm: 20, sheetLengthMm: 3000, sheetWidthMm: 2000,
+      pricingMode: 'PER_SQM', pricePerSheet: null, pricePerSqm: 400,
+      category: 'PLACA', active: true, hasGrain: false,
+    },
+  });
+  await prisma.material.upsert({
+    where: { id: 'sticla-polita-standard' },
+    update: {},
+    create: {
+      id: 'sticla-polita-standard', name: 'Sticlă poliță clară 8mm', kind: 'STICLA_POLITA',
+      thicknessMm: 8, sheetLengthMm: 3000, sheetWidthMm: 2000,
+      pricingMode: 'PER_SQM', pricePerSheet: null, pricePerSqm: 300,
+      category: 'PLACA', active: true, hasGrain: false,
+    },
+  });
 
   const edgeBands = [
     { id: 'abs-04', name: 'ABS 0.4mm', thicknessMm: 0.4, pricePerMl: 1 },

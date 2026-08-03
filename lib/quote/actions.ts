@@ -20,6 +20,7 @@ import { buildSnapshot } from './snapshot';
 import { isFrozenStatus } from './basis';
 import { ASSEMBLY_LEG_HEIGHT_PRESETS, ASSEMBLY_NAME_PRESETS } from './assembly-presets';
 import { parseProjectDetails } from './project-details';
+import { PLINTH_MODES } from './plinth';
 import type { CabinetInput, CabinetType } from '@/lib/engine';
 
 const optStr = z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().optional());
@@ -75,6 +76,7 @@ const assemblySchema = z
   .object({
     name: z.string().trim().min(1, 'Numele ansamblului lipsește'),
     legHeightMm: z.coerce.number().positive(),
+    plinthMode: z.enum(PLINTH_MODES).default('NONE'),
     ...assemblyBlatFields,
   })
   .refine(requireBlatFields, {
@@ -88,11 +90,13 @@ const newAssemblySchema = z
     name: optFreeText,
     legHeightPreset: z.enum(ASSEMBLY_LEG_HEIGHT_PRESETS),
     legHeightMm: optFreeNumber,
+    plinthMode: z.enum(PLINTH_MODES).default('NONE'),
     ...assemblyBlatFields,
   })
   .transform((d) => ({
     name: d.name && d.name.length > 0 ? d.name : d.namePreset,
     legHeightMm: d.legHeightMm ?? Number(d.legHeightPreset),
+    plinthMode: d.plinthMode,
     kind: d.kind,
     baseHeightMm: d.baseHeightMm,
     blatMaterialId: d.blatMaterialId,
@@ -189,6 +193,7 @@ export const duplicateProject = formAction(async (id: string) => {
           projectId: copy.id,
           name: a.name,
           legHeightMm: a.legHeightMm,
+          plinthMode: a.plinthMode,
           sortOrder: a.sortOrder,
         },
       });
@@ -204,6 +209,7 @@ export const duplicateProject = formAction(async (id: string) => {
           inputJson: c.inputJson,
           hardwareJson: c.hardwareJson,
           extraPartsJson: c.extraPartsJson,
+          plinthEnabled: c.plinthEnabled,
         },
       });
     }
@@ -236,7 +242,7 @@ export const addAssembly = formAction(async (projectId: string, fd: FormData) =>
   const d = newAssemblySchema.parse(formDataToObject(fd));
   const count = await prisma.assembly.count({ where: { projectId } });
   await prisma.assembly.create({
-    data: { projectId, name: d.name, legHeightMm: d.legHeightMm, sortOrder: count, ...normalizeAssemblyBlat(d) },
+    data: { projectId, name: d.name, legHeightMm: d.legHeightMm, plinthMode: d.plinthMode, sortOrder: count, ...normalizeAssemblyBlat(d) },
   });
   revalidatePath(`/proiecte/${projectId}`);
 });
@@ -245,7 +251,7 @@ export const updateAssembly = formAction(async (assemblyId: string, fd: FormData
   const d = assemblySchema.parse(formDataToObject(fd));
   const a = await prisma.assembly.update({
     where: { id: assemblyId },
-    data: { name: d.name, legHeightMm: d.legHeightMm, ...normalizeAssemblyBlat(d) },
+    data: { name: d.name, legHeightMm: d.legHeightMm, plinthMode: d.plinthMode, ...normalizeAssemblyBlat(d) },
   });
   revalidatePath(`/proiecte/${a.projectId}`);
 });
@@ -380,6 +386,17 @@ export const updateCabinetData = formAction(async (cabinetId: string, data: Reco
   revalidatePath(`/proiecte/${cab.projectId}`);
 });
 
+export const updateCabinetPlinth = formAction(async (cabinetId: string, fd: FormData) => {
+  const d = z.object({ plinthEnabled: z.enum(['false', 'true']) }).parse(formDataToObject(fd));
+  const cabinet = await prisma.cabinet.update({
+    where: { id: cabinetId },
+    data: { plinthEnabled: d.plinthEnabled === 'true' },
+  });
+  revalidatePath(`/proiecte/${cabinet.projectId}`);
+  revalidatePath(`/proiecte/${cabinet.projectId}/corp/${cabinetId}`);
+  revalidatePath(`/proiecte/${cabinet.projectId}/plan-debitare`);
+});
+
 export const updateBlat = formAction(async (cabinetId: string, fd: FormData) => {
   const d = blatFormSchema.parse(formDataToObject(fd));
   // grosimea informativă vine din material (dacă lipsește, rămâne 0)
@@ -413,6 +430,7 @@ export const duplicateCabinet = formAction(async (cabinetId: string) => {
       inputJson: JSON.stringify(input),
       hardwareJson: cab.hardwareJson,
       extraPartsJson: cab.extraPartsJson,
+      plinthEnabled: cab.plinthEnabled,
     },
   });
   revalidatePath(`/proiecte/${cab.projectId}`);

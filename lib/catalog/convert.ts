@@ -34,7 +34,7 @@ export interface SettingsRow {
   defaultAventosId?: string | null;
 }
 
-const MATERIAL_KINDS: MaterialKind[] = ['PAL', 'MDF_VOPSIT', 'MDF_MELAMINAT', 'MDF_INFOLIAT', 'PFL'];
+const MATERIAL_KINDS: MaterialKind[] = ['PAL', 'MDF_VOPSIT', 'MDF_MELAMINAT', 'MDF_INFOLIAT', 'PFL', 'STICLA_RAMA', 'STICLA_POLITA'];
 const HARDWARE_CATEGORIES: HardwareCategory[] = [
   'BALAMA', 'SERTAR', 'MANER', 'PICIOR', 'SINA_SUSPENDARE',
   'SUPORT_POLITA', 'CLEMA_SOCLU', 'PISTON_AVENTOS', 'HOLTSURUB', 'ACCESORIU',

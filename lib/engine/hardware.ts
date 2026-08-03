@@ -105,7 +105,7 @@ export function suggestHardware(
   }
   // PROFIL_J, GOLA, FARA: fără produs per front — costul lor intră separat (stratul de calcul al proiectului)
 
-  if (input.shelves > 0) {
+  if (input.shelves > 0 && !input.pieces?.honeycomb) {
     suggestions.push({
       slot: 'suporti-polita',
       category: 'SUPORT_POLITA',

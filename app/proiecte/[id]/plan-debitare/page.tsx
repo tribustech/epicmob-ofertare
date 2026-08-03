@@ -23,7 +23,7 @@ export default async function PlanDebitarePage({ params }: { params: Promise<{ i
     );
   }
   const snapshot = basis.snapshot;
-  const { quote, error } = tryComputeQuote(toQuoteInput(project, cabinets, legHeightByCabinet(assemblies, cabinets)), snapshot);
+  const { quote, error } = tryComputeQuote(toQuoteInput(project, cabinets, legHeightByCabinet(assemblies, cabinets), assemblies), snapshot);
   if (!quote) return <p className="text-sm text-red-700">Eroare de calcul: {error}</p>;
 
   const nested = quote.costs.needs.boards.filter((b) => b.layout !== null);

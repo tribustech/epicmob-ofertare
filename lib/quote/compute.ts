@@ -15,6 +15,7 @@ import { computeBlat, type BlatResult } from '@/lib/engine';
 import { isCabinetInputComplete, type ExtraPart } from './cabinet-form';
 import { handleExtraCost, withResolvedHandle, type ProjectHandle } from './handle';
 import { pickLegId } from './legs';
+import { buildPlinthParts, type PlinthAssembly } from './plinth';
 
 export interface SnapshotData {
   takenAt: string;
@@ -42,6 +43,8 @@ export function frontCatalogsFromSnapshot(snap: SnapshotData) {
 
 export interface QuoteCabinet {
   id?: string;
+  assemblyId?: string | null;
+  plinthEnabled?: boolean;
   input: CabinetInput;
   hardwareAdjustments: HardwareAdjustments | null;
   extraParts: ExtraPart[];
@@ -61,6 +64,7 @@ export interface QuoteInput {
   laborPct: number;
   freeLines: FreeLine[];
   cabinets: QuoteCabinet[];
+  assemblies?: PlinthAssembly[];
   projectHandle: ProjectHandle;
 }
 
@@ -71,6 +75,8 @@ export interface QuoteResult {
   unresolvedHardware: HardwareSuggestion[];
   hardwareSummary: HardwareSummaryRow[];
   cutList: CutListFile[];
+  glassFrontList: CutListFile[];
+  glassShelfList: CutListFile[];
   warnings: Warning[];
   cabinetIssues: CabinetIssue[];
   cabinets: ExpandedCabinet[];
@@ -127,6 +133,15 @@ export function computeQuote(qAll: QuoteInput, snap: SnapshotData): QuoteResult 
       });
     }
   }
+  parts.push(...buildPlinthParts({
+    assemblies: q.assemblies ?? [],
+    cabinets: q.cabinets.map((c) => ({
+      id: c.id ?? '',
+      assemblyId: c.assemblyId ?? null,
+      plinthEnabled: c.plinthEnabled ?? false,
+      input: c.input,
+    })),
+  }));
 
   const byId = new Map<string, number>();
   const unresolvedHardware: HardwareSuggestion[] = [];
@@ -196,6 +211,16 @@ export function computeQuote(qAll: QuoteInput, snap: SnapshotData): QuoteResult 
     extraHardware,
     blats: blatResults,
   });
+  const glassFrontMaterialIds = new Set(
+    catalogs.materials.filter((material) => material.kind === 'STICLA_RAMA').map((material) => material.id),
+  );
+  const glassShelfMaterialIds = new Set(
+    catalogs.materials.filter((material) => material.kind === 'STICLA_POLITA').map((material) => material.id),
+  );
+  const glassFrontParts = parts.filter((part) => glassFrontMaterialIds.has(part.materialId));
+  const glassShelfParts = parts.filter((part) => glassShelfMaterialIds.has(part.materialId));
+  const workshopParts = parts.filter((part) =>
+    !glassFrontMaterialIds.has(part.materialId) && !glassShelfMaterialIds.has(part.materialId));
 
   return {
     costs,
@@ -203,7 +228,9 @@ export function computeQuote(qAll: QuoteInput, snap: SnapshotData): QuoteResult 
     hardwareLines,
     unresolvedHardware,
     hardwareSummary: aggregateHardware(hardwareLines, catalogs.hardware),
-    cutList: cutListCsv(parts, catalogs),
+    cutList: cutListCsv(workshopParts, catalogs),
+    glassFrontList: cutListCsv(glassFrontParts, catalogs),
+    glassShelfList: cutListCsv(glassShelfParts, catalogs),
     warnings: [...incompleteWarnings, ...expanded.flatMap((e) => e.warnings), ...blatResults.flatMap((r) => r.warnings)],
     cabinetIssues,
     cabinets: expanded,

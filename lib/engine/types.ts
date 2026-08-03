@@ -1,6 +1,8 @@
 // Unități: dimensiuni în mm, arii în m², cant în ml, bani în RON.
 
-export type MaterialKind = 'PAL' | 'MDF_VOPSIT' | 'MDF_MELAMINAT' | 'MDF_INFOLIAT' | 'PFL';
+import type { HoneycombNode } from './honeycomb';
+
+export type MaterialKind = 'PAL' | 'MDF_VOPSIT' | 'MDF_MELAMINAT' | 'MDF_INFOLIAT' | 'PFL' | 'STICLA_RAMA' | 'STICLA_POLITA';
 
 export type PricingMode =
   | { mode: 'PER_SHEET'; pricePerSheet: number }
@@ -109,7 +111,7 @@ export interface CabinetInput {
   doors: number;                   // 0 = fără uși; exclusiv cu drawers
   drawers?: DrawerOptions;         // sertare pe orice tip de corp; exclusiv cu doors
   carcassMaterialId: string;
-  frontKind?: 'PAL' | 'MDF_MELAMINAT' | 'MDF_INFOLIAT' | 'MDF_VOPSIT'; // lipsă = PAL (comportament istoric)
+  frontKind?: 'PAL' | 'MDF_MELAMINAT' | 'MDF_INFOLIAT' | 'MDF_VOPSIT' | 'STICLA_RAMA'; // lipsă = PAL (comportament istoric)
   frontMaterialId: string | null;  // null = corp fără fronturi
   mdfFront?: {                      // doar frontKind === 'MDF_VOPSIT'
     supplierId: string; modelId: string;
@@ -192,6 +194,7 @@ export interface PiecesConfig {
   top?: { variant: 'PLIN' | 'PAZII' | 'ABSENT'; pazieWidthMm?: number };
   overrides?: Record<PieceKey, PieceOverride>;
   free?: FreePiece[];
+  honeycomb?: { root: HoneycombNode };
 }
 
 /** mm; x: 0→W stânga→dreapta, y: 0→înălțimea carcasei jos→sus (0 = baza carcasei,

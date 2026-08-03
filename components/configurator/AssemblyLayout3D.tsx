@@ -11,7 +11,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import * as THREE from 'three';
 import { saveAssemblyLayout } from '@/lib/quote/actions';
 import {
-  clampBy, doorSlots, FIXED_KINDS, hasLegs, newFixed, overlaps, place, radToDeg,
+  clampBy, doorSlots, FIXED_KINDS, hasLegs, legDepthPositions, newFixed, overlaps, place, radToDeg, stackSuspended,
   roomWalls, snapGuides, wallOrient, layoutDeleteAction, moveWallTo, parseDimensionDraft, resizeWall, WALL_DIMENSION_STEP,
   type FixedItem, type FixedKind, type LayoutItem, type LayoutRoom, type SnapGuide, type WallSeg,
 } from '@/lib/quote/layout';
@@ -29,11 +29,12 @@ const COLORS: Record<CabinetType, string> = {
 const FIXED_LABEL: Record<FixedKind, string> = { GRINDA: 'Grindă', STALP: 'Stâlp', PERETE: 'Perete', CUTIE: 'Cutie', GEAM: 'Geam' };
 
 function Legs({ c }: { c: LayoutItem }) {
-  const lx = (c.w / 2 - 30) * S, lz = (c.d / 2 - 30) * S, ly = (-c.h / 2 - c.legMm / 2) * S;
+  const lx = (c.w / 2 - 30) * S, ly = (-c.h / 2 - c.legMm / 2) * S;
+  const legZ = legDepthPositions(c.d, !!c.hasPlinth);
   return (
     <>
-      {[[lx, lz], [-lx, lz], [lx, -lz], [-lx, -lz]].map(([x, z], i) => (
-        <mesh key={i} position={[x, ly, z]} raycast={() => null}>
+      {[[lx, legZ.front], [-lx, legZ.front], [lx, legZ.back], [-lx, legZ.back]].map(([x, zMm], i) => (
+        <mesh key={i} position={[x, ly, zMm * S]} raycast={() => null}>
           <boxGeometry args={[0.03, c.legMm * S, 0.03]} />
           <meshStandardMaterial color="#4b4b4b" />
         </mesh>
@@ -42,17 +43,57 @@ function Legs({ c }: { c: LayoutItem }) {
   );
 }
 
+function Plinth({ c }: { c: LayoutItem }) {
+  if (!c.hasPlinth) return null;
+  const heightMm = 100;
+  const supportHeight = c.legMm > 0 ? c.legMm : heightMm;
+  const y = (-c.h / 2 - supportHeight + heightMm / 2) * S;
+  const z = (c.d / 2 - 35) * S;
+  return (
+    <mesh position={[0, y, z]} raycast={() => null}>
+      <boxGeometry args={[c.w * S, heightMm * S, 0.018]} />
+      <meshStandardMaterial color={COLORS[c.type] ?? '#c9a87c'} />
+      <Edges color="#8a6d45" lineWidth={1} />
+    </mesh>
+  );
+}
+
 // fronturile reale: uși (panouri verticale) sau sertare (benzi orizontale), fiecare cu mâner.
 function FrontFace({ c }: { c: LayoutItem }) {
   if (!c.front) return null;
   const z = c.d * S / 2 + 0.005, zH = c.d * S / 2 + 0.009;
   const W = c.w, H = c.h, GAP = 8;
-  const panel = (key: string, cx: number, cy: number, pw: number, ph: number) => (
-    <mesh key={key} position={[cx * S, cy * S, z]} raycast={() => null}>
-      <planeGeometry args={[Math.max(20, pw) * S, Math.max(20, ph) * S]} />
-      <meshStandardMaterial color="#6f5330" transparent opacity={0.92} side={THREE.DoubleSide} />
-    </mesh>
-  );
+  const panel = (key: string, cx: number, cy: number, pw: number, ph: number, glass = false) => {
+    const width = Math.max(20, pw), height = Math.max(20, ph);
+    const frame = Math.max(8, Math.min(30, width / 4, height / 4));
+    return (
+      <group key={key} position={[cx * S, cy * S, z]}>
+        <mesh raycast={() => null}>
+          <planeGeometry args={[width * S, height * S]} />
+          <meshStandardMaterial
+            color={glass ? '#b9e5f2' : '#6f5330'} transparent opacity={glass ? 0.24 : 0.92}
+            depthWrite={!glass} side={THREE.DoubleSide}
+          />
+        </mesh>
+        {glass && (
+          <group position={[0, 0, 0.003]}>
+            {[-1, 1].map((side) => (
+              <mesh key={`h${side}`} position={[0, side * (height - frame) * S / 2, 0]} raycast={() => null}>
+                <boxGeometry args={[width * S, frame * S, 0.014]} />
+                <meshStandardMaterial color="#616a70" metalness={0.35} roughness={0.35} />
+              </mesh>
+            ))}
+            {[-1, 1].map((side) => (
+              <mesh key={`v${side}`} position={[side * (width - frame) * S / 2, 0, 0]} raycast={() => null}>
+                <boxGeometry args={[frame * S, height * S, 0.014]} />
+                <meshStandardMaterial color="#616a70" metalness={0.35} roughness={0.35} />
+              </mesh>
+            ))}
+          </group>
+        )}
+      </group>
+    );
+  };
   const bar = (key: string, cx: number, cy: number, w: number, h: number) => (
     <mesh key={key} position={[cx * S, cy * S, zH]} raycast={() => null}>
       <boxGeometry args={[w * S, h * S, 0.014]} />
@@ -67,7 +108,7 @@ function FrontFace({ c }: { c: LayoutItem }) {
     let yTop = H / 2;
     hs.forEach((hh, i) => {
       const ph = (hh / tot) * H, cy = yTop - ph / 2; yTop -= ph;
-      parts.push(panel(`d${i}`, 0, cy, W - 2 * GAP, ph - GAP));
+      parts.push(panel(`d${i}`, 0, cy, W - 2 * GAP, ph - GAP, c.front?.glass));
       parts.push(bar(`dh${i}`, 0, cy + ph / 2 - 55, Math.min(W * 0.5, 300), 14));
     });
   } else {
@@ -75,7 +116,7 @@ function FrontFace({ c }: { c: LayoutItem }) {
     // panouri false: fixe, ca un front, dar fără mâner
     fals.forEach((f, i) => parts.push(panel(`f${i}`, f.cx, 0, f.w - 2 * GAP, H - 2 * GAP)));
     doors.forEach((d, i) => {
-      parts.push(panel(`o${i}`, d.cx, 0, d.w - 2 * GAP, H - 2 * GAP));
+      parts.push(panel(`o${i}`, d.cx, 0, d.w - 2 * GAP, H - 2 * GAP, c.front?.glass));
       const hx = d.cx + (d.cx <= 0 ? d.w / 2 - 40 : -(d.w / 2 - 40));
       parts.push(bar(`oh${i}`, hx, 0, 14, Math.min(H * 0.4, 300)));
     });
@@ -97,7 +138,11 @@ function OpenBody({ c }: { c: LayoutItem }) {
     parts.push(
       <mesh key={`s${i}`} position={[0, y * S, 0]} raycast={() => null}>
         <boxGeometry args={[Math.max(20, W - 24) * S, 18 * S, Math.max(20, D - 24) * S]} />
-        <meshStandardMaterial color="#bda06f" />
+        <meshStandardMaterial
+          color={c.glassShelves ? '#c9edf5' : '#bda06f'} transparent={c.glassShelves}
+          opacity={c.glassShelves ? 0.24 : 1} depthWrite={!c.glassShelves}
+        />
+        {c.glassShelves && <Edges color="#71858d" lineWidth={1} />}
       </mesh>,
     );
   }
@@ -127,6 +172,7 @@ function CabMesh({ c, hovered, active, interactive, onDown, onHover }: {
   return (
     <group position={[c.cx * S, (bodyBottom + c.h / 2) * S, c.cz * S]} rotation={[0, c.rot, 0]}>
       {hasLegs(c) && <Legs c={c} />}
+      <Plinth c={c} />
       <mesh
         onPointerDown={interactive ? (e) => onDown(e, c) : undefined}
         onPointerOver={interactive ? (e) => { e.stopPropagation(); onHover(c.id); document.body.style.cursor = 'grab'; } : undefined}
@@ -228,7 +274,7 @@ function Walls({ walls, editRoom, selectedWall, onWallDown, onSelectWall, onCont
 function Editor({ items, fixed, room, selectedId, onSelect, onSnapshot, onDrag, onWallDrag, editRoom, selectedWall, onSelectWall, onWallContext }: {
   items: LayoutItem[]; fixed: FixedItem[]; room: LayoutRoom;
   selectedId: string | null; onSelect: (id: string | null) => void; onSnapshot: () => void;
-  onDrag: (id: string, cx: number, cz: number, rot: number) => void;
+  onDrag: (id: string, cx: number, cz: number, rot: number, by: number) => void;
   onWallDrag: (id: string, cx: number, cz: number) => void;
   editRoom: boolean; selectedWall: string | null; onSelectWall: (id: string) => void;
   onWallContext: (id: string, x: number, y: number) => void;
@@ -272,9 +318,14 @@ function Editor({ items, fixed, room, selectedId, onSelect, onSnapshot, onDrag, 
     const rot = isFixed(me) ? me.rot : wallOrient(rawCx, rawCz, room, me.rot);
     // snapping vede toate elementele; coliziunea filtrează intern pe bandă
     const others = boxesRef.current.filter((b) => b.id !== d.id);
-    const s = place({ ...me, rot }, rawCx, rawCz, others, room, true, false);
-    onDrag(d.id, s.cx, s.cz, rot);
-    setGuides(snapGuides({ ...me, rot }, s.cx, s.cz, others, room));
+    const stack = isFixed(me) ? null : stackSuspended(
+      { ...me, rot }, rawCx, rawCz, others.filter((b): b is LayoutItem => !isFixed(b)), room,
+    );
+    const desired = stack ?? { cx: rawCx, cz: rawCz, by: me.by, rot };
+    const moving = { ...me, by: desired.by, rot: desired.rot };
+    const s = place(moving, desired.cx, desired.cz, others, room, true, false);
+    onDrag(d.id, s.cx, s.cz, desired.rot, desired.by);
+    setGuides(snapGuides(moving, s.cx, s.cz, others, room));
   }, [floorPoint, room, onSnapshot, onDrag, onWallDrag]);
 
   const onUp = useCallback(() => {
@@ -436,8 +487,8 @@ export default function AssemblyLayout3D({
     setFixed((prev) => prev.some((i) => i.id === id) ? prev.map((i) => (i.id === id ? { ...i, ...patch } as FixedItem : i)) : prev);
   }, []);
 
-  const onDrag = useCallback((id: string, cx: number, cz: number, rot: number) => {
-    updateBox(id, { cx, cz, rot });
+  const onDrag = useCallback((id: string, cx: number, cz: number, rot: number, by: number) => {
+    updateBox(id, { cx, cz, rot, by });
   }, [updateBox]);
 
   const rotate = useCallback(() => {

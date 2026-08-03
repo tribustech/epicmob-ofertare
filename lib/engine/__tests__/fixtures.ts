@@ -22,6 +22,11 @@ export const TEST_CATALOGS: Catalogs = {
       sheetLengthMm: 2800, sheetWidthMm: 2070,
       pricing: { mode: 'PER_SQM', pricePerSqm: 320 },
     },
+    {
+      id: 'sticla-polita-standard', name: 'Sticlă poliță clară 8mm', kind: 'STICLA_POLITA', thicknessMm: 8,
+      sheetLengthMm: 3000, sheetWidthMm: 2000,
+      pricing: { mode: 'PER_SQM', pricePerSqm: 300 },
+    },
   ],
   edgeBands: [
     { id: 'abs-04', name: 'ABS 0.4mm', thicknessMm: 0.4, pricePerMl: 1 },

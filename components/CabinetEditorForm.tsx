@@ -35,6 +35,8 @@ import { MaterialPicker } from '@/components/MaterialPicker';
 import { FrontModelPicker, type FrontModelOption } from '@/components/FrontModelPicker';
 import { RalPicker, type RalColor } from '@/components/RalPicker';
 import { materialHasNoPrice } from '@/lib/quote/material-price';
+import { HoneycombEditor } from '@/components/configurator/HoneycombEditor';
+import { equalHorizontalHoneycomb, type HoneycombNode } from '@/lib/engine/honeycomb';
 
 export type FieldOption = { value: string; label: string };
 
@@ -49,6 +51,7 @@ const FRONT_KIND_OPTIONS: FieldOption[] = [
   { value: 'MDF_MELAMINAT', label: 'MDF melaminat' },
   { value: 'MDF_INFOLIAT', label: 'MDF infoliat' },
   { value: 'MDF_VOPSIT', label: 'MDF vopsit' },
+  { value: 'STICLA_RAMA', label: 'Sticlă cu ramă' },
 ];
 
 const MDF_FINISH_OPTIONS: FieldOption[] = [
@@ -101,6 +104,16 @@ const SHELF_AXIS_OPTIONS: FieldOption[] = [
   { value: 'LR', label: 'Stânga–dreapta' },
   { value: 'FB', label: 'Față–spate' },
 ];
+
+const SHELF_LAYOUT_OPTIONS: FieldOption[] = [
+  { value: 'SIMPLE', label: 'Polițe simple' },
+  { value: 'FAGURE', label: 'Fagure' },
+];
+
+function countHoneycombShelves(node: HoneycombNode): number {
+  if (node.kind === 'leaf') return 0;
+  return (node.axis === 'H' ? 1 : 0) + countHoneycombShelves(node.first) + countHoneycombShelves(node.second);
+}
 
 const DOOR_OPENING_OPTIONS: FieldOption[] = [
   { value: 'BALAMALE', label: 'Clasic' },
@@ -414,6 +427,18 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     setHw((prev) => ({ ...prev, extra: updater(prev.extra ?? []) }));
 
   const pickerMaterials = useMemo(() => snapshot.materials.filter((m) => m.category !== 'BLAT'), [snapshot]);
+  const boardMaterials = useMemo(
+    () => pickerMaterials.filter((m) => m.kind !== 'STICLA_RAMA' && m.kind !== 'STICLA_POLITA'),
+    [pickerMaterials],
+  );
+  const shelfMaterials = useMemo(
+    () => pickerMaterials.filter((m) => m.kind !== 'STICLA_RAMA'),
+    [pickerMaterials],
+  );
+  const glassFrameMaterials = useMemo(
+    () => pickerMaterials.filter((m) => m.kind === 'STICLA_RAMA'),
+    [pickerMaterials],
+  );
   // culoarea piesei în viewportul 3D depinde de tipul materialului (PAL/MDF/…)
   const materialKindById: Record<string, string> = Object.fromEntries(pickerMaterials.map((m) => [m.id, m.kind ?? 'PAL']));
   // marcaj „»»»" în 3D pentru piesele cu material cu decor direcțional (snapshot-uri vechi înghețate: lipsă = false);
@@ -423,6 +448,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     ...Object.fromEntries(pickerMaterials.map((m) => [m.id, m.hasGrain ?? false])),
     ...grainOverrides,
   };
+  const shelfIsGlass = materialKindById[values.shelfMaterialId] === 'STICLA_POLITA';
   const toggleGrain = (materialId: string, next: boolean) => {
     setGrainOverrides((prev) => ({ ...prev, [materialId]: next }));
     void setMaterialHasGrain(materialId, next).then((r) => {
@@ -432,7 +458,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   };
 
   const noPriceMaterials = useMemo(() => {
-    const ids = [values.carcassMaterialId, values.frontMaterialId, values.backMaterialId, values.drawersBottomMaterialId, ...extraParts.map((p) => p.materialId)];
+    const ids = [values.carcassMaterialId, values.frontMaterialId, values.shelfMaterialId, values.backMaterialId, values.drawersBottomMaterialId, ...extraParts.map((p) => p.materialId)];
     const seen = new Set<string>();
     const names: string[] = [];
     for (const id of ids) {
@@ -442,7 +468,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
       if (m && materialHasNoPrice(m)) names.push(m.name);
     }
     return names;
-  }, [values.carcassMaterialId, values.frontMaterialId, values.backMaterialId, values.drawersBottomMaterialId, extraParts, snapshot]);
+  }, [values.carcassMaterialId, values.frontMaterialId, values.shelfMaterialId, values.backMaterialId, values.drawersBottomMaterialId, extraParts, snapshot]);
 
   function handleSave() {
     if (!parsed.success) {
@@ -481,12 +507,12 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     frontType === 'USI'
       ? [
           `Uși · ${plural(Number(values.doors) || 0, 'ușă', 'uși')}`,
-          withShelves ? plural(Number(values.shelves) || 0, 'poliță', 'polițe') : null,
+          withShelves ? (piecesCfg.honeycomb ? 'fagure' : plural(Number(values.shelves) || 0, 'poliță', 'polițe')) : null,
           handleSummary,
         ].filter(Boolean).join(' · ')
       : frontType === 'SERTARE'
         ? `Sertare · ${plural(drawersCount, 'sertar', 'sertare')} · ${handleSummary}`
-        : `Fără front · ${plural(Number(values.shelves) || 0, 'poliță', 'polițe')}`;
+        : `Fără front · ${piecesCfg.honeycomb ? 'fagure' : plural(Number(values.shelves) || 0, 'poliță', 'polițe')}`;
   const backSummary = backEnabled
     ? ['Cu spate', values.backMaterialId ? materialName(values.backMaterialId) : null,
        BACK_MOUNT_OPTIONS.find((o) => o.value === values.backMount)?.label.toLowerCase() ?? null]
@@ -540,19 +566,26 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const shelfControls = (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
-        <MaterialPicker label="Material polițe" value={values.shelfMaterialId} onChange={(v) => set('shelfMaterialId', v)} materials={pickerMaterials} allowEmpty />
-        <GrainCheckbox materialId={values.shelfMaterialId} grainById={materialGrainById} onToggle={toggleGrain} idSuffix="polite" />
+        <MaterialPicker
+          label="Material polițe" value={values.shelfMaterialId}
+          onChange={(v) => {
+            set('shelfMaterialId', v);
+            if (materialKindById[v] === 'STICLA_POLITA') set('shelfDecorMatters', 'false');
+          }}
+          materials={shelfMaterials} allowEmpty
+        />
+        {!shelfIsGlass && <GrainCheckbox materialId={values.shelfMaterialId} grainById={materialGrainById} onToggle={toggleGrain} idSuffix="polite" />}
       </div>
       <p className="text-xs text-muted-foreground">Fără selecție, polițele se fac din materialul carcasei.</p>
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id="shelfDecorMatters"
-          checked={values.shelfDecorMatters === 'true'}
-          onCheckedChange={(c) => set('shelfDecorMatters', c === true ? 'true' : 'false')}
-        />
-        <Label htmlFor="shelfDecorMatters" className="font-normal">Contează direcția decorului</Label>
-      </div>
-      {values.shelfDecorMatters === 'true' && (
+      {!shelfIsGlass && <div className="flex items-center gap-2">
+          <Checkbox
+            id="shelfDecorMatters"
+            checked={values.shelfDecorMatters === 'true'}
+            onCheckedChange={(c) => set('shelfDecorMatters', c === true ? 'true' : 'false')}
+          />
+          <Label htmlFor="shelfDecorMatters" className="font-normal">Contează direcția decorului</Label>
+        </div>}
+      {!shelfIsGlass && values.shelfDecorMatters === 'true' && (
         <div className="grid gap-2">
           <Label className={fieldLabelCls}>Axa decorului</Label>
           <SegmentedControl value={values.shelfDecorAxis} onChange={(v) => set('shelfDecorAxis', v)} options={SHELF_AXIS_OPTIONS} />
@@ -560,6 +593,69 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             Față–spate rotește piesa în lista de debitare (decorul curge pe lungimea plăcii).
           </p>
         </div>
+      )}
+    </div>
+  );
+
+  const honeycombRoot = piecesCfg.honeycomb?.root;
+  const carcassThicknessMm = pickerMaterials.find((material) => material.id === values.carcassMaterialId)?.thicknessMm ?? 18;
+  const honeycombWidthMm = Math.max(1, (Number(values.widthMm) || 0) - 2 * carcassThicknessMm);
+  const topInsetMm = piecesCfg.top?.variant === 'ABSENT' ? 0 : carcassThicknessMm;
+  const honeycombHeightMm = Math.max(
+    1,
+    (Number(values.heightMm) || 0) - legDeduct - carcassThicknessMm - topInsetMm,
+  );
+  const enableHoneycomb = () => {
+    const shelfCount = Math.max(0, Math.trunc(Number(values.shelves) || 0));
+    const shelfThickness = pickerMaterials.find((material) => material.id === values.shelfMaterialId)?.thicknessMm
+      ?? carcassThicknessMm;
+    try {
+      const root = equalHorizontalHoneycomb(shelfCount, honeycombHeightMm, shelfThickness);
+      setPiecesCfg((current) => ({ ...current, honeycomb: { root } }));
+    } catch {
+      setPiecesCfg((current) => ({ ...current, honeycomb: { root: { id: 'root', kind: 'leaf' } } }));
+    }
+  };
+  const disableHoneycomb = () => {
+    if (honeycombRoot) set('shelves', String(countHoneycombShelves(honeycombRoot)));
+    setPiecesCfg((current) => {
+      const { honeycomb: _honeycomb, ...rest } = current;
+      return rest;
+    });
+  };
+  const shelfConfiguration = (
+    <div className="space-y-3">
+      <div className="grid gap-2">
+        <Label className={fieldLabelCls}>Așezare interioară</Label>
+        <SegmentedControl
+          value={honeycombRoot ? 'FAGURE' : 'SIMPLE'}
+          onChange={(value) => value === 'FAGURE' ? enableHoneycomb() : disableHoneycomb()}
+          options={SHELF_LAYOUT_OPTIONS}
+        />
+      </div>
+      {!honeycombRoot ? (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <NumField label="Număr polițe" value={values.shelves} onChange={(value) => set('shelves', value)} />
+          </div>
+          {Number(values.shelves) > 0 && shelfControls}
+        </>
+      ) : (
+        <>
+          {shelfControls}
+          <HoneycombEditor
+            root={honeycombRoot}
+            widthMm={honeycombWidthMm}
+            heightMm={honeycombHeightMm}
+            carcassThicknessMm={carcassThicknessMm}
+            defaultShelfMaterialId={values.shelfMaterialId || undefined}
+            materials={shelfMaterials}
+            onChange={(root) => setPiecesCfg((current) => ({ ...current, honeycomb: { root } }))}
+          />
+          <p className="text-xs text-muted-foreground">
+            Separatoarele verticale folosesc materialul carcasei. Polițele sunt fixe și pot avea material propriu.
+          </p>
+        </>
       )}
     </div>
   );
@@ -650,19 +746,48 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
           complete={sectionComplete.materiale} error={sectionError('materiale')}>
           <div className="space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <MaterialPicker label="Material carcasă" value={values.carcassMaterialId} onChange={(v) => set('carcassMaterialId', v)} materials={pickerMaterials} error={showError('carcassMaterialId')} />
+              <MaterialPicker label="Material carcasă" value={values.carcassMaterialId} onChange={(v) => set('carcassMaterialId', v)} materials={boardMaterials} error={showError('carcassMaterialId')} />
               <SelectField label="Cant carcasă" value={values.carcassFrontEdgeId} onChange={(v) => set('carcassFrontEdgeId', v)} options={bandOptions.carcassFront} error={showError('carcassFrontEdgeId')} />
             </div>
             <GrainCheckbox materialId={values.carcassMaterialId} grainById={materialGrainById} onToggle={toggleGrain} idSuffix="carcasa" />
 
             <div className="grid gap-2 border-t pt-3">
               <Label className={fieldLabelCls}>Tip front</Label>
-              <SegmentedControl value={frontKind} onChange={(v) => set('frontKind', v)} options={FRONT_KIND_OPTIONS} />
+              <SegmentedControl
+                value={frontKind}
+                onChange={(v) => {
+                  set('frontKind', v);
+                  if (v === 'STICLA_RAMA') {
+                    setValues((prev) => ({
+                      ...prev,
+                      frontKind: v,
+                      frontMaterialId: glassFrameMaterials[0]?.id ?? '',
+                      frontPerimeterId: '',
+                    }));
+                  }
+                }}
+                options={FRONT_KIND_OPTIONS}
+              />
             </div>
 
-            {frontKind !== 'MDF_VOPSIT' ? (
+            {frontKind === 'STICLA_RAMA' ? (
+              <div className="space-y-2">
+                <MaterialPicker
+                  label="Sticlă și ramă"
+                  value={values.frontMaterialId}
+                  onChange={(v) => set('frontMaterialId', v)}
+                  materials={glassFrameMaterials}
+                  allowEmpty
+                  error={showError('frontMaterialId')}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Prețul include sticla și rama completă. Nu se adaugă cant ABS sau debitare PAL;
+                  balamalele și mânerul se calculează separat.
+                </p>
+              </div>
+            ) : frontKind !== 'MDF_VOPSIT' ? (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <MaterialPicker label="Material fronturi" value={values.frontMaterialId} onChange={(v) => set('frontMaterialId', v)} materials={pickerMaterials} allowEmpty error={showError('frontMaterialId')} />
+                <MaterialPicker label="Material fronturi" value={values.frontMaterialId} onChange={(v) => set('frontMaterialId', v)} materials={boardMaterials} allowEmpty error={showError('frontMaterialId')} />
                 <SelectField label="Cant fronturi" value={values.frontPerimeterId} onChange={(v) => set('frontPerimeterId', v)} options={bandOptions.frontPerimeter} allowEmpty />
                 <GrainCheckbox materialId={values.frontMaterialId} grainById={materialGrainById} onToggle={toggleGrain} idSuffix="fronturi" />
               </div>
@@ -743,14 +868,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                     />
                     <Label htmlFor="withShelves" className="font-normal">Cu polițe (debifează la corpul de chiuvetă)</Label>
                   </div>
-                  {withShelves && (
-                    <>
-                      <div className="grid grid-cols-2 gap-3">
-                        <NumField label="Număr polițe" value={values.shelves} onChange={(v) => set('shelves', v)} />
-                      </div>
-                      {shelfControls}
-                    </>
-                  )}
+                  {withShelves && shelfConfiguration}
                 </div>
                 {type === 'SUSPENDAT' && (
                   <div className="grid gap-2">
@@ -835,10 +953,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             {frontType === 'FARA' && (
               <div className="space-y-3 rounded-lg border p-3">
                 <Label className={fieldLabelCls}>Polițe</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <NumField label="Număr polițe" value={values.shelves} onChange={(v) => set('shelves', v)} />
-                </div>
-                {Number(values.shelves) > 0 && shelfControls}
+                {shelfConfiguration}
               </div>
             )}
 

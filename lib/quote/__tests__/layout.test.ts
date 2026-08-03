@@ -13,6 +13,19 @@ const resizeWall = (wall: WallSeg, dimension: 'len' | 'h', value: number): WallS
   (layoutModule as unknown as { resizeWall?: (w: WallSeg, d: 'len' | 'h', v: number) => WallSeg }).resizeWall?.(wall, dimension, value);
 const parseDimensionDraft = (raw: string): number | null | undefined =>
   (layoutModule as unknown as { parseDimensionDraft?: (value: string) => number | null }).parseDimensionDraft?.(raw);
+type StackPlacement = { cx: number; cz: number; by: number; rot: number; targetId: string } | null;
+const stackSuspended = (
+  me: LayoutItem, cx: number, cz: number, others: LayoutItem[], targetRoom: LayoutRoom,
+): StackPlacement | undefined =>
+  (layoutModule as unknown as {
+    stackSuspended?: (
+      item: LayoutItem, x: number, z: number, neighbors: LayoutItem[], room: LayoutRoom,
+    ) => StackPlacement;
+  }).stackSuspended?.(me, cx, cz, others, targetRoom);
+const legDepthPositions = (depthMm: number, hasPlinth: boolean): { front: number; back: number } | undefined =>
+  (layoutModule as unknown as {
+    legDepthPositions?: (depth: number, plinth: boolean) => { front: number; back: number };
+  }).legDepthPositions?.(depthMm, hasPlinth);
 
 describe('layoutDeleteAction — ștergere din tastatură', () => {
   it('Backspace șterge peretele selectat', () => {
@@ -76,6 +89,83 @@ const base = (over: Partial<LayoutItem> = {}): LayoutItem => ({
   cx: 300, cz: 280, by: 0, rot: 0, ...over,
 });
 const room: LayoutRoom = { W: 3600, D: 2800, H: 2600 };
+
+describe('picioare ascunse de plintă în 3D', () => {
+  it('retrage piciorul frontal în spatele feței plintei', () => {
+    const positions = legDepthPositions(300, true);
+    const frontLegFace = positions!.front + 15;
+    const plinthFrontFace = 300 / 2 - 35 + 9;
+
+    expect(frontLegFace).toBeLessThan(plinthFrontFace);
+  });
+
+  it('păstrează poziția picioarelor când corpul nu are plintă', () => {
+    expect(legDepthPositions(300, false)).toEqual({ front: 120, back: -120 });
+  });
+});
+
+describe('stivuire automată pentru corpuri suspendate', () => {
+  it('așază corpul deasupra, cant pe cant, cu spatele și muchia apropiată aliniate', () => {
+    const lower = base({
+      id: 'lower', type: 'SUSPENDAT', w: 900, h: 750, d: 350, legMm: 0,
+      cx: 1000, cz: 175, by: 1400, rot: 0,
+    });
+    const upper = base({
+      id: 'upper', type: 'SUSPENDAT', w: 600, h: 300, d: 300, legMm: 0,
+      cx: 1800, cz: 150, by: 1400, rot: 0,
+    });
+
+    expect(stackSuspended(upper, 1160, 170, [lower], room)).toEqual({
+      cx: 1150,
+      cz: 150,
+      by: 2150,
+      rot: 0,
+      targetId: 'lower',
+    });
+  });
+
+  it('așază corpul dedesubt când nu încape deasupra', () => {
+    const upper = base({
+      id: 'upper', type: 'SUSPENDAT', w: 800, h: 600, d: 350, legMm: 0,
+      cx: 1000, cz: 175, by: 1900, rot: 0,
+    });
+    const moved = base({
+      id: 'moved', type: 'SUSPENDAT', w: 600, h: 500, d: 300, legMm: 0,
+      cx: 1800, cz: 150, by: 1400, rot: 0,
+    });
+
+    expect(stackSuspended(moved, 1000, 160, [upper], room)?.by).toBe(1400);
+  });
+
+  it('aliniază spatele și pe un perete lateral', () => {
+    const target = base({
+      id: 'side', type: 'SUSPENDAT', w: 800, h: 600, d: 350, legMm: 0,
+      cx: 175, cz: 1200, by: 1400, rot: Math.PI / 2,
+    });
+    const moved = base({
+      id: 'moved', type: 'SUSPENDAT', w: 600, h: 300, d: 300, legMm: 0,
+      cx: 900, cz: 1800, by: 1400, rot: 0,
+    });
+
+    expect(stackSuspended(moved, 160, 1280, [target], room)).toEqual({
+      cx: 150,
+      cz: 1300,
+      by: 2000,
+      rot: Math.PI / 2,
+      targetId: 'side',
+    });
+  });
+
+  it('nu stivuiește când corpul este tras departe de vecin', () => {
+    const target = base({
+      id: 'target', type: 'SUSPENDAT', w: 900, h: 600, d: 350, legMm: 0,
+      cx: 1000, cz: 175, by: 1400, rot: 0,
+    });
+    const moved = base({ id: 'moved', type: 'SUSPENDAT', legMm: 0, by: 1400 });
+
+    expect(stackSuspended(moved, 2600, 1200, [target], room)).toBeNull();
+  });
+});
 
 describe('doorSlots — uși + fronturi false', () => {
   it('fără fals: ușile umplu toată lățimea (ca înainte)', () => {

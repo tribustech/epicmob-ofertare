@@ -36,6 +36,77 @@ describe('computeQuote — corpul de referință (aceleași cifre ca motorul)', 
 });
 
 describe('computeQuote — override-uri și piese suplimentare', () => {
+  it('include plinta ansamblului în piese, necesar și debitare', () => {
+    const q = baseQuote();
+    q.assemblies = [{ id: 'a1', name: 'Bucătărie', plinthMode: 'ASSEMBLY' }];
+    q.cabinets[0] = {
+      ...q.cabinets[0],
+      id: 'c1',
+      assemblyId: 'a1',
+      plinthEnabled: false,
+    };
+
+    const r = computeQuote(q, makeSnapshot());
+
+    expect(r.parts).toContainEqual(expect.objectContaining({
+      name: 'Plintă ansamblu', lengthMm: 600, widthMm: 100, materialId: 'pal-alb',
+    }));
+    expect(r.cutList.find((file) => file.materialId === 'pal-alb')?.csv).toContain('Plintă ansamblu');
+  });
+
+  it('cotează sticla cu ramă la m² și o separă de debitarea PAL', () => {
+    const snapshot = makeSnapshot();
+    snapshot.materials.push({
+      id: 'sticla-rama-standard', name: 'Sticlă cu ramă', kind: 'STICLA_RAMA',
+      thicknessMm: 20, sheetLengthMm: 3000, sheetWidthMm: 2000,
+      pricingMode: 'PER_SQM', pricePerSheet: null, pricePerSqm: 400, active: true,
+    });
+    const q = baseQuote();
+    q.cabinets[0].input = {
+      ...q.cabinets[0].input,
+      frontKind: 'STICLA_RAMA',
+      frontMaterialId: 'sticla-rama-standard',
+      edgeBands: { ...q.cabinets[0].input.edgeBands, frontPerimeterId: null },
+    };
+    const withoutFront = baseQuote();
+    withoutFront.cabinets[0].input = {
+      ...withoutFront.cabinets[0].input,
+      doors: 0,
+      frontMaterialId: null,
+    };
+
+    const result = computeQuote(q, snapshot);
+    const baseline = computeQuote(withoutFront, snapshot);
+
+    expect(result.costs.breakdown.boards - baseline.costs.breakdown.boards).toBeCloseTo(0.718 * 0.598 * 400, 2);
+    expect(result.cutList.some((file) => file.materialId === 'sticla-rama-standard')).toBe(false);
+    expect(result.glassFrontList).toHaveLength(1);
+    expect(result.glassFrontList[0].csv).toContain('B1;Ușă;718;598;1');
+  });
+
+  it('cotează polița de sticlă la 300 lei/m² și o exportă separat', () => {
+    const snapshot = makeSnapshot();
+    snapshot.materials.push({
+      id: 'sticla-polita-standard', name: 'Sticlă poliță clară 8mm', kind: 'STICLA_POLITA',
+      thicknessMm: 8, sheetLengthMm: 3000, sheetWidthMm: 2000,
+      pricingMode: 'PER_SQM', pricePerSheet: null, pricePerSqm: 300, active: true,
+    });
+    const q = baseQuote();
+    q.cabinets[0].input = {
+      ...q.cabinets[0].input,
+      shelf: { materialId: 'sticla-polita-standard' },
+    };
+
+    const result = computeQuote(q, snapshot);
+
+    const shelf = result.parts.find((part) => part.name === 'Poliță')!;
+    expect(shelf.materialId).toBe('sticla-polita-standard');
+    expect(shelf.edges).toEqual({});
+    expect(result.cutList.some((file) => file.materialId === 'sticla-polita-standard')).toBe(false);
+    expect(result.glassShelfList).toHaveLength(1);
+    expect(result.glassShelfList[0].csv).toContain('B1;Poliță;564;530;1');
+  });
+
   it('override-ul înlocuiește complet feroneria corpului', () => {
     const q = baseQuote();
     q.cabinets[0].hardwareAdjustments = zeroAllSlots([{ hardwareId: 'maner-std', qty: 10 }]);

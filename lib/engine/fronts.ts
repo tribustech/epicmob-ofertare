@@ -58,7 +58,7 @@ export function expandFronts(
     throw new Error(`Corpul ${input.label}: nu există un material MDF vopsit în catalog pentru fronturi`);
   }
   // MDF vopsit și MDF înfoliat au fața finisată pe toate laturile — fără cant ABS
-  const NO_EDGE_KINDS: MaterialKind[] = ['MDF_VOPSIT', 'MDF_INFOLIAT'];
+  const NO_EDGE_KINDS: MaterialKind[] = ['MDF_VOPSIT', 'MDF_INFOLIAT', 'STICLA_RAMA'];
   const bandId = NO_EDGE_KINDS.includes(material.kind) ? null : input.edgeBands.frontPerimeterId;
   // front = piesă verticală cu fața spre tine; lengthMm = înălțimea → stânga/dreapta pe lungime
   const FRONT_AXES: PieceInstance['edgeAxis'] = { sus: 'W', jos: 'W', stanga: 'L', dreapta: 'L' };

@@ -43,6 +43,11 @@ const CATEGORY_LABELS: [key: string, label: string][] = [
 ];
 const NAME_PRESET_OPTIONS = ASSEMBLY_NAME_PRESETS.map((v) => ({ value: v, label: v }));
 const LEG_HEIGHT_PRESET_OPTIONS = ASSEMBLY_LEG_HEIGHT_PRESETS.map((v) => ({ value: v, label: `${v} mm` }));
+const PLINTH_MODE_OPTIONS = [
+  { value: 'NONE', label: 'Fără plintă' },
+  { value: 'ASSEMBLY', label: 'Plintă pe tot ansamblul' },
+  { value: 'CABINETS', label: 'Plintă doar pe corpurile selectate' },
+];
 
 /** Motivele problemelor unui corp (incomplet / feronerie nerezolvată / avertismente). */
 function cabinetReasons(issue: CabinetIssue | undefined, incomplete: boolean): string[] {
@@ -90,7 +95,7 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
 
   const basis = await getQuoteBasis(project);
   const computed = basis.kind !== 'MISSING'
-    ? tryComputeQuote(toQuoteInput(project, cabinets, legHeightMap), basis.snapshot)
+    ? tryComputeQuote(toQuoteInput(project, cabinets, legHeightMap, assemblies), basis.snapshot)
     : null;
   const quote = computed?.quote ?? null;
   const snapshot = basis.kind !== 'MISSING' ? basis.snapshot : null;
@@ -147,6 +152,7 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                 <TextInput name="name" label="Nume liber (opțional)" required={false} />
                 <Select name="legHeightPreset" label="Picioare (preselecție)" options={LEG_HEIGHT_PRESET_OPTIONS} defaultValue={LEG_HEIGHT_PRESET_OPTIONS[0].value} />
                 <NumberInput name="legHeightMm" label="Picioare — valoare liberă (mm)" required={false} step="1" />
+                <Select name="plinthMode" label="Plintă (100 mm)" options={PLINTH_MODE_OPTIONS} defaultValue="NONE" />
                 <AssemblyKindFields blatMaterials={blatMaterialItems} />
                 <p className="text-xs text-muted-foreground sm:col-span-2">
                   Regulă: dacă un câmp liber e completat, el câștigă; altfel se folosește preselecția
@@ -351,6 +357,16 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                         <a href={`/proiecte/${project.id}/export/debitare/${f.materialId}`}>CSV debitare: {f.materialName}</a>
                       </Button>
                     ))}
+                    {quote.glassFrontList.map((f) => (
+                      <Button key={`glass-${f.materialId}`} asChild variant="outline" size="sm">
+                        <a href={`/proiecte/${project.id}/export/debitare/${f.materialId}`}>CSV fronturi sticlă: {f.materialName}</a>
+                      </Button>
+                    ))}
+                    {quote.glassShelfList.map((f) => (
+                      <Button key={`glass-shelf-${f.materialId}`} asChild variant="outline" size="sm">
+                        <a href={`/proiecte/${project.id}/export/debitare/${f.materialId}`}>CSV polițe sticlă: {f.materialName}</a>
+                      </Button>
+                    ))}
                     <Button asChild variant="outline" size="sm">
                       <a href={`/proiecte/${project.id}/export/feronerie`}>CSV feronerie</a>
                     </Button>
@@ -381,6 +397,7 @@ function AssemblyCard({ projectId, assembly, cabinets, issues, blatMaterials }: 
     <ActionForm action={updateAssembly.bind(null, assembly.id)} className="grid items-end gap-3 sm:grid-cols-2">
       <TextInput name="name" label="Nume" defaultValue={assembly.name} />
       <NumberInput name="legHeightMm" label="Picioare (mm)" defaultValue={assembly.legHeightMm} step="1" />
+      <Select name="plinthMode" label="Plintă (100 mm)" options={PLINTH_MODE_OPTIONS} defaultValue={assembly.plinthMode} />
       <AssemblyKindFields
         blatMaterials={blatMaterials}
         defaults={{
@@ -397,7 +414,7 @@ function AssemblyCard({ projectId, assembly, cabinets, issues, blatMaterials }: 
   return (
     <AssemblyCardShell
       name={assembly.name}
-      metaText={`· picioare ${fmtNum(assembly.legHeightMm, 0)} mm${blatSummary}`}
+      metaText={`· picioare ${fmtNum(assembly.legHeightMm, 0)} mm · ${PLINTH_MODE_OPTIONS.find((option) => option.value === assembly.plinthMode)?.label.toLowerCase() ?? 'fără plintă'}${blatSummary}`}
       threeDSlot={(
         <Button asChild variant="outline" size="sm" title="Așezare 3D a corpurilor">
           <Link href={`/proiecte/${projectId}/ansamblu/${assembly.id}/asezare`}>

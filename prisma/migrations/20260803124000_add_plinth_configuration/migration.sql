@@ -1,0 +1,5 @@
+ALTER TABLE "Assembly"
+ADD COLUMN "plinthMode" TEXT NOT NULL DEFAULT 'NONE';
+
+ALTER TABLE "Cabinet"
+ADD COLUMN "plinthEnabled" BOOLEAN NOT NULL DEFAULT false;

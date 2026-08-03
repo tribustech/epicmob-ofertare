@@ -10,7 +10,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const basis = await getQuoteBasis(data.project);
   if (basis.kind === 'MISSING') return new Response('Proiectul e într-o stare înghețată fără calcul salvat — comută starea.', { status: 400 });
   const { quote, error } = tryComputeQuote(
-    toQuoteInput(data.project, data.cabinets, legHeightByCabinet(data.assemblies, data.cabinets)),
+    toQuoteInput(data.project, data.cabinets, legHeightByCabinet(data.assemblies, data.cabinets), data.assemblies),
     basis.snapshot,
   );
   if (!quote) return new Response(`Eroare de calcul: ${error}`, { status: 400 });

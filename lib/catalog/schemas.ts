@@ -18,7 +18,7 @@ export function formDataToObject(fd: FormData): Record<string, string> {
 export const materialSchema = z
   .object({
     name: z.string().trim().min(1),
-    kind: z.enum(['PAL', 'MDF_VOPSIT', 'MDF_MELAMINAT', 'MDF_INFOLIAT', 'PFL']),
+    kind: z.enum(['PAL', 'MDF_VOPSIT', 'MDF_MELAMINAT', 'MDF_INFOLIAT', 'PFL', 'STICLA_RAMA', 'STICLA_POLITA']),
     thicknessMm: posNum,
     sheetLengthMm: posNum,
     sheetWidthMm: posNum,

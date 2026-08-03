@@ -78,4 +78,5 @@ export { nestParts, DEFAULT_NEST_PARAMS } from './nesting';
 export type { NestParams, NestPiece, PlacedPiece, SheetLayout, NestResult } from './nesting';
 export { toParts, applyPiecesConfig } from './pieces';
 export { assignPlacements } from './placement';
+export * from './honeycomb';
 export * from './types';

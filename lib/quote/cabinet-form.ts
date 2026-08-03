@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { CabinetInput } from '@/lib/engine';
+import type { HoneycombNode } from '@/lib/engine/honeycomb';
 
 const posNum = z.coerce.number({ invalid_type_error: 'Introdu un număr' }).finite().positive('Introdu o valoare mai mare ca 0');
 const intNonNeg = z.coerce.number({ invalid_type_error: 'Introdu un număr' }).int('Introdu un număr întreg').min(0, 'Nu poate fi negativ');
@@ -25,7 +26,7 @@ export const cabinetFormSchema = z
     shelfDecorAxis: z.enum(['LR', 'FB']).default('LR'),
     doors: intNonNeg,
     carcassMaterialId: z.string().min(1, 'Alege materialul carcasei'),
-    frontKind: z.enum(['PAL', 'MDF_MELAMINAT', 'MDF_INFOLIAT', 'MDF_VOPSIT']).default('PAL'),
+    frontKind: z.enum(['PAL', 'MDF_MELAMINAT', 'MDF_INFOLIAT', 'MDF_VOPSIT', 'STICLA_RAMA']).default('PAL'),
     frontMaterialId: optStr,
     mdfSupplierId: optStr,
     mdfModelId: optStr,
@@ -100,7 +101,10 @@ export function parseDrawerHeights(s: string): number[] {
 export function toCabinetInput(d: CabinetFormData, pieces?: PiecesConfigForm): CabinetInput {
   const heights = d.drawerFrontHeightsMm ? parseDrawerHeights(d.drawerFrontHeightsMm) : [];
   const isMdfVopsit = d.frontType !== 'FARA' && d.frontKind === 'MDF_VOPSIT';
-  const shelves = d.frontType === 'SERTARE' ? 0 : (d.frontType === 'USI' && !d.withShelves ? 0 : d.shelves);
+  const hasHoneycomb = !!pieces?.honeycomb;
+  const shelves = hasHoneycomb || d.frontType === 'SERTARE'
+    ? 0
+    : (d.frontType === 'USI' && !d.withShelves ? 0 : d.shelves);
   return {
     label: d.label,
     type: d.type,
@@ -110,7 +114,7 @@ export function toCabinetInput(d: CabinetFormData, pieces?: PiecesConfigForm): C
     subBlat: d.type === 'BAZA' && d.subBlat ? true : undefined,
     mount: { top: d.mountTop, bottom: d.mountBottom },
     shelves,
-    shelf: shelves > 0 && (d.shelfMaterialId || d.shelfDecorMatters)
+    shelf: (shelves > 0 || hasHoneycomb) && (d.shelfMaterialId || d.shelfDecorMatters)
       ? {
           materialId: d.shelfMaterialId,
           decorAxis: d.shelfDecorMatters ? d.shelfDecorAxis : undefined,
@@ -206,6 +210,19 @@ export type ExtraPart = z.infer<typeof extraPartSchema>;
 
 const edgeSideEnum = z.enum(['fata', 'spate', 'sus', 'jos', 'stanga', 'dreapta']);
 const edgeOverrides = z.record(edgeSideEnum, z.string().nullable());
+const honeycombNodeSchema: z.ZodType<HoneycombNode> = z.lazy(() => z.union([
+  z.object({ id: z.string().min(1), kind: z.literal('leaf') }),
+  z.object({
+    id: z.string().min(1),
+    kind: z.literal('split'),
+    axis: z.enum(['H', 'V']),
+    firstSizeMm: posNum,
+    materialId: z.string().min(1).optional(),
+    sourceId: z.string().min(1),
+    first: honeycombNodeSchema,
+    second: honeycombNodeSchema,
+  }),
+]));
 
 export const piecesConfigSchema = z.object({
   top: z.object({
@@ -228,6 +245,7 @@ export const piecesConfigSchema = z.object({
     materialId: z.string().min(1),
     edges: edgeOverrides.optional(),
   })).optional(),
+  honeycomb: z.object({ root: honeycombNodeSchema }).optional(),
 });
 export type PiecesConfigForm = z.infer<typeof piecesConfigSchema>;
 
@@ -243,6 +261,7 @@ export function prunePiecesConfig(cfg: PiecesConfigForm | undefined): PiecesConf
     ...(cfg.top && cfg.top.variant !== 'PLIN' ? { top: cfg.top } : {}),
     ...(Object.keys(overrides).length > 0 ? { overrides } : {}),
     ...((cfg.free?.length ?? 0) > 0 ? { free: cfg.free } : {}),
+    ...(cfg.honeycomb ? { honeycomb: cfg.honeycomb } : {}),
   };
   return Object.keys(out).length > 0 ? out : undefined;
 }
