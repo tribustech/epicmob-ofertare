@@ -17,11 +17,17 @@ import {
 } from './cabinet-form';
 import { hardwareAdjustmentsSchema, pruneAdjustments } from './hardware-adjustments';
 import { buildSnapshot } from './snapshot';
-import { isFrozenStatus } from './basis';
+import { getQuoteBasis, isFrozenStatus } from './basis';
 import { ASSEMBLY_LEG_HEIGHT_PRESETS, ASSEMBLY_NAME_PRESETS } from './assembly-presets';
 import { parseProjectDetails } from './project-details';
 import { PLINTH_MODES } from './plinth';
 import type { CabinetInput, CabinetType } from '@/lib/engine';
+import {
+  buildBulkEditPreview,
+  bulkCabinetPatchSchema,
+  type BulkCabinetPatch,
+} from './bulk-edit';
+import { legHeightByCabinet, loadProject, toQuoteInput } from './load';
 
 const optStr = z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().optional());
 
@@ -385,6 +391,145 @@ export const updateCabinetData = formAction(async (cabinetId: string, data: Reco
   revalidatePath(`/proiecte/${cab.projectId}/corp/${cabinetId}`);
   revalidatePath(`/proiecte/${cab.projectId}`);
 });
+
+const bulkSelectionSchema = z.object({
+  assemblyId: z.string().min(1),
+  cabinetIds: z.array(z.string().min(1)).min(1, 'Selectează cel puțin un corp').max(200),
+}).refine((value) => new Set(value.cabinetIds).size === value.cabinetIds.length, {
+  message: 'Selecția conține corpuri duplicate', path: ['cabinetIds'],
+});
+
+async function validateBulkCatalogPatch(patch: BulkCabinetPatch) {
+  if (patch.carcassMaterialId) {
+    const material = await prisma.material.findUnique({ where: { id: patch.carcassMaterialId } });
+    if (!material || !material.active || material.category === 'BLAT'
+      || material.kind === 'STICLA_RAMA' || material.kind === 'STICLA_POLITA') {
+      throw new Error('Materialul ales pentru carcasă nu este disponibil');
+    }
+  }
+
+  if (patch.front?.kind === 'MDF_VOPSIT') {
+    const model = await prisma.frontModel.findFirst({
+      where: {
+        id: patch.front.mdfFront.modelId,
+        supplierId: patch.front.mdfFront.supplierId,
+        active: true,
+        supplier: { active: true },
+      },
+    });
+    if (!model) throw new Error('Modelul MDF vopsit nu este disponibil');
+    return;
+  }
+
+  if (patch.front) {
+    const material = await prisma.material.findUnique({ where: { id: patch.front.materialId } });
+    if (!material || !material.active || material.kind !== patch.front.kind) {
+      throw new Error('Materialul ales pentru front nu corespunde tipului selectat');
+    }
+  }
+}
+
+async function prepareBulkCabinetEdit(
+  assemblyId: string,
+  cabinetIds: string[],
+  rawPatch: BulkCabinetPatch,
+) {
+  const selection = bulkSelectionSchema.parse({ assemblyId, cabinetIds });
+  const patch = bulkCabinetPatchSchema.parse(rawPatch);
+  await validateBulkCatalogPatch(patch);
+
+  const assembly = await prisma.assembly.findUnique({
+    where: { id: selection.assemblyId }, select: { projectId: true },
+  });
+  if (!assembly) throw new Error('Ansamblul nu există');
+
+  const data = await loadProject(assembly.projectId);
+  if (!data) throw new Error('Proiectul nu există');
+  const selectedIds = new Set(selection.cabinetIds);
+  const selected = data.cabinets.filter((cabinet) => selectedIds.has(cabinet.id));
+  if (selected.length !== selectedIds.size || selected.some((cabinet) => cabinet.assemblyId !== assemblyId)) {
+    throw new Error('Toate corpurile selectate trebuie să aparțină ansamblului curent');
+  }
+  if (selected.some((cabinet) => cabinet.input.type === 'BLAT')) {
+    throw new Error('Blaturile nu pot fi modificate prin această operație');
+  }
+
+  const basis = await getQuoteBasis(data.project);
+  if (basis.kind === 'MISSING') {
+    throw new Error('Proiectul nu are o bază de preț disponibilă');
+  }
+  const quoteInput = toQuoteInput(
+    data.project,
+    data.cabinets,
+    legHeightByCabinet(data.assemblies, data.cabinets),
+    data.assemblies,
+  );
+  const preview = buildBulkEditPreview(quoteInput, basis.snapshot, selection.cabinetIds, patch);
+  return { data, patch, preview, selected };
+}
+
+export type BulkEditActionResult =
+  | { ok: true; preview: {
+    selectedLabels: string[];
+    skippedFrontLabels: string[];
+    selectedBefore: number;
+    selectedAfter: number;
+    totalBefore: number;
+    totalAfter: number;
+  } }
+  | { ok: false; error: string };
+
+export async function previewBulkCabinetEdit(
+  assemblyId: string,
+  cabinetIds: string[],
+  patch: BulkCabinetPatch,
+): Promise<BulkEditActionResult> {
+  try {
+    const prepared = await prepareBulkCabinetEdit(assemblyId, cabinetIds, patch);
+    return {
+      ok: true,
+      preview: {
+        selectedLabels: prepared.selected.map((cabinet) => cabinet.input.label),
+        skippedFrontLabels: prepared.preview.skippedFrontLabels,
+        selectedBefore: prepared.preview.selectedBefore,
+        selectedAfter: prepared.preview.selectedAfter,
+        totalBefore: prepared.preview.totalBefore,
+        totalAfter: prepared.preview.totalAfter,
+      },
+    };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'Previzualizarea nu a putut fi calculată' };
+  }
+}
+
+export async function applyBulkCabinetEdit(
+  assemblyId: string,
+  cabinetIds: string[],
+  patch: BulkCabinetPatch,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const prepared = await prepareBulkCabinetEdit(assemblyId, cabinetIds, patch);
+    await prisma.$transaction(
+      cabinetIds.map((cabinetId) => {
+        const input = prepared.preview.patchedInputs.get(cabinetId);
+        if (!input) throw new Error('Corpul selectat nu a putut fi pregătit');
+        return prisma.cabinet.update({
+          where: { id: cabinetId },
+          data: { inputJson: JSON.stringify(input) },
+        });
+      }),
+    );
+
+    const projectId = prepared.data.project.id;
+    revalidatePath(`/proiecte/${projectId}`);
+    revalidatePath(`/proiecte/${projectId}/oferta`);
+    revalidatePath(`/proiecte/${projectId}/plan-debitare`);
+    for (const cabinetId of cabinetIds) revalidatePath(`/proiecte/${projectId}/corp/${cabinetId}`);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'Modificările nu au putut fi salvate' };
+  }
+}
 
 export const updateCabinetPlinth = formAction(async (cabinetId: string, fd: FormData) => {
   const d = z.object({ plinthEnabled: z.enum(['false', 'true']) }).parse(formDataToObject(fd));

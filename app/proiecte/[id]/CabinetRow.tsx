@@ -5,10 +5,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { HoverCard } from 'radix-ui';
 import { TableCell, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useBulkCabinetSelection } from '@/components/BulkCabinetEditor';
 
 export function CabinetRow({
-  href, label, typeLabel, dims, problems, actions,
+  cabinetId, showSelection, selectable, href, label, typeLabel, dims, problems, actions,
 }: {
+  cabinetId: string;
+  showSelection?: boolean;
+  selectable?: boolean;
   href: string;
   label: string;
   typeLabel: string;
@@ -17,9 +22,21 @@ export function CabinetRow({
   actions: ReactNode;
 }) {
   const router = useRouter();
+  const selection = useBulkCabinetSelection();
   const total = problems.reduce((sum, p) => sum + p.qty, 0);
   return (
     <TableRow className="cursor-pointer" onClick={() => router.push(href)}>
+      {showSelection && (
+        <TableCell className="w-10" onClick={(event) => event.stopPropagation()}>
+          {selectable && (
+            <Checkbox
+              aria-label={`Selectează ${label}`}
+              checked={selection?.isSelected(cabinetId) ?? false}
+              onCheckedChange={(checked) => selection?.toggle(cabinetId, checked === true)}
+            />
+          )}
+        </TableCell>
+      )}
       <TableCell>
         <Link href={href} className="font-medium hover:underline" onClick={(e) => e.stopPropagation()}>
           {label}

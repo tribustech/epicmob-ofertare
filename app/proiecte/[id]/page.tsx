@@ -26,6 +26,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { fmtLei, fmtNum } from '@/lib/format';
 import { CabinetRow } from './CabinetRow';
+import {
+  BulkCabinetEditor, type BulkFrontModel, type BulkFrontSupplier,
+} from '@/components/BulkCabinetEditor';
+import { getRalColors } from '@/lib/ral';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,18 +83,47 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
   const { project, assemblies, cabinets } = data;
   const legHeightMap = legHeightByCabinet(assemblies, cabinets);
   const freeLines = JSON.parse(project.freeLinesJson) as { name: string; amount: number }[];
-  const handleProducts = await prisma.hardwareItem.findMany({
-    where: { active: true, category: { in: ['MANER', 'ACCESORIU'] } },
-    orderBy: { name: 'asc' },
-  });
-  const blatMaterials = await prisma.material.findMany({
-    where: { active: true, category: 'BLAT' },
-    orderBy: { name: 'asc' },
-  });
+  const [handleProducts, blatMaterials, bulkMaterials, frontSuppliers, frontModels] = await Promise.all([
+    prisma.hardwareItem.findMany({
+      where: { active: true, category: { in: ['MANER', 'ACCESORIU'] } },
+      orderBy: { name: 'asc' },
+    }),
+    prisma.material.findMany({
+      where: { active: true, category: 'BLAT' },
+      orderBy: { name: 'asc' },
+    }),
+    prisma.material.findMany({
+      where: { active: true },
+      orderBy: { name: 'asc' },
+    }),
+    prisma.frontSupplier.findMany({
+      where: { active: true, productType: 'VOPSIT' }, orderBy: { name: 'asc' },
+    }),
+    prisma.frontModel.findMany({
+      where: { active: true, supplier: { active: true, productType: 'VOPSIT' } },
+      orderBy: [{ tier: 'asc' }, { code: 'asc' }],
+    }),
+  ]);
   const blatMaterialItems = blatMaterials.map((m) => ({
     id: m.id, name: m.name, kind: m.kind, thicknessMm: m.thicknessMm, brand: m.brand,
     category: m.category, imageUrl: m.imageUrl, decorCode: m.decorCode,
     pricePerSheet: m.pricePerSheet, pricePerSqm: m.pricePerSqm, pricingMode: m.pricingMode, active: m.active,
+  }));
+  const bulkMaterialItems: MaterialPickerItem[] = bulkMaterials.filter((m) => m.category !== 'BLAT').map((m) => ({
+    id: m.id, name: m.name, kind: m.kind, thicknessMm: m.thicknessMm, brand: m.brand,
+    category: m.category, imageUrl: m.imageUrl, decorCode: m.decorCode,
+    pricePerSheet: m.pricePerSheet, pricePerSqm: m.pricePerSqm, pricingMode: m.pricingMode, active: m.active,
+  }));
+  const bulkFrontSuppliers: BulkFrontSupplier[] = frontSuppliers.map((supplier) => ({
+    id: supplier.id, name: supplier.name,
+  }));
+  const bulkFrontModels: BulkFrontModel[] = frontModels.map((model) => ({
+    id: model.id, supplierId: model.supplierId, code: model.code, name: model.name, tier: model.tier,
+    collection: model.collection, shapeFamily: model.shapeFamily, imageUrl: model.imageUrl,
+  }));
+  const ralColors = getRalColors().map((color) => ({
+    code: color.code, num: color.num, name_en: color.name_en, hex: color.hex,
+    vivid: color.vivid, black: color.black,
   }));
 
   const basis = await getQuoteBasis(project);
@@ -140,6 +173,10 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                 cabinets={cabinetsByAssembly.get(a.id) ?? []}
                 issues={issueByCabinetId}
                 blatMaterials={blatMaterialItems}
+                bulkMaterials={bulkMaterialItems}
+                bulkFrontSuppliers={bulkFrontSuppliers}
+                bulkFrontModels={bulkFrontModels}
+                ralColors={ralColors}
               />
             ))}
             {assemblies.length === 0 && (
@@ -385,9 +422,16 @@ const ASSEMBLY_KIND_LABELS: Record<string, string> = {
   FARA_BLAT: '', CU_BLAT: 'cu blat', BUCATARIE: 'bucătărie',
 };
 
-function AssemblyCard({ projectId, assembly, cabinets, issues, blatMaterials }: {
+function AssemblyCard({
+  projectId, assembly, cabinets, issues, blatMaterials,
+  bulkMaterials, bulkFrontSuppliers, bulkFrontModels, ralColors,
+}: {
   projectId: string; assembly: Assembly; cabinets: LoadedCabinet[]; issues: Map<string, CabinetIssue>;
   blatMaterials: MaterialPickerItem[];
+  bulkMaterials: MaterialPickerItem[];
+  bulkFrontSuppliers: BulkFrontSupplier[];
+  bulkFrontModels: BulkFrontModel[];
+  ralColors: { code: string; num: string; name_en: string; hex: string; vivid: boolean; black: boolean }[];
 }) {
   const kindLabel = ASSEMBLY_KIND_LABELS[assembly.kind] ?? '';
   const blatSummary = assembly.kind !== 'FARA_BLAT' && assembly.baseHeightMm != null && assembly.blatDepthMm != null
@@ -425,7 +469,16 @@ function AssemblyCard({ projectId, assembly, cabinets, issues, blatMaterials }: 
       deleteSlot={<DeleteButton action={deleteAssembly.bind(null, assembly.id)} label="Șterge ansamblul" />}
       editForm={editForm}
     >
-      <CabinetsTable projectId={projectId} cabinets={cabinets} issues={issues} />
+      <BulkCabinetEditor
+        assemblyId={assembly.id}
+        eligibleIds={cabinets.filter((cabinet) => cabinet.input.type !== 'BLAT').map((cabinet) => cabinet.id)}
+        materials={bulkMaterials}
+        suppliers={bulkFrontSuppliers}
+        models={bulkFrontModels}
+        ralColors={ralColors}
+      >
+        <CabinetsTable projectId={projectId} cabinets={cabinets} issues={issues} bulkSelectable />
+      </BulkCabinetEditor>
 
       <div className="flex gap-2">
         <ActionForm action={addCabinet.bind(null, projectId, assembly.id, 'BAZA')}>
@@ -439,8 +492,9 @@ function AssemblyCard({ projectId, assembly, cabinets, issues, blatMaterials }: 
   );
 }
 
-function CabinetsTable({ projectId, cabinets, issues }: {
+function CabinetsTable({ projectId, cabinets, issues, bulkSelectable = false }: {
   projectId: string; cabinets: LoadedCabinet[]; issues: Map<string, CabinetIssue>;
+  bulkSelectable?: boolean;
 }) {
   if (cabinets.length === 0) {
     return <p className="text-sm text-muted-foreground">Niciun corp încă.</p>;
@@ -449,6 +503,7 @@ function CabinetsTable({ projectId, cabinets, issues }: {
     <Table>
       <TableHeader>
         <TableRow>
+          {bulkSelectable && <TableHead className="w-10"><span className="sr-only">Selectare</span></TableHead>}
           <TableHead>Corp</TableHead>
           <TableHead>Tip</TableHead>
           <TableHead>Dimensiuni (L×H×A mm)</TableHead>
@@ -462,6 +517,9 @@ function CabinetsTable({ projectId, cabinets, issues }: {
           return (
           <CabinetRow
             key={c.id}
+            cabinetId={c.id}
+            showSelection={bulkSelectable}
+            selectable={bulkSelectable && c.input.type !== 'BLAT'}
             href={`/proiecte/${projectId}/corp/${c.id}`}
             label={c.input.label}
             typeLabel={TYPE_LABELS[c.input.type] ?? c.input.type}
