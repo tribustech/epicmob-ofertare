@@ -26,7 +26,7 @@ const isFixed = (b: Box): b is FixedItem => 'kind' in b;
 const COLORS: Record<CabinetType, string> = {
   BAZA: '#c9a87c', SUSPENDAT: '#d8cdb8', INALT: '#b8a888', COLT: '#cfd4d8', BLAT: '#b7c4cc',
 };
-const FIXED_LABEL: Record<FixedKind, string> = { GRINDA: 'Grindă', STALP: 'Stâlp', PERETE: 'Perete', CUTIE: 'Cutie', GEAM: 'Geam' };
+const FIXED_LABEL: Record<FixedKind, string> = { GRINDA: 'Grindă', STALP: 'Stâlp', PERETE: 'Perete', CUTIE: 'Cutie', GEAM: 'Geam', MASINA_SPALAT: 'Mașină spălat' };
 
 function Legs({ c }: { c: LayoutItem }) {
   const lx = (c.w / 2 - 30) * S, ly = (-c.h / 2 - c.legMm / 2) * S;
@@ -203,8 +203,11 @@ function FixedMesh({ f, hovered, active, interactive, onDown, onHover }: {
   onDown: (e: ThreeEvent<PointerEvent>, b: Box) => void; onHover: (id: string | null) => void;
 }) {
   const glass = f.kind === 'GEAM';
-  const color = active ? '#5b8def' : hovered ? (glass ? '#bfe3f2' : '#8fa6bd') : (glass ? '#bcdcee' : '#9aa7b0');
-  const opacity = (glass ? 0.32 : 0.6) * (interactive ? 1 : 0.5);
+  const appliance = f.kind === 'MASINA_SPALAT';
+  const color = active ? '#5b8def'
+    : hovered ? (glass ? '#bfe3f2' : appliance ? '#eef1f4' : '#8fa6bd')
+    : (glass ? '#bcdcee' : appliance ? '#e2e6ea' : '#9aa7b0');
+  const opacity = (glass ? 0.32 : appliance ? 0.92 : 0.6) * (interactive ? 1 : 0.5);
   return (
     <group position={[f.cx * S, (f.by + f.h / 2) * S, f.cz * S]} rotation={[0, f.rot, 0]}>
       <mesh
@@ -309,6 +312,9 @@ function Editor({ items, fixed, room, selectedId, onSelect, onSnapshot, onDrag, 
     if (!d.moved) { d.moved = true; onSnapshot(); }
     const { x, z } = floorPoint(e.clientX, e.clientY);
     const rawCx = x - d.offX, rawCz = z - d.offZ;
+    // dacă raza nu a intersectat podeaua sau canvas-ul a raportat 0×0 (reflow) → coordonate non-finite;
+    // ignoră cadrul ca să nu propagăm NaN în poziția corpului (ar arunca computeBoundingSphere)
+    if (!Number.isFinite(rawCx) || !Number.isFinite(rawCz)) return;
     if (d.kind === 'wall') {
       onWallDrag(d.id, rawCx, rawCz);
       return;

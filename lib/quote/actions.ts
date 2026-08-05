@@ -277,7 +277,7 @@ const layoutSchema = z.object({
     rotDeg: z.number().int(),
   })),
   fixed: z.array(z.object({
-    id: z.string(), kind: z.enum(['GRINDA', 'STALP', 'PERETE', 'CUTIE', 'GEAM']),
+    id: z.string(), kind: z.enum(['GRINDA', 'STALP', 'PERETE', 'CUTIE', 'GEAM', 'MASINA_SPALAT']),
     w: z.number().positive(), h: z.number().positive(), d: z.number().positive(),
     cx: z.number().finite(), cz: z.number().finite(), by: z.number().finite(), rot: z.number().finite(),
   })).default([]),

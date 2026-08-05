@@ -162,7 +162,7 @@ export function wallPin(
 
 // elemente fixe de construcție (nu mobilă): se trag și se lipesc ca un corp, dar sunt obstacole.
 // legMm e mereu 0, ca să fie compatibile cu place()/bandsOverlap (aceleași câmpuri geometrice).
-export type FixedKind = 'GRINDA' | 'STALP' | 'PERETE' | 'CUTIE' | 'GEAM';
+export type FixedKind = 'GRINDA' | 'STALP' | 'PERETE' | 'CUTIE' | 'GEAM' | 'MASINA_SPALAT';
 export type FixedItem = {
   id: string; kind: FixedKind;
   w: number; h: number; d: number; legMm: 0;
@@ -174,6 +174,7 @@ export const FIXED_KINDS: { kind: FixedKind; label: string }[] = [
   { kind: 'PERETE', label: 'Perete' },
   { kind: 'GEAM', label: 'Geam' },
   { kind: 'CUTIE', label: 'Cutie' },
+  { kind: 'MASINA_SPALAT', label: 'Mașină spălat' },
 ];
 export const SILL = 900; // cota implicită de parapet a geamului (mm)
 
@@ -186,6 +187,8 @@ export function newFixed(kind: FixedKind, room: LayoutRoom, id: string): FixedIt
     case 'PERETE': return { ...base, w: 100, h: room.H, d: 600, cz: 300, by: 0 };
     case 'GEAM': return { ...base, w: 1200, h: 1200, d: 80, cz: 0, by: SILL }; // încastrat în peretele din spate
     case 'CUTIE': return { ...base, w: 300, h: 600, d: 300, cz: 200, by: 0 };
+    // mașină de spălat: L 600 (lățime) × Î 860 (înălțime) × A 670 (adâncime); pe podea, spatele la perete
+    case 'MASINA_SPALAT': return { ...base, w: 600, h: 860, d: 670, cz: 335, by: 0 };
   }
 }
 
@@ -253,11 +256,17 @@ export function stackSuspended(
 // snap=false: doar coliziune + clamp (pentru nudge fin cu săgețile, fără lipire).
 // Snapping-ul vede TOATE elementele (blatul se aliniază la bazele de sub el, chiar din altă
 // bandă), dar coliziunea împinge doar elementele din aceeași bandă verticală (blatul stă peste).
+// electrocasnicele care se încastrează într-un corp (nișă) NU împing/nu sunt împinse la coliziune,
+// ca să poată sta în interiorul corpului. Snapping-ul rămâne, deci tot se aliniază pe muchii.
+const NESTABLE: ReadonlySet<string> = new Set(['MASINA_SPALAT']);
+const nestable = (c: { kind?: string }) => c.kind != null && NESTABLE.has(c.kind);
+
 export function place(
-  me: Pick<LayoutItem, 'w' | 'd' | 'rot' | 'by' | 'h' | 'legMm'>, cx: number, cz: number,
-  others: Pick<LayoutItem, 'w' | 'd' | 'rot' | 'cx' | 'cz' | 'by' | 'h' | 'legMm'>[], room: LayoutRoom,
+  me: Pick<LayoutItem, 'w' | 'd' | 'rot' | 'by' | 'h' | 'legMm'> & { kind?: string }, cx: number, cz: number,
+  others: (Pick<LayoutItem, 'w' | 'd' | 'rot' | 'cx' | 'cz' | 'by' | 'h' | 'legMm'> & { kind?: string })[], room: LayoutRoom,
   snap = true, constrainToWalls = true,
 ): { cx: number; cz: number } {
+  const meNest = nestable(me);
   const { fw, fd } = foot(me);
   const hw = fw / 2, hd = fd / 2;
   const b0 = wallsBounds(roomWalls(room));
@@ -298,6 +307,7 @@ export function place(
   for (let iter = 0; iter < 4; iter++) {
     let pushed = false;
     for (const o of others) {
+      if (meNest || nestable(o)) continue; // electrocasnic încastrabil → se poate suprapune cu corpul-nișă
       if (!bandsOverlap(me, o)) continue; // stau în benzi diferite (ex. blat peste bază) → nu se împing
       const of = foot(o);
       const ox = hw + of.fw / 2 - Math.abs(cx - o.cx);
@@ -394,7 +404,9 @@ export function overlapBox(a: Solid, b: Solid): OverlapBox | null {
   const x0 = Math.max(a.cx - fa.fw / 2, b.cx - fb.fw / 2), x1 = Math.min(a.cx + fa.fw / 2, b.cx + fb.fw / 2);
   const z0 = Math.max(a.cz - fa.fd / 2, b.cz - fb.fd / 2), z1 = Math.min(a.cz + fa.fd / 2, b.cz + fb.fd / 2);
   const y0 = Math.max(a.by, b.by), y1 = Math.min(a.by + totalH(a), b.by + totalH(b));
-  if (x1 - x0 <= 1 || z1 - z0 <= 1 || y1 - y0 <= 1) return null; // toleranță 1mm (atingerea nu contează)
+  // NaN-safe: `!(x1 - x0 > 1)` prinde și NaN (comparațiile cu NaN sunt false), ca să nu randăm
+  // un box cu dimensiuni NaN dacă o coordonată e coruptă tranzitoriu (ar arunca computeBoundingSphere)
+  if (!(x1 - x0 > 1) || !(z1 - z0 > 1) || !(y1 - y0 > 1)) return null; // toleranță 1mm (atingerea nu contează)
   return { cx: (x0 + x1) / 2, cz: (z0 + z1) / 2, by: y0, w: x1 - x0, d: z1 - z0, h: y1 - y0 };
 }
 // toate zonele de intersecție dintr-o listă de corpuri
@@ -426,9 +438,9 @@ export function bandsNear(
   return a.by <= b.by + totalH(b) + gap && b.by <= a.by + totalH(a) + gap;
 }
 
-// limitează cota de jos ca să nu iasă corpul prin podea/tavan
-export function clampBy(c: Pick<LayoutItem, 'h' | 'legMm'>, by: number, room: LayoutRoom): number {
-  return Math.min(Math.max(by, 0), Math.max(0, room.H - totalH(c)));
+// limitează cota de jos ca să nu iasă corpul prin podea (fără plafon: corpurile suspendate pot urca oricât)
+export function clampBy(_c: Pick<LayoutItem, 'h' | 'legMm'>, by: number, _room: LayoutRoom): number {
+  return Math.max(by, 0);
 }
 
 export const degToRad = (deg: number) => (deg * Math.PI) / 180;

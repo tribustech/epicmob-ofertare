@@ -290,6 +290,10 @@ describe('overlapBox — zona de intersecție (semnal roșu)', () => {
     const b = base({ by: 1400, h: 720, legMm: 0, cx: 300, cz: 280 });
     expect(overlapBox(a, b)).toBeNull();
   });
+  it('null (nu un box NaN) când o coordonată e coruptă — nu trebuie să ajungă în geometrie', () => {
+    const a = base({ cx: NaN });
+    expect(overlapBox(a, base({ cx: 1000 }))).toBeNull();
+  });
 });
 
 describe('bandsOverlap — bandă verticală', () => {
@@ -304,8 +308,8 @@ describe('bandsOverlap — bandă verticală', () => {
 });
 
 describe('clampBy — verticală', () => {
-  it('nu urcă peste tavan', () => {
-    expect(clampBy(base(), 5000, room)).toBe(room.H - 820); // 2600 - (720+100)
+  it('urcă liber (fără plafon)', () => {
+    expect(clampBy(base(), 5000, room)).toBe(5000);
   });
   it('nu coboară sub podea', () => expect(clampBy(base(), -100, room)).toBe(0));
 });
