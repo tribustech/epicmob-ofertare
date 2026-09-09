@@ -33,6 +33,7 @@ export default async function SetariPage() {
   }
   const construction = parseConstruction(settings.constructionJson);
   const hardware = await prisma.hardwareItem.findMany({ where: { active: true }, orderBy: { name: 'asc' } });
+  const edgeBands = await prisma.edgeBand.findMany({ where: { active: true }, orderBy: { name: 'asc' } });
   const byCategory = (cat: string) =>
     hardware.filter((h) => h.category === cat).map((h) => ({ value: h.id, label: h.name }));
 
@@ -55,6 +56,14 @@ export default async function SetariPage() {
               <NumberInput name="profilJPerFront" label="Profil J (lei/front frezat)" defaultValue={settings.profilJPerFront} />
               <NumberInput name="golaPricePerMl" label="Profil GOLA (lei/ml)" defaultValue={settings.golaPricePerMl} />
               <NumberInput name="blatCutPricePerPiece" label="Debitare blat (lei/placă)" defaultValue={settings.blatCutPricePerPiece} />
+              <NumberInput name="roundedCutPricePerPiece" label="Debitare rotund (lei/poliță)" defaultValue={settings.roundedCutPricePerPiece} />
+              <NumberInput name="roundedEdgePricePerPiece" label="Cant rotund (lei/poliță)" defaultValue={settings.roundedEdgePricePerPiece} />
+              <Select
+                name="blatEdgeBandId" label="Cant blat (bandă)"
+                options={edgeBands.map((b) => ({ value: b.id, label: b.name }))}
+                defaultValue={settings.blatEdgeBandId}
+                allowEmpty
+              />
             </div>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
               <Select name="defaultHingeId" label="Balama implicită" options={byCategory('BALAMA')} defaultValue={settings.defaultHingeId} allowEmpty />

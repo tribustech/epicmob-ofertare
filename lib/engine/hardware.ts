@@ -26,11 +26,14 @@ export function suggestHardware(
   const drawerFronts = fronts.filter((f) => f.kind === 'SERTAR');
   const liftUp = input.doorOpening === 'RIDICABILA' && doors.length > 0;
 
-  if (doors.length > 0 && input.frontMaterialId && !liftUp) {
-    const frontMat = findMaterial(catalogs, input.frontMaterialId);
+  if (doors.length > 0 && !liftUp) {
+    // fronturile pe placă au frontMaterialId; cele MDF vopsit au null (frontul e în mdfFront) —
+    // și ele primesc balamale, cu grosime implicită de 18mm pentru greutatea ușii
+    const frontMat = input.frontMaterialId ? findMaterial(catalogs, input.frontMaterialId) : null;
+    const frontThicknessMm = frontMat?.thicknessMm ?? 18;
     let totalHinges = 0;
     for (const door of doors) {
-      const weight = doorWeightKg(door.widthMm, door.heightMm, frontMat.thicknessMm, cc);
+      const weight = doorWeightKg(door.widthMm, door.heightMm, frontThicknessMm, cc);
       const { count, warnings: hw } = suggestHingeCount(door.heightMm, door.widthMm, weight, cc);
       totalHinges += count;
       warnings.push(...hw.map((w) => ({ ...w, cabinetLabel: input.label })));
@@ -106,11 +109,14 @@ export function suggestHardware(
   // PROFIL_J, GOLA, FARA: fără produs per front — costul lor intră separat (stratul de calcul al proiectului)
 
   if (input.shelves > 0 && !input.pieces?.honeycomb) {
+    // cu despărțitoare între uși polițele sunt per-compartiment → mai mulți suporți
+    const compartments = input.doors >= 2 ? input.doors : 1;
+    const shelfPieces = input.shelves * compartments;
     suggestions.push({
       slot: 'suporti-polita',
       category: 'SUPORT_POLITA',
-      name: `Suporți poliță (${input.shelves} × ${SHELF_SUPPORTS_PER_SHELF})`,
-      qty: input.shelves * SHELF_SUPPORTS_PER_SHELF,
+      name: `Suporți poliță (${shelfPieces} × ${SHELF_SUPPORTS_PER_SHELF})`,
+      qty: shelfPieces * SHELF_SUPPORTS_PER_SHELF,
     });
   }
 

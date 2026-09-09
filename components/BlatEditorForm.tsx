@@ -31,7 +31,7 @@ function toBoardMaterial(m: BlatMaterialOption): BoardMaterial {
 }
 
 export function BlatEditorForm(props: {
-  initial: { label: string; widthMm: string; depthMm: string; blatMaterialId: string; manualPieces: string };
+  initial: { label: string; widthMm: string; depthMm: string; blatMaterialId: string; manualPieces: string; blatCantMode: string };
   materials: BlatMaterialOption[];
   cutPricePerPiece: number;
   save: (fd: FormData) => Promise<FormState>;
@@ -41,10 +41,12 @@ export function BlatEditorForm(props: {
   const [depthMm, setDepthMm] = useState(props.initial.depthMm);
   const [blatMaterialId, setBlatMaterialId] = useState(props.initial.blatMaterialId);
   const [manualPieces, setManualPieces] = useState(props.initial.manualPieces);
+  const [cantMode, setCantMode] = useState(props.initial.blatCantMode || 'FRONT');
 
   const material = props.materials.find((m) => m.id === blatMaterialId);
   const w = Number(widthMm);
   const d = Number(depthMm);
+  const cantMl = cantMode === 'NONE' ? 0 : (cantMode === 'FRONT_SIDES' ? w + 2 * d : w) / 1000;
   const canCompute = material && w > 0 && d > 0;
   const overDepth = !!material && d > 0 && d > material.sheetWidthMm;
 
@@ -92,6 +94,17 @@ export function BlatEditorForm(props: {
         )}
         {/* când adâncimea încape, nr. de plăci e automat — trimitem gol ca schema să-l ignore */}
         {!overDepth && <input type="hidden" name="manualPieces" value="" />}
+        <div className="col-span-2 grid gap-1">
+          <Label htmlFor="blatCantMode" className={fieldLabelCls}>Cant blat (ABS 2mm)</Label>
+          <select
+            id="blatCantMode" name="blatCantMode" value={cantMode} onChange={(e) => setCantMode(e.target.value)}
+            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+          >
+            <option value="FRONT">Muchia frontală</option>
+            <option value="FRONT_SIDES">Frontal + capete (insulă)</option>
+            <option value="NONE">Fără cant</option>
+          </select>
+        </div>
       </div>
 
       {props.materials.length === 0 && (
@@ -114,7 +127,7 @@ export function BlatEditorForm(props: {
 
       {result && (
         <Card size="sm" className="bg-muted/40">
-          <CardContent className="grid grid-cols-2 gap-3 md:grid-cols-5">
+          <CardContent className="grid grid-cols-2 gap-3 md:grid-cols-6">
             <div>
               <div className="text-xs text-muted-foreground">Placă ({fmtNum(material!.thicknessMm, 0)} mm)</div>
               <div className="text-lg font-semibold">{fmtNum(material!.sheetLengthMm, 0)}×{fmtNum(material!.sheetWidthMm, 0)}</div>
@@ -134,6 +147,10 @@ export function BlatEditorForm(props: {
             <div>
               <div className="text-xs text-muted-foreground">Debitare ({fmtNum(props.cutPricePerPiece, 0)} lei/placă)</div>
               <div className="text-lg font-semibold">{fmtLei(result.cuttingCost)}</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground">Cant ABS 2mm</div>
+              <div className="text-lg font-semibold">{cantMode === 'NONE' ? '—' : `${fmtNum(cantMl, 2)} ml`}</div>
             </div>
           </CardContent>
         </Card>

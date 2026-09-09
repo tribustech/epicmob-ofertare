@@ -10,6 +10,7 @@ const projectDetailsSchema = z.object({
   name: z.string().trim().min(1, 'Numele proiectului lipsește'),
   clientName: optTrimmedStr,
   clientContact: optTrimmedStr,
+  observatii: optTrimmedStr,
 });
 
 export const parseProjectDetails = (input: Record<string, unknown>) => projectDetailsSchema.parse(input);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeCosts, type CostCatalogs } from '../costing';
+import { computeCosts, CARCASS_VOPSIT_PART_NAMES, type CostCatalogs } from '../costing';
 import { expandCabinet } from '../templates';
 import { DEFAULT_CONSTRUCTION } from '../constants';
 import { bazaInput, TEST_CATALOGS } from './fixtures';
@@ -23,9 +23,9 @@ const COST_CATALOGS: CostCatalogs = {
 
 describe('computeCosts — corp bază de referință', () => {
   // Corp B1: 600×720×560, 1 poliță, 1 ușă MDF vopsit, spate PFL în falț.
-  // Calcul de mână (vezi spec): plăci 553.21, cant 3.13, debitare 83,
+  // Calcul de mână (vezi spec): plăci 553.21, cant 5.35 (laterale pe 3 laturi), debitare 83,
   // feronerie 48 (2 balamale×15 + 1 mâner×10 + 4 picioare×2).
-  // bază materiale = 553.21 + 3.13 + 83 + 48 = 687.35; manoperă = bază × laborPct%.
+  // bază materiale = 553.21 + 5.35 + 83 + 48 = 689.57; manoperă = bază × laborPct%.
   const expanded = expandCabinet(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
 
   const result = computeCosts({
@@ -44,16 +44,16 @@ describe('computeCosts — corp bază de referință', () => {
 
   it('categoriile de cost', () => {
     expect(result.breakdown.boards).toBeCloseTo(553.21, 1);        // 260 + 100 + 0.4294×450
-    expect(result.breakdown.edging).toBeCloseTo(3.13, 1);          // 3.132 ml × 1
+    expect(result.breakdown.edging).toBeCloseTo(5.35, 1);          // 5.352 ml × 1 (laterale pe 3 laturi)
     expect(result.breakdown.cuttingService).toBeCloseTo(83, 5);    // PAL 50 + PFL 33
     expect(result.breakdown.hardware).toBeCloseTo(48, 5);
-    expect(result.breakdown.labor).toBeCloseTo(206.20, 1);         // 687.35 × 30%
+    expect(result.breakdown.labor).toBeCloseTo(206.87, 1);         // 689.57 × 30%
     expect(result.breakdown.freeLines).toBe(0);
   });
 
   it('total și adaos', () => {
-    expect(result.totalCost).toBeCloseTo(687.35, 1);               // bază materiale, fără manoperă
-    expect(result.sellPrice).toBeCloseTo(893.55, 1);                // bază × 1.3
+    expect(result.totalCost).toBeCloseTo(689.57, 1);               // bază materiale, fără manoperă
+    expect(result.sellPrice).toBeCloseTo(896.44, 1);                // bază × 1.3
   });
 });
 
@@ -67,6 +67,48 @@ describe('computeCosts — cazuri particulare', () => {
     expect(r.breakdown.freeLines).toBe(1000);
     expect(r.totalCost).toBe(1000);
     expect(r.sellPrice).toBe(1000);
+  });
+
+  it('linia liberă „în comision" intră în baza de manoperă; cea normală doar în plus', () => {
+    const r = computeCosts({
+      parts: [], hardwareLines: [], cabinets: [], nesting: { kerfMm: 4, trimMm: 10 }, laborPct: 50,
+      freeLines: [
+        { name: 'Manoperă montaj', amount: 1000, inCommission: true },
+        { name: 'Transport', amount: 200 }, // fără adaos
+      ],
+      catalogs: COST_CATALOGS,
+    });
+    // fără piese: materialBase = 0; manoperă = (0 + 1000) × 50% = 500 (doar linia comisionată)
+    expect(r.breakdown.labor).toBe(500);
+    expect(r.breakdown.freeLines).toBe(1200);
+    expect(r.totalCost).toBe(1200);            // costul include ambele linii
+    expect(r.sellPrice).toBe(1700);            // 1200 + 500 adaos
+  });
+
+  it('debitarea pe rotund (extraCutting) intră la debitare și în total', () => {
+    const r = computeCosts({
+      parts: [], hardwareLines: [], cabinets: [], nesting: { kerfMm: 4, trimMm: 10 }, laborPct: 0,
+      freeLines: [], catalogs: COST_CATALOGS, extraCutting: 60,
+    });
+    expect(r.breakdown.cuttingService).toBe(60);
+    expect(r.sellPrice).toBe(60);
+  });
+
+  it('cantul suplimentar (extraEdging, ex. blat) intră la cant și în necesar', () => {
+    const r = computeCosts({
+      parts: [], hardwareLines: [], cabinets: [], nesting: { kerfMm: 4, trimMm: 10 }, laborPct: 0,
+      freeLines: [], catalogs: COST_CATALOGS, extraEdging: [{ edgeBandId: 'abs-1', totalMl: 3 }],
+    });
+    expect(r.breakdown.edging).toBe(6); // 3 ml × 2 lei/ml
+    expect(r.needs.edging).toContainEqual({ edgeBandId: 'abs-1', totalMl: 3 });
+  });
+
+  it('cantul forfetar (extraEdgingFlat, ex. cant pe rotund) intră la cant', () => {
+    const r = computeCosts({
+      parts: [], hardwareLines: [], cabinets: [], nesting: { kerfMm: 4, trimMm: 10 }, laborPct: 0,
+      freeLines: [], catalogs: COST_CATALOGS, extraEdgingFlat: 40,
+    });
+    expect(r.breakdown.edging).toBe(40);
   });
 
   it('feronerie inexistentă în catalog → eroare', () => {
@@ -179,6 +221,21 @@ describe('computeCosts — fronturi MDF vopsit cotate per m² (EUR × curs)', ()
     // frontul MDF vopsit nu are cant → edging neschimbat față de referință
     expect(r.breakdown.edging).toBeCloseTo(baseline.breakdown.edging, 6);
     expect(r.warnings ?? []).toHaveLength(0);
+  });
+
+  it('carcasă MDF vopsit: piesele de carcasă cotate per m² (EUR×curs), scoase din plăci', () => {
+    const cfg = { supplierId: 'paintmob', modelId: 'model-mediu', finish: 'MAT' as const, faces: 1, ralCode: 'RAL 9010', colorCategory: 'NORMALA' as const };
+    const exp = expandCabinet(bazaInput({ carcassMaterialId: 'mdf-vopsit', frontMaterialId: 'pal-alb' }), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const carcassArea = exp.parts
+      .filter((p) => CARCASS_VOPSIT_PART_NAMES.has(p.name) && p.materialId === 'mdf-vopsit')
+      .reduce((s, p) => s + (p.lengthMm / 1000) * (p.widthMm / 1000) * p.qty, 0);
+    const common = { parts: exp.parts, hardwareLines: [], freeLines: [], laborPct: 0, nesting: NEST, catalogs: VOPSIT_CATALOGS };
+    const ref = computeCosts({ ...common, cabinets: [exp.input] });                       // fără mdfCarcass → placă la 450
+    const vop = computeCosts({ ...common, cabinets: [{ ...exp.input, mdfCarcass: cfg }] }); // cu vopsit → per m² EUR
+    expect(carcassArea).toBeGreaterThan(0);
+    expect(ref.needs.boards.some((b) => b.materialId === 'mdf-vopsit')).toBe(true);
+    expect(vop.needs.boards.some((b) => b.materialId === 'mdf-vopsit')).toBe(false);
+    expect(vop.breakdown.boards - ref.breakdown.boards).toBeCloseTo(carcassArea * (115 * 5 - 450), 3);
   });
 
   it('model cu frezare mâner: + handleMillingEur × frontCount × curs', () => {

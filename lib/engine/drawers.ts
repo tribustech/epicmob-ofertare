@@ -50,37 +50,43 @@ export function expandDrawerBoxes(
   const SIDE_AXES_HORIZ_LIKE: PieceInstance['edgeAxis'] = { fata: 'L', spate: 'L', stanga: 'W', dreapta: 'W' };
 
   const pieces: PieceInstance[] = [];
+  const cols = Math.max(1, drawers.columns ?? 1);
+  // regiunea utilă pe fiecare coloană (lățimea interioară împărțită, minus lufturile dintre coloane)
+  const colRegion = (innerW - (cols - 1) * cc.frontGapMm) / cols;
 
   heights.forEach((frontH, i) => {
     const boxW = assertPositiveDim(
-      innerW - cc.palBoxSlideAllowanceMm, 'lățime cutie sertar (PAL_BOX)', input.label,
+      colRegion - cc.palBoxSlideAllowanceMm, 'lățime cutie sertar (PAL_BOX)', input.label,
     );
     const boxH = Math.max(frontH - cc.palBoxHeightDeductMm, cc.palBoxMinHeightMm);
     const boxInnerW = assertPositiveDim(
       boxW - 2 * t, 'lățime față/spate cutie sertar (PAL_BOX)', input.label,
     );
-    for (let j = 0; j < 2; j++) {
+    const tag = (i: number, c: number) => cols > 1 ? `${i + 1}·c${c + 1}` : `${i + 1}`;
+    for (let c = 0; c < cols; c++) {
+      for (let j = 0; j < 2; j++) {
+        pieces.push({
+          key: `sertar:${i}:${c}:laterala:${j}`, cabinetLabel: input.label,
+          name: 'Laterală sertar', label: `Sertar ${tag(i, c)} · laterală ${j === 0 ? 'stânga' : 'dreapta'}`,
+          lengthMm: nominalMm, widthMm: boxH, materialId: carcass.id,
+          edges: { sus: fe }, edgeAxis: BOX_SIDE_AXES,
+        });
+      }
+      (['fata', 'spate'] as const).forEach((pos) => {
+        pieces.push({
+          key: `sertar:${i}:${c}:${pos}`, cabinetLabel: input.label,
+          name: 'Față/Spate cutie sertar', label: `Sertar ${tag(i, c)} · ${pos === 'fata' ? 'față' : 'spate'} cutie`,
+          lengthMm: boxInnerW, widthMm: boxH, materialId: carcass.id,
+          edges: { sus: fe }, edgeAxis: { sus: 'L', jos: 'L', stanga: 'W', dreapta: 'W' },
+        });
+      });
       pieces.push({
-        key: `sertar:${i}:laterala:${j}`, cabinetLabel: input.label,
-        name: 'Laterală sertar', label: `Sertar ${i + 1} · laterală ${j === 0 ? 'stânga' : 'dreapta'}`,
-        lengthMm: nominalMm, widthMm: boxH, materialId: carcass.id,
-        edges: { sus: fe }, edgeAxis: BOX_SIDE_AXES,
+        key: `sertar:${i}:${c}:fund`, cabinetLabel: input.label,
+        name: 'Fund sertar', label: `Sertar ${tag(i, c)} · fund`,
+        lengthMm: nominalMm, widthMm: boxW, materialId: bottom.id,
+        edges: {}, edgeAxis: SIDE_AXES_HORIZ_LIKE,
       });
     }
-    (['fata', 'spate'] as const).forEach((pos) => {
-      pieces.push({
-        key: `sertar:${i}:${pos}`, cabinetLabel: input.label,
-        name: 'Față/Spate cutie sertar', label: `Sertar ${i + 1} · ${pos === 'fata' ? 'față' : 'spate'} cutie`,
-        lengthMm: boxInnerW, widthMm: boxH, materialId: carcass.id,
-        edges: { sus: fe }, edgeAxis: { sus: 'L', jos: 'L', stanga: 'W', dreapta: 'W' },
-      });
-    });
-    pieces.push({
-      key: `sertar:${i}:fund`, cabinetLabel: input.label,
-      name: 'Fund sertar', label: `Sertar ${i + 1} · fund`,
-      lengthMm: nominalMm, widthMm: boxW, materialId: bottom.id,
-      edges: {}, edgeAxis: SIDE_AXES_HORIZ_LIKE,
-    });
   });
 
   return { pieces, warnings };

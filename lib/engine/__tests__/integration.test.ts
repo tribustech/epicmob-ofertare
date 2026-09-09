@@ -61,9 +61,9 @@ describe('computeProject — corp bază de referință (calcul de mână)', () =
   });
 
   it('costuri identice cu calculul de mână', () => {
-    // bază materiale = 553.21 + 3.13 + 83 + 48 = 687.35 (fără manoperă); vezi costing.test.ts
-    expect(result.costs.totalCost).toBeCloseTo(687.35, 1);
-    expect(result.costs.sellPrice).toBeCloseTo(893.55, 1);
+    // bază materiale = 553.21 + 5.35 + 83 + 48 = 689.57 (fără manoperă; cant laterale pe 3 laturi); vezi costing.test.ts
+    expect(result.costs.totalCost).toBeCloseTo(689.57, 1);
+    expect(result.costs.sellPrice).toBeCloseTo(896.44, 1);
   });
 
   it('fără avertismente pe corpul de referință', () => {

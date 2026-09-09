@@ -27,6 +27,9 @@ export interface SettingsRow {
   profilJPerFront?: number | null; golaPricePerMl?: number | null;
   eurToRon?: number | null; // curs EUR→RON pentru fronturile MDF vopsit
   blatCutPricePerPiece?: number | null; // debitare blat, lei per placă (default 35)
+  roundedCutPricePerPiece?: number | null; // debitare pe rotund, lei per poliță cu colț rotunjit (default 0)
+  roundedEdgePricePerPiece?: number | null; // cant pe rotund, lei per poliță (separat de debitare, default 0)
+  blatEdgeBandId?: string | null; // banda de cant folosită la blat (lipsă = orice ABS 2mm)
   defaultHingeId: string | null; defaultHandleId: string | null;
   defaultLegId: string | null; defaultRailId: string | null;
   // opționale: snapshot-urile dinainte de feronerie v4 nu le au
@@ -55,7 +58,7 @@ export function toBoardMaterial(row: MaterialRow): BoardMaterial {
   return {
     id: row.id, name: row.name, kind: row.kind as MaterialKind,
     thicknessMm: row.thicknessMm, sheetLengthMm: row.sheetLengthMm, sheetWidthMm: row.sheetWidthMm,
-    pricing,
+    pricing, hasGrain: row.hasGrain,
   };
 }
 

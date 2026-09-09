@@ -139,29 +139,41 @@ export function expandFronts(
       : heights;
     // regruparea înălțimilor identice într-o singură linie de piesă se face în toParts
     const n = input.drawers!.count;
+    const cols = Math.max(1, input.drawers!.columns ?? 1);
+    const colW = assertPositiveDim(
+      (usableW - (cols - 1) * cc.frontGapMm) / cols, 'lățime sertar (coloană)', input.label,
+    );
     adjusted.forEach((h, i) => {
-      pieces.push({
-        key: `front-sertar:${i}`, cabinetLabel: input.label, name: 'Front sertar',
-        label: `Front sertar ${i + 1}`,
-        lengthMm: h, widthMm: usableW, materialId: material.id,
-        edges: perim, edgeAxis: FRONT_AXES,
-        calc: {
-          ...(input.drawers!.frontHeightsMm ? {} : {
-            length: dim('Înălțime', [
-              { label: 'înălțime corp', valueMm: input.heightMm },
-              ...(legDeduct > 0 ? [{ label: 'picior', valueMm: -legDeduct }] : []),
-              { label: 'luft sus + jos', valueMm: -2 * cc.outerGapMm },
-              ...(n > 1 ? [
-                { label: `${n - 1}× luft între fronturi`, valueMm: -(n - 1) * cc.frontGapMm },
-                { label: `partea celorlalte ${n - 1} fronturi`, valueMm: -(heights[i]) * (n - 1) },
+      for (let c = 0; c < cols; c++) {
+        pieces.push({
+          key: `front-sertar:${i}:${c}`, cabinetLabel: input.label, name: 'Front sertar',
+          label: `Front sertar ${i + 1}${cols > 1 ? ` · col ${c + 1}` : ''}`,
+          lengthMm: h, widthMm: colW, materialId: material.id,
+          edges: perim, edgeAxis: FRONT_AXES,
+          calc: {
+            ...(input.drawers!.frontHeightsMm ? {} : {
+              length: dim('Înălțime', [
+                { label: 'înălțime corp', valueMm: input.heightMm },
+                ...(legDeduct > 0 ? [{ label: 'picior', valueMm: -legDeduct }] : []),
+                { label: 'luft sus + jos', valueMm: -2 * cc.outerGapMm },
+                ...(n > 1 ? [
+                  { label: `${n - 1}× luft între fronturi`, valueMm: -(n - 1) * cc.frontGapMm },
+                  { label: `partea celorlalte ${n - 1} fronturi`, valueMm: -(heights[i]) * (n - 1) },
+                ] : []),
+                ...(handleType === 'GOLA' ? [{ label: 'profil GOLA', valueMm: -cc.golaFrontDeductMm }] : []),
+              ]),
+            }),
+            width: dim('Lățime', [
+              ...widthTermsBase,
+              ...(cols > 1 ? [
+                { label: `${cols - 1}× luft între coloane`, valueMm: -(cols - 1) * cc.frontGapMm },
+                { label: `partea celorlalte ${cols - 1} coloane`, valueMm: -colW * (cols - 1) },
               ] : []),
-              ...(handleType === 'GOLA' ? [{ label: 'profil GOLA', valueMm: -cc.golaFrontDeductMm }] : []),
             ]),
-          }),
-          width: dim('Lățime', widthTermsBase),
-        },
-      });
-      fronts.push({ kind: 'SERTAR', widthMm: usableW, heightMm: h });
+          },
+        });
+        fronts.push({ kind: 'SERTAR', widthMm: colW, heightMm: h });
+      }
     });
   } else if (input.doors > 0) {
     const doorW = assertPositiveDim(

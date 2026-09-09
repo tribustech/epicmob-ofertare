@@ -5,8 +5,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { NoPriceBadge } from '@/components/NoPriceBadge';
+import { ActionForm } from '@/components/ActionForm';
+import { ModalCloseContext } from '@/components/modal-close';
+import { SubmitButton } from '@/components/forms';
+import { updateMaterialPrice } from '@/lib/catalog/actions';
 import { materialHasNoPrice } from '@/lib/quote/material-price';
 
 export type MaterialCard = {
@@ -44,6 +50,7 @@ export function MaterialeGalerie({ materials }: { materials: MaterialCard[] }) {
   const [q, setQ] = useState('');
   const [brand, setBrand] = useState<string>('all');
   const [category, setCategory] = useState<string>('all');
+  const [editing, setEditing] = useState<MaterialCard | null>(null);
 
   const hasManual = useMemo(() => materials.some((m) => m.brand == null), [materials]);
 
@@ -120,7 +127,12 @@ export function MaterialeGalerie({ materials }: { materials: MaterialCard[] }) {
         {filtered.map((m) => {
           const price = priceLabel(m);
           return (
-            <Card key={m.id} size="sm" className="gap-0 py-0">
+            <Card
+              key={m.id} size="sm"
+              className="cursor-pointer gap-0 py-0 transition hover:ring-2 hover:ring-ring/50"
+              onClick={() => setEditing(m)}
+              title="Click pentru a modifica prețul"
+            >
               {m.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -165,6 +177,33 @@ export function MaterialeGalerie({ materials }: { materials: MaterialCard[] }) {
           Niciun material nu corespunde filtrelor.
         </p>
       )}
+
+      <Dialog open={editing != null} onOpenChange={(o) => { if (!o) setEditing(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{editing?.decorCode || editing?.name || 'Material'}</DialogTitle>
+          </DialogHeader>
+          {editing && (
+            <ModalCloseContext.Provider value={() => setEditing(null)}>
+              <ActionForm action={updateMaterialPrice.bind(null, editing.id)} className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  {editing.name} · {editing.kind} · {editing.thicknessMm} mm · {editing.brand ?? 'Manual'}
+                </p>
+                <div className="grid gap-1">
+                  <Label htmlFor="material-price">
+                    Preț ({editing.pricingMode === 'PER_SQM' ? 'lei/m²' : 'lei/foaie'})
+                  </Label>
+                  <Input
+                    id="material-price" name="price" type="number" step="0.01" min="0" autoFocus
+                    defaultValue={(editing.pricingMode === 'PER_SQM' ? editing.pricePerSqm : editing.pricePerSheet) ?? ''}
+                  />
+                </div>
+                <SubmitButton>Salvează prețul</SubmitButton>
+              </ActionForm>
+            </ModalCloseContext.Provider>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

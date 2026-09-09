@@ -1,7 +1,7 @@
 import { LEGGED_TYPES } from './constants';
 import { layoutHoneycomb } from './honeycomb';
 import type {
-  CabinetInput, Catalogs, ConstructionConstants, DimCalc, DimTerm, PanelMount, PieceInstance, Warning,
+  CabinetInput, Catalogs, ConstructionConstants, DimCalc, DimTerm, PanelMount, PieceInstance, RoundedCornerShape, Warning,
 } from './types';
 
 export function findMaterial(catalogs: Catalogs, id: string) {
@@ -88,7 +88,8 @@ export function expandCarcass(
       key: `laterala:${i}`, cabinetLabel: label,
       name: 'Laterală', label: `Laterală ${pos}`,
       lengthMm: sideH, widthMm: panelDepth, materialId: carcass.id,
-      edges: { fata: fe }, edgeAxis: SIDE_AXES_VERT,
+      // cant pe 3 laturi (față + sus + jos); spatele NU se cantuiește (lipit de perete)
+      edges: { fata: fe, sus: fe, jos: fe }, edgeAxis: SIDE_AXES_VERT,
       calc: { length: sideHCalc, width: depthCalc },
     });
   });
@@ -130,34 +131,88 @@ export function expandCarcass(
   });
 
   const honeycomb = input.pieces?.honeycomb;
+  // despărțitoare verticale între uși: un corp cu 2+ uși se împarte în N compartimente
+  // de N-1 montanți din PAL; polițele devin per-compartiment.
+  const hasDividers = input.doors >= 2 && !honeycomb;
+  const dividerCount = hasDividers ? input.doors - 1 : 0;
+  const compW = hasDividers
+    ? assertPositiveDim((innerW - dividerCount * t) / input.doors, 'lățime compartiment', label)
+    : innerW;
+  const carcassH = H - legDeduct;
+  const zBack = pflThick + screw;
+  const compLeftX = (c: number) => t + c * (compW + t); // marginea stângă interioară a compartimentului c
+
   if (input.shelves > 0 && !honeycomb) {
     const shelfW = assertPositiveDim(D - cc.shelfSetbackMm, 'lățime poliță', label);
     const shelfMat = input.shelf?.materialId ? findMaterial(catalogs, input.shelf.materialId) : carcass;
+    const shelfTh = shelfMat.thicknessMm;
     const shelfEdges = shelfMat.kind === 'STICLA_POLITA' ? {} : { fata: fe };
-    const interiorCalc = dim('Lățime interioară', [{ label: 'lățime corp', valueMm: W }, grosime2x]);
+    const shelfSpanW = hasDividers ? compW : innerW;
+    const interiorCalc = dim('Lățime interioară', hasDividers
+      ? [{ label: 'compartiment', valueMm: shelfSpanW }]
+      : [{ label: 'lățime corp', valueMm: W }, grosime2x]);
     const shelfDepthCalc = dim('Adâncime', [
       { label: 'adâncime', valueMm: D },
       { label: 'retragere poliță', valueMm: -cc.shelfSetbackMm },
     ]);
+    // colț frontal rotunjit al polițelor (debitare pe rotund): raza = valoarea dată sau,
+    // lipsă, adâncimea poliței (sfert de cerc); limitată la interior/adâncime ca să încapă
+    const shelfShape: RoundedCornerShape | undefined = input.shelf?.roundedCorner
+      ? {
+          corner: input.shelf.roundedCorner,
+          radiusMm: Math.max(0, Math.min(input.shelf.roundedRadiusMm ?? shelfW, shelfSpanW, shelfW)),
+        }
+      : undefined;
+    const roundEdge = shelfShape ? { shape: shelfShape } : {};
+    const comps = hasDividers ? input.doors : 1;
     // nesting-ul nu rotește piese (decorul curge pe lungime) — axa FAȚĂ–SPATE
     // înseamnă piesa rotită în lista de debitare, cu cantul frontal pe latura scurtă
     for (let i = 0; i < input.shelves; i++) {
-      if (input.shelf?.decorAxis === 'FB') {
-        pieces.push({
-          key: `polita:${i}`, cabinetLabel: label, name: 'Poliță', label: `Poliță ${i + 1}`,
-          lengthMm: shelfW, widthMm: innerW, materialId: shelfMat.id,
-          edges: shelfEdges,
-          edgeAxis: { fata: 'W', spate: 'W', stanga: 'L', dreapta: 'L' },
-          calc: { length: shelfDepthCalc, width: interiorCalc },
-        });
-      } else {
-        pieces.push({
-          key: `polita:${i}`, cabinetLabel: label, name: 'Poliță', label: `Poliță ${i + 1}`,
-          lengthMm: innerW, widthMm: shelfW, materialId: shelfMat.id,
-          edges: shelfEdges, edgeAxis: SIDE_AXES_HORIZ,
-          calc: { length: interiorCalc, width: shelfDepthCalc },
-        });
+      for (let c = 0; c < comps; c++) {
+        const key = hasDividers ? `polita:${i}:${c}` : `polita:${i}`;
+        const labelTxt = `Poliță ${i + 1}${hasDividers ? ` · comp ${c + 1}` : ''}`;
+        // cu despărțitoare setăm poziția 3D aici (cheia cu :c nu e recunoscută de assignPlacements)
+        const place = hasDividers
+          ? { placement: { x: compLeftX(c), y: (carcassH * (i + 1)) / (input.shelves + 1), z: zBack, w: shelfSpanW, h: shelfTh, d: shelfW } }
+          : {};
+        if (input.shelf?.decorAxis === 'FB') {
+          pieces.push({
+            key, cabinetLabel: label, name: 'Poliță', label: labelTxt,
+            lengthMm: shelfW, widthMm: shelfSpanW, materialId: shelfMat.id,
+            edges: shelfEdges,
+            edgeAxis: { fata: 'W', spate: 'W', stanga: 'L', dreapta: 'L' },
+            calc: { length: shelfDepthCalc, width: interiorCalc },
+            ...roundEdge, ...place,
+          });
+        } else {
+          pieces.push({
+            key, cabinetLabel: label, name: 'Poliță', label: labelTxt,
+            lengthMm: shelfSpanW, widthMm: shelfW, materialId: shelfMat.id,
+            edges: shelfEdges, edgeAxis: SIDE_AXES_HORIZ,
+            calc: { length: interiorCalc, width: shelfDepthCalc },
+            ...roundEdge, ...place,
+          });
+        }
       }
+    }
+  }
+
+  // montanții verticali dintre uși (câte unul între fiecare pereche de uși)
+  if (hasDividers) {
+    const interiorTop = topVariant === 'ABSENT' ? sideH : sideH - t;
+    const dividerH = assertPositiveDim(interiorTop - t, 'înălțime despărțitor', label);
+    for (let k = 0; k < dividerCount; k++) {
+      pieces.push({
+        key: `despartitor:${k}`, cabinetLabel: label,
+        name: 'Despărțitor', label: `Despărțitor ${k + 1}`,
+        lengthMm: dividerH, widthMm: panelDepth, materialId: carcass.id,
+        edges: { fata: fe }, edgeAxis: SIDE_AXES_VERT,
+        calc: {
+          length: dim('Înălțime', [{ label: 'înălțime interioară', valueMm: dividerH }]),
+          width: depthCalc,
+        },
+        placement: { x: t + (k + 1) * compW + k * t, y: t, z: zBack, w: t, h: dividerH, d: panelDepth },
+      });
     }
   }
 
@@ -221,10 +276,10 @@ export function expandCarcass(
   }
 
   const warnings: Warning[] = [];
-  if (input.shelves > 0 && !honeycomb && innerW > cc.shelfSpanWarnMm) {
+  if (input.shelves > 0 && !honeycomb && compW > cc.shelfSpanWarnMm) {
     warnings.push({
       code: 'SHELF_SPAN',
-      message: `Poliță cu deschidere ${innerW}mm — peste ${cc.shelfSpanWarnMm}mm, recomandat sprijin intermediar`,
+      message: `Poliță cu deschidere ${compW}mm — peste ${cc.shelfSpanWarnMm}mm, recomandat sprijin intermediar`,
       cabinetLabel: label,
     });
   }

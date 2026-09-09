@@ -52,6 +52,7 @@ export function computeMaterialNeeds(
     const nested = nestParts(
       piecesByMaterial.get(materialId) ?? [],
       material.sheetLengthMm, material.sheetWidthMm, nesting,
+      !material.hasGrain, // fără direcție de fibră → piesele pot fi rotite
     );
     return {
       materialId, totalAreaSqm,

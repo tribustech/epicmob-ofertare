@@ -116,6 +116,9 @@ model AppSettings {
   defaultAventosId      String?
   eurToRon         Float   @default(4.97)
   blatCutPricePerPiece Float @default(35)
+  roundedCutPricePerPiece Float @default(0)
+  roundedEdgePricePerPiece Float @default(0) // cant pe rotund, lei per poliță (separat de debitare)
+  blatEdgeBandId String? // banda de cant folosită la blat (dacă lipsește, se ia orice ABS de 2mm)
 }
 
 model Project {
@@ -123,12 +126,14 @@ model Project {
   name          String
   clientName    String?
   clientContact String?
+  observatii    String?    // note libere afișate în ofertă
   status        String     @default("CIORNA") // CIORNA | TRIMISA | ACCEPTATA
   laborPct      Float
   yieldFactor   Float
   handleType    String     @default("APLICAT")
   handleItemId  String?
   freeLinesJson String     @default("[]")
+  loosePanelsJson String   @default("[]")
   snapshotJson  String?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt

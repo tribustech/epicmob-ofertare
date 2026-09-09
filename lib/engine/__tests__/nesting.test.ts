@@ -16,6 +16,17 @@ describe('nestParts — plasare pe o placă', () => {
     ]);
   });
 
+  it('material fără fibră: piesa lată-dar-scurtă se rotește ca să încapă', () => {
+    // placă 1000×500 (util 980×480); piesa e 300×900 → 900 > 480 lățime utilă
+    const lat = [piece('Spate lat', 300, 900)];
+    // fără rotație (fibră) → nu încape, aruncă
+    expect(() => nestParts(lat, 1000, 500, P, false)).toThrow(/nu încape/);
+    // cu rotație (fără fibră) → latura lungă (900) merge pe lungime (980) → încape
+    const r = nestParts(lat, 1000, 500, P, true);
+    expect(r.sheets).toHaveLength(1);
+    expect(r.sheets[0].pieces[0]).toMatchObject({ lengthMm: 900, widthMm: 300 });
+  });
+
   it('raft nou sub primul, cu kerf între rafturi', () => {
     const r = nestParts([piece('A', 980, 238), piece('B', 980, 238)], 1000, 500, P);
     expect(r.sheets).toHaveLength(1);

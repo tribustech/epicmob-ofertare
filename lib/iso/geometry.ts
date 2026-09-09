@@ -71,17 +71,22 @@ export function buildIsoModel(input: CabinetInput, cc: ConstructionConstants): C
   if (hasFronts && drawerCount > 0) {
     const heights = input.drawers!.frontHeightsMm
       ?? Array.from({ length: drawerCount }, () => (H - 2 * g - (drawerCount - 1) * gap) / drawerCount);
+    const cols = Math.max(1, input.drawers!.columns ?? 1);
+    const colW = (usableW - (cols - 1) * gap) / cols;
     let topY = H - g; // sertarul 1 e sus
     // GOLA: fiecare sertar are profilul lui deasupra frontului (frontul se scurtează cu profilul)
     for (const h of heights) {
       if (isGola) golaBars.push({ xMm: g, yMm: topY - deduct, wMm: W - 2 * g, hMm: deduct });
       const rowTop = isGola ? topY - deduct : topY;
       const frontHRow = isGola ? h - deduct : h;
-      fronts.push({
-        kind: 'SERTAR', xMm: frontX0, yMm: rowTop - frontHRow, wMm: usableW, hMm: frontHRow,
-        ...(markKind ? { handle: { xMm: frontX0 + usableW / 2, yMm: rowTop - HANDLE_INSET_MM, kind: markKind, vertical: false } } : {}),
-        ...(isJ ? { jStrip: { xMm: frontX0, yMm: rowTop - J_STRIP_MM, wMm: usableW, hMm: J_STRIP_MM } } : {}),
-      });
+      for (let c = 0; c < cols; c++) {
+        const x = frontX0 + c * (colW + gap);
+        fronts.push({
+          kind: 'SERTAR', xMm: x, yMm: rowTop - frontHRow, wMm: colW, hMm: frontHRow,
+          ...(markKind ? { handle: { xMm: x + colW / 2, yMm: rowTop - HANDLE_INSET_MM, kind: markKind, vertical: false } } : {}),
+          ...(isJ ? { jStrip: { xMm: x, yMm: rowTop - J_STRIP_MM, wMm: colW, hMm: J_STRIP_MM } } : {}),
+        });
+      }
       topY -= h + gap;
     }
   } else if (hasFronts && input.doors > 0) {

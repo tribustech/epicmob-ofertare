@@ -75,6 +75,20 @@ describe('applyBulkCabinetPatch', () => {
     expect(result.input.frontMaterialId).toBeNull();
     expect(result.input.widthMm).toBe(700);
   });
+
+  it('schimbă cantul carcasei și cantul frontului (front PAL)', () => {
+    const result = applyBulkCabinetPatch(cabinet(), { carcassEdgeBandId: 'abs-1', frontEdgeBandId: 'abs-04' });
+    expect(result.input.edgeBands.carcassFrontEdgeId).toBe('abs-1');
+    expect(result.input.edgeBands.frontPerimeterId).toBe('abs-04');
+  });
+
+  it('cantul de front se ignoră la corpul fără fronturi; carcasa se schimbă mereu', () => {
+    const result = applyBulkCabinetPatch(cabinet({ doors: 0, frontMaterialId: null }), {
+      carcassEdgeBandId: 'abs-1', frontEdgeBandId: 'abs-04',
+    });
+    expect(result.input.edgeBands.carcassFrontEdgeId).toBe('abs-1');
+    expect(result.input.edgeBands.frontPerimeterId).toBe('abs-2'); // neschimbat
+  });
 });
 
 describe('bulkCabinetPatchSchema', () => {

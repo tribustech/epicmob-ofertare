@@ -23,9 +23,9 @@ describe('computeMaterialNeeds', () => {
     expect(pfl.totalAreaSqm).toBeCloseTo(0.4267, 3);
     expect(pfl.sheets).toBe(1);
 
-    // cant 0.4: laterale 2×0.72 + blat/fund 2×0.564 + poliță 0.564 = 3.132 ml
+    // cant 0.4: laterale 2×(0.72 + 2×0.555) + blat/fund 2×0.564 + poliță 0.564 = 5.352 ml (laterale pe 3 laturi)
     const abs04 = edging.find((e) => e.edgeBandId === 'abs-04')!;
-    expect(abs04.totalMl).toBeCloseTo(3.132, 3);
+    expect(abs04.totalMl).toBeCloseTo(5.352, 3);
   });
 
   it('material PER_SQM → sheets null', () => {

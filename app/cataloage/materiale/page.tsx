@@ -25,7 +25,7 @@ const PRICING_OPTIONS = [
 function MaterialFields({ m }: { m?: {
   name: string; kind: string; thicknessMm: number; sheetLengthMm: number;
   sheetWidthMm: number; pricingMode: string; pricePerSheet: number | null; pricePerSqm: number | null;
-  hasGrain?: boolean;
+  hasGrain?: boolean; category?: string;
 } }) {
   return (
     <div className="grid grid-cols-2 gap-2 md:grid-cols-8">
@@ -42,6 +42,10 @@ function MaterialFields({ m }: { m?: {
       <label className="col-span-2 flex items-center gap-2 self-end pb-1.5 text-sm">
         <input type="checkbox" name="hasGrain" defaultChecked={m?.hasGrain ?? false} className="h-4 w-4 rounded border-input" />
         Decor cu direcție (nu e UNI)
+      </label>
+      <label className="col-span-2 flex items-center gap-2 self-end pb-1.5 text-sm">
+        <input type="checkbox" name="isBlat" defaultChecked={m?.category === 'BLAT'} className="h-4 w-4 rounded border-input" />
+        Este blat (masă de lucru)
       </label>
     </div>
   );

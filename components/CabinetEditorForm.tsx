@@ -38,6 +38,17 @@ import { materialHasNoPrice } from '@/lib/quote/material-price';
 import { HoneycombEditor } from '@/components/configurator/HoneycombEditor';
 import { equalHorizontalHoneycomb, type HoneycombNode } from '@/lib/engine/honeycomb';
 
+/** Înlocuiește în arborele de fagure materialul `from` cu `to` (polițele care „urmau" carcasa). */
+function remapHoneycombMaterial(node: HoneycombNode, from: string, to: string): HoneycombNode {
+  if (node.kind === 'leaf') return node;
+  return {
+    ...node,
+    materialId: node.materialId === from ? to : node.materialId,
+    first: remapHoneycombMaterial(node.first, from, to),
+    second: remapHoneycombMaterial(node.second, from, to),
+  };
+}
+
 export type FieldOption = { value: string; label: string };
 
 // dynamic la nivel de modul, ssr:false — three.js/WebGL nu are sens pe server
@@ -189,6 +200,20 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const set = (field: string, value: string) => {
     markTouched(field);
     setValues((v) => ({ ...v, [field]: value }));
+  };
+
+  // La schimbarea materialului carcasei, polițele care „urmau" carcasa (gol = moștenește, sau egale
+  // cu vechea carcasă) se schimbă automat pe noul material — inclusiv polițele din fagure. Cele
+  // setate DELIBERAT pe alt material rămân neatinse.
+  const changeCarcass = (v: string) => {
+    const old = values.carcassMaterialId;
+    set('carcassMaterialId', v);
+    if (old && old !== v) {
+      if (values.shelfMaterialId === old) set('shelfMaterialId', v);
+      setPiecesCfg((cfg) => (cfg.honeycomb
+        ? { ...cfg, honeycomb: { root: remapHoneycombMaterial(cfg.honeycomb.root, old, v) } }
+        : cfg));
+    }
   };
 
   const parsed = useMemo(() => cabinetFormSchema.safeParse(values), [values]);
@@ -594,11 +619,33 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
           </p>
         </div>
       )}
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="shelfRounded"
+          checked={values.shelfRounded === 'true'}
+          onCheckedChange={(c) => set('shelfRounded', c === true ? 'true' : 'false')}
+        />
+        <Label htmlFor="shelfRounded" className="font-normal">Polițe rotunjite pe colț</Label>
+      </div>
+      {values.shelfRounded === 'true' && (
+        <div className="grid gap-2">
+          <Label className={fieldLabelCls}>Colțul rotunjit</Label>
+          <SegmentedControl
+            value={values.shelfRoundedSide}
+            onChange={(v) => set('shelfRoundedSide', v)}
+            options={[{ value: 'LEFT', label: 'Stânga' }, { value: 'RIGHT', label: 'Dreapta' }]}
+          />
+          <p className="text-xs text-muted-foreground">
+            Colțul frontal se taie pe rotund (rază = adâncimea poliței). Cere cant flexibil și debitare pe rotund — cost în plus per poliță, setat în Setări.
+          </p>
+        </div>
+      )}
     </div>
   );
 
   const honeycombRoot = piecesCfg.honeycomb?.root;
   const carcassThicknessMm = pickerMaterials.find((material) => material.id === values.carcassMaterialId)?.thicknessMm ?? 18;
+  const carcassIsVopsit = pickerMaterials.find((material) => material.id === values.carcassMaterialId)?.kind === 'MDF_VOPSIT';
   const honeycombWidthMm = Math.max(1, (Number(values.widthMm) || 0) - 2 * carcassThicknessMm);
   const topInsetMm = piecesCfg.top?.variant === 'ABSENT' ? 0 : carcassThicknessMm;
   const honeycombHeightMm = Math.max(
@@ -746,10 +793,28 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
           complete={sectionComplete.materiale} error={sectionError('materiale')}>
           <div className="space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <MaterialPicker label="Material carcasă" value={values.carcassMaterialId} onChange={(v) => set('carcassMaterialId', v)} materials={boardMaterials} error={showError('carcassMaterialId')} />
+              <MaterialPicker label="Material carcasă" value={values.carcassMaterialId} onChange={changeCarcass} materials={boardMaterials} error={showError('carcassMaterialId')} />
               <SelectField label="Cant carcasă" value={values.carcassFrontEdgeId} onChange={(v) => set('carcassFrontEdgeId', v)} options={bandOptions.carcassFront} error={showError('carcassFrontEdgeId')} />
             </div>
             <GrainCheckbox materialId={values.carcassMaterialId} grainById={materialGrainById} onToggle={toggleGrain} idSuffix="carcasa" />
+
+            {carcassIsVopsit && (
+              <div className="space-y-3 rounded-lg border bg-muted/30 p-3">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Configurare vopsit carcasă (ca la fronturi)</div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <SelectField label="Furnizor" value={values.carcassMdfSupplierId} onChange={(v) => set('carcassMdfSupplierId', v)} options={frontSupplierOptions} allowEmpty />
+                  <FrontModelPicker label="Model" value={values.carcassMdfModelId} onChange={(v) => set('carcassMdfModelId', v)} models={frontModelOptions} allowEmpty />
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="grid gap-2"><Label className={fieldLabelCls}>Finisaj</Label><SegmentedControl value={values.carcassMdfFinish} onChange={(v) => set('carcassMdfFinish', v)} options={MDF_FINISH_OPTIONS} /></div>
+                  <div className="grid gap-2"><Label className={fieldLabelCls}>Nr. fețe</Label><SegmentedControl value={values.carcassMdfFaces} onChange={(v) => set('carcassMdfFaces', v)} options={MDF_FACES_OPTIONS} /></div>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <RalPicker label="Culoare RAL" value={values.carcassMdfRalCode} onChange={(v) => set('carcassMdfRalCode', v)} colors={ralColors} onVividHint={(vivid) => { if (vivid) set('carcassMdfColorCategory', 'VIE'); }} allowEmpty />
+                  <div className="grid gap-2"><Label className={fieldLabelCls}>Categorie culoare</Label><SegmentedControl value={values.carcassMdfColorCategory} onChange={(v) => set('carcassMdfColorCategory', v)} options={MDF_COLOR_CATEGORY_OPTIONS} /></div>
+                </div>
+              </div>
+            )}
 
             <div className="grid gap-2 border-t pt-3">
               <Label className={fieldLabelCls}>Tip front</Label>
@@ -891,7 +956,8 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             {frontType === 'SERTARE' && (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <NumField label="Nr. sertare" value={values.drawersCount} onChange={onDrawersCountChange} error={showError('drawersCount')} />
+                  <NumField label="Nr. sertare (rânduri)" value={values.drawersCount} onChange={onDrawersCountChange} error={showError('drawersCount')} />
+                  <NumField label="Coloane (pe lățime)" value={values.drawersColumns ?? '1'} onChange={(v) => set('drawersColumns', v)} error={showError('drawersColumns')} />
                   <SelectField label="Sistem sertare" value={values.drawersSystem} onChange={(v) => set('drawersSystem', v)} options={DRAWER_SYSTEM_OPTIONS} />
                   {values.drawersSystem === 'PAL_BOX' && (
                     <MaterialPicker label="Fund sertare" value={values.drawersBottomMaterialId} onChange={(v) => set('drawersBottomMaterialId', v)} materials={pickerMaterials} allowEmpty error={showError('drawersBottomMaterialId')} />

@@ -48,6 +48,17 @@ describe('expandDrawerBoxes — PAL_BOX', () => {
     expect(bottom).toMatchObject({ lengthMm: 500, widthMm: 538, qty: 3, materialId: 'pfl-alb' });
   });
 
+  it('coloane: grilă 2 rânduri × 2 coloane → 4 cutii, mai înguste', () => {
+    const grid = sertareInput('PAL_BOX'); grid.drawers!.count = 2; grid.drawers!.columns = 2;
+    const single = sertareInput('PAL_BOX'); single.drawers!.count = 2;
+    const parts = toParts(expandDrawerBoxes(grid, TEST_CATALOGS, cc).pieces);
+    expect(parts.find((p) => p.name === 'Laterală sertar')!.qty).toBe(8); // 2 laterale × 2 col × 2 rânduri
+    expect(parts.find((p) => p.name === 'Fund sertar')!.qty).toBe(4);     // 2 col × 2 rânduri
+    const bottomGrid = parts.find((p) => p.name === 'Fund sertar')!.widthMm;
+    const bottom1 = toParts(expandDrawerBoxes(single, TEST_CATALOGS, cc).pieces).find((p) => p.name === 'Fund sertar')!.widthMm;
+    expect(bottomGrid).toBeLessThan(bottom1); // cutia pe coloană e mai îngustă
+  });
+
   it('înălțimea cutiei nu scade sub minim', () => {
     const input = sertareInput('PAL_BOX');
     input.drawers!.frontHeightsMm = [100, 308, 308];

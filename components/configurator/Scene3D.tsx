@@ -1,7 +1,9 @@
 'use client';
+import { useEffect, useMemo } from 'react';
+import * as THREE from 'three';
 import { Canvas } from '@react-three/fiber';
 import { Edges, Html, OrbitControls } from '@react-three/drei';
-import type { EdgeSide, PieceInstance, PiecePlacement } from '@/lib/engine';
+import type { EdgeSide, PieceInstance, PiecePlacement, RoundedCornerShape } from '@/lib/engine';
 
 const KIND_COLORS: Record<string, string> = {
   PAL: '#c9a87c', MDF_MELAMINAT: '#d8cdb8', MDF_INFOLIAT: '#d8d3c8',
@@ -11,6 +13,30 @@ const KIND_COLORS: Record<string, string> = {
 };
 const S = 1 / 1000; // mm → unități scenă (metri)
 const fmt = (n: number) => String(Math.round(n * 10) / 10);
+
+/** Geometria unei polițe cu colț frontal rotunjit, centrată în cutia de gabarit w×h×d.
+ *  Amprenta (X × Z) are colțul din față (z max) rotunjit pe stânga (x=0) sau dreapta (x=w). */
+function roundedShelfGeometry(p: PiecePlacement, shape: RoundedCornerShape): THREE.ExtrudeGeometry {
+  const w = p.w * S, d = p.d * S, h = p.h * S;
+  const r = Math.max(0, Math.min(shape.radiusMm * S, w, d));
+  const s = new THREE.Shape();
+  s.moveTo(0, 0);
+  s.lineTo(w, 0);
+  if (shape.corner === 'RIGHT') {
+    s.lineTo(w, d - r);
+    s.absarc(w - r, d - r, r, 0, Math.PI / 2, false);
+    s.lineTo(0, d);
+  } else {
+    s.lineTo(w, d);
+    s.lineTo(r, d);
+    s.absarc(r, d - r, r, Math.PI / 2, Math.PI, false);
+  }
+  s.closePath();
+  const g = new THREE.ExtrudeGeometry(s, { depth: h, bevelEnabled: false });
+  g.rotateX(Math.PI / 2);            // amprenta pe podea, grosimea pe Y
+  g.translate(-w / 2, h / 2, -d / 2); // centrează în cutia de gabarit
+  return g;
+}
 
 type Axis3 = 'x' | 'y' | 'z';
 const AXES: Axis3[] = ['x', 'y', 'z'];
@@ -130,6 +156,8 @@ function PieceMesh({ pc, kind, color, selected, hovered, hoveredEdge, hasGrain, 
   const isGlass = kind === 'STICLA_RAMA';
   const isGlassShelf = kind === 'STICLA_POLITA';
   const isTransparentGlass = isGlass || isGlassShelf;
+  const roundedGeom = useMemo(() => (pc.shape ? roundedShelfGeometry(p, pc.shape) : null), [p, pc.shape]);
+  useEffect(() => () => roundedGeom?.dispose(), [roundedGeom]);
   return (
     <mesh
       position={[(p.x + p.w / 2) * S, (p.y + p.h / 2) * S, (p.z + p.d / 2) * S]}
@@ -137,7 +165,9 @@ function PieceMesh({ pc, kind, color, selected, hovered, hoveredEdge, hasGrain, 
       onPointerOver={(e) => { e.stopPropagation(); onHover(pc.key); document.body.style.cursor = 'pointer'; }}
       onPointerOut={() => { onHover(null); document.body.style.cursor = ''; }}
     >
-      <boxGeometry args={[p.w * S, p.h * S, p.d * S]} />
+      {roundedGeom
+        ? <primitive object={roundedGeom} attach="geometry" />
+        : <boxGeometry args={[p.w * S, p.h * S, p.d * S]} />}
       <meshStandardMaterial
         color={selected ? '#5b8def' : hovered ? '#93b3f0' : color}
         transparent opacity={isTransparentGlass ? (selected || hovered ? 0.5 : 0.24) : selected ? 0.95 : 0.92}

@@ -54,7 +54,7 @@ export function legHeightByCabinet(assemblies: Assembly[], cabinets: LoadedCabin
 }
 
 export function toQuoteInput(
-  project: { laborPct: number; freeLinesJson: string; handleType: string; handleItemId: string | null },
+  project: { laborPct: number; freeLinesJson: string; loosePanelsJson?: string; handleType: string; handleItemId: string | null },
   cabinets: LoadedCabinet[],
   legHeightMap: Map<string, number> = new Map(),
   assemblies: Assembly[] = [],
@@ -62,6 +62,7 @@ export function toQuoteInput(
   return {
     laborPct: project.laborPct,
     freeLines: JSON.parse(project.freeLinesJson),
+    loosePanels: JSON.parse(project.loosePanelsJson ?? '[]'),
     cabinets: cabinets.map((c) => ({
       id: c.id,
       assemblyId: c.assemblyId,

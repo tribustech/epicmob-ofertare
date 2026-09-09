@@ -16,6 +16,7 @@ export interface BoardMaterial {
   sheetLengthMm: number;
   sheetWidthMm: number;
   pricing: PricingMode;
+  hasGrain?: boolean; // decor cu direcție de fibră → piesele NU se rotesc la debitare
 }
 
 export interface EdgeBand {
@@ -87,8 +88,9 @@ export interface HandleConfig {
 export type DrawerSystem = 'PAL_BOX' | 'TANDEMBOX';
 
 export interface DrawerOptions {
-  count: number;
-  frontHeightsMm?: number[];       // dacă lipsește: împărțire egală
+  count: number;                   // număr de rânduri de sertare (pe verticală)
+  columns?: number;                // număr de coloane (sertare una lângă alta); implicit 1
+  frontHeightsMm?: number[];       // dacă lipsește: împărțire egală (per rând)
   system: DrawerSystem;
   bottomMaterialId?: string;       // fund sertar (doar PAL_BOX; TANDEMBOX e complet)
 }
@@ -106,11 +108,22 @@ export interface CabinetInput {
   shelves: number;
   /** materialul polițelor (lipsă = materialul carcasei) și axa decorului
    *  ('LR' stânga–dreapta = istoric; 'FB' față–spate = piesa rotită la debitare);
-   *  decorAxis e prezent doar când direcția decorului contează */
-  shelf?: { materialId?: string; decorAxis?: 'LR' | 'FB' };
+   *  decorAxis e prezent doar când direcția decorului contează.
+   *  roundedCorner: polițele au colțul frontal (stânga/dreapta) rotunjit — se taie pe rotund
+   *  (debitare CNC, cost în plus) și cer cant flexibil pe față. Raza = roundedRadiusMm sau,
+   *  lipsă, adâncimea poliței (sfert de cerc). */
+  shelf?: {
+    materialId?: string; decorAxis?: 'LR' | 'FB';
+    roundedCorner?: 'LEFT' | 'RIGHT'; roundedRadiusMm?: number;
+  };
   doors: number;                   // 0 = fără uși; exclusiv cu drawers
   drawers?: DrawerOptions;         // sertare pe orice tip de corp; exclusiv cu doors
   carcassMaterialId: string;
+  mdfCarcass?: {                   // carcasă MDF vopsit — cotată per m² ca fronturile
+    supplierId: string; modelId: string;
+    finish: 'MAT' | 'LUCIOS'; faces: number;
+    ralCode: string; colorCategory: 'NORMALA' | 'VIE' | 'METALIZAT';
+  };
   frontKind?: 'PAL' | 'MDF_MELAMINAT' | 'MDF_INFOLIAT' | 'MDF_VOPSIT' | 'STICLA_RAMA'; // lipsă = PAL (comportament istoric)
   frontMaterialId: string | null;  // null = corp fără fronturi
   mdfFront?: {                      // doar frontKind === 'MDF_VOPSIT'
@@ -142,8 +155,10 @@ export interface CabinetInput {
   };
   handle?: HandleConfig;        // rezolvat (excepția corpului sau moștenirea proiectului); lipsă = APLICAT + produs implicit
   /** doar type === 'BLAT': materialul de blat + nr. manual de plăci (când adâncimea > lățimea plăcii).
-   *  Un blat nu folosește câmpurile de carcasă/fronturi/feronerie — widthMm = lungime, depthMm = adâncime. */
-  blat?: { materialId: string; manualPieces?: number };
+   *  Un blat nu folosește câmpurile de carcasă/fronturi/feronerie — widthMm = lungime, depthMm = adâncime.
+   *  cantMode: cantuirea muchiilor vizibile (ABS 2mm, automat) — FRONT = doar muchia frontală (blat la perete);
+   *  FRONT_SIDES = frontal + cele două capete (insulă/peninsulă); NONE = fără cant. Lipsă = FRONT. */
+  blat?: { materialId: string; manualPieces?: number; cantMode?: 'NONE' | 'FRONT' | 'FRONT_SIDES' };
   /** configurarea pieselor (configurator 3D): slot capac, override-uri per bucată, piese libere */
   pieces?: PiecesConfig;
 }
@@ -204,6 +219,14 @@ export interface PiecePlacement {
   w: number; h: number; d: number;
 }
 
+/** Colț frontal rotunjit al unei piese (poliță). Piesa se taie dintr-un blank dreptunghiular
+ *  (lengthMm × widthMm — materialul/nesting-ul nu se schimbă), dar are un colț frontal tăiat pe
+ *  arc de rază radiusMm. `corner` = colțul frontal pe latura lungă (stânga/dreapta). */
+export interface RoundedCornerShape {
+  corner: 'LEFT' | 'RIGHT';
+  radiusMm: number;
+}
+
 export interface PieceInstance {
   key: PieceKey;
   cabinetLabel: string;
@@ -217,6 +240,7 @@ export interface PieceInstance {
   manual?: { lengthMm?: boolean; widthMm?: boolean; material?: boolean; edges?: EdgeSide[] };
   calc?: { length?: DimCalc; width?: DimCalc };
   placement?: PiecePlacement; // lipsă la piese libere și BLAT — nu se randează în 3D
+  shape?: RoundedCornerShape; // colț frontal rotunjit (poliță) — debitare pe rotund + 3D
   free?: boolean;
 }
 
@@ -336,4 +360,7 @@ export interface CuttingRate {
 export interface FreeLine {
   name: string;
   amount: number;
+  /** dacă e true, suma intră în baza pe care se aplică adaosul de manoperă (se comisionează);
+   *  altfel se adaugă doar ca extra, fără adaos. */
+  inCommission?: boolean;
 }

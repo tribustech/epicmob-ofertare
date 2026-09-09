@@ -1,5 +1,6 @@
 'use server';
 
+import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { DEFAULT_CONSTRUCTION } from '@/lib/engine';
@@ -18,6 +19,7 @@ function materialData(fd: FormData) {
     pricePerSheet: d.pricingMode === 'PER_SHEET' ? (d.pricePerSheet ?? null) : null,
     pricePerSqm: d.pricingMode === 'PER_SQM' ? (d.pricePerSqm ?? null) : null,
     hasGrain: d.hasGrain,
+    category: fd.get('isBlat') === 'on' ? 'BLAT' : 'PLACA',
   };
 }
 
@@ -31,6 +33,18 @@ export const updateMaterial = formAction(async (id: string, fd: FormData) => {
 });
 export const deactivateMaterial = formAction(async (id: string) => {
   await prisma.material.update({ where: { id }, data: { active: false } });
+  revalidatePath('/cataloage/materiale');
+});
+
+// editare rapidă doar a prețului (din galeria de materiale, la click pe card)
+export const updateMaterialPrice = formAction(async (id: string, fd: FormData) => {
+  const { price } = z.object({ price: z.coerce.number().positive('Prețul trebuie să fie mai mare ca 0') })
+    .parse(formDataToObject(fd));
+  const m = await prisma.material.findUniqueOrThrow({ where: { id }, select: { pricingMode: true } });
+  await prisma.material.update({
+    where: { id },
+    data: m.pricingMode === 'PER_SQM' ? { pricePerSqm: price } : { pricePerSheet: price },
+  });
   revalidatePath('/cataloage/materiale');
 });
 
@@ -166,6 +180,9 @@ export const updateSettings = formAction(async (fd: FormData) => {
       eurToRon: d.eurToRon,
       profilJPerFront: d.profilJPerFront, golaPricePerMl: d.golaPricePerMl,
       blatCutPricePerPiece: d.blatCutPricePerPiece,
+      roundedCutPricePerPiece: d.roundedCutPricePerPiece,
+      roundedEdgePricePerPiece: d.roundedEdgePricePerPiece,
+      blatEdgeBandId: d.blatEdgeBandId ?? null,
       defaultHingeId: d.defaultHingeId ?? null, defaultHandleId: d.defaultHandleId ?? null,
       defaultLegId: d.defaultLegId ?? null, defaultRailId: d.defaultRailId ?? null,
       defaultShelfSupportId: d.defaultShelfSupportId ?? null,

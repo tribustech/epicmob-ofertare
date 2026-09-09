@@ -12,9 +12,10 @@ describe('expandCarcass', () => {
     const byName = (n: string) => parts.find((p) => p.name === n)!;
 
     // spate PFL 3mm → adâncimea lateralelor/blatului scade cu PFL 3 + șurub 2: 560 → 555
+    // laterala are cant pe 3 laturi: față (l1) + sus (w1) + jos (w2); spatele fără cant
     expect(byName('Laterală')).toMatchObject({
       lengthMm: 720, widthMm: 555, qty: 2, materialId: 'pal-alb',
-      edges: { l1: 'abs-04' },
+      edges: { l1: 'abs-04', w1: 'abs-04', w2: 'abs-04' },
     });
     // fără grupul „Blat corp / Fund corp" — sunt bucăți individuale, deci rânduri qty 1
     expect(byName('Blat corp')).toMatchObject({
@@ -32,6 +33,38 @@ describe('expandCarcass', () => {
       lengthMm: 716, widthMm: 596, qty: 1, materialId: 'pfl-alb', edges: {},
     });
     expect(warnings).toEqual([]);
+  });
+
+  it('despărțitor între uși: 2 uși → 1 montant vertical + polițe per compartiment', () => {
+    const { pieces } = expandCarcass(bazaInput({ doors: 2, shelves: 1 }), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const desp = pieces.filter((p) => p.name === 'Despărțitor');
+    expect(desp).toHaveLength(1);
+    expect(desp[0].placement).toBeDefined();            // are poziție 3D
+    expect(desp[0].widthMm).toBe(555);                  // adâncimea panoului (ca laterala)
+    const polite = pieces.filter((p) => p.name === 'Poliță');
+    expect(polite).toHaveLength(2);                     // câte o poliță per compartiment
+    expect(polite[0].lengthMm).toBe(273);              // (564 − 18) / 2
+    expect(polite.every((p) => p.placement)).toBe(true);
+  });
+
+  it('3 uși → 2 despărțitoare; 1 ușă → niciunul', () => {
+    const three = expandCarcass(bazaInput({ doors: 3, shelves: 0 }), TEST_CATALOGS, DEFAULT_CONSTRUCTION).pieces;
+    expect(three.filter((p) => p.name === 'Despărțitor')).toHaveLength(2);
+    const one = expandCarcass(bazaInput({ doors: 1 }), TEST_CATALOGS, DEFAULT_CONSTRUCTION).pieces;
+    expect(one.some((p) => p.name === 'Despărțitor')).toBe(false);
+  });
+
+  it('polițe rotunjite pe colț: piesele primesc forma cu rază = adâncimea poliței', () => {
+    const input = bazaInput({ shelf: { roundedCorner: 'RIGHT' } });
+    const { pieces } = expandCarcass(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    const shelf = pieces.find((p) => p.key === 'polita:0')!;
+    // rază = adâncimea poliței (D − retragere = 530), limitată la interior/adâncime
+    expect(shelf.shape).toEqual({ corner: 'RIGHT', radiusMm: 530 });
+  });
+
+  it('fără opțiune de colț rotunjit, polițele nu au formă', () => {
+    const { pieces } = expandCarcass(bazaInput(), TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    expect(pieces.find((p) => p.key === 'polita:0')!.shape).toBeUndefined();
   });
 
   it('spate aplicat = dimensiunea corpului', () => {

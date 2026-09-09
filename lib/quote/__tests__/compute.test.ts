@@ -22,8 +22,8 @@ describe('computeQuote — corpul de referință (aceleași cifre ca motorul)', 
   const r = computeQuote(baseQuote(), makeSnapshot());
 
   it('totaluri identice cu calculul de mână', () => {
-    expect(r.costs.totalCost).toBeCloseTo(687.35, 1);
-    expect(r.costs.sellPrice).toBeCloseTo(893.55, 1);
+    expect(r.costs.totalCost).toBeCloseTo(689.57, 1);
+    expect(r.costs.sellPrice).toBeCloseTo(896.44, 1);
   });
 
   it('feronerie auto: 2 balamale, 1 mâner, 4 picioare, holtșurub; cutList per material', () => {
@@ -52,6 +52,44 @@ describe('computeQuote — override-uri și piese suplimentare', () => {
       name: 'Plintă ansamblu', lengthMm: 600, widthMm: 100, materialId: 'pal-alb',
     }));
     expect(r.cutList.find((file) => file.materialId === 'pal-alb')?.csv).toContain('Plintă ansamblu');
+  });
+
+  it('plăcile libere de proiect intră ca piese și în debitare', () => {
+    const q = baseQuote({
+      loosePanels: [{ name: 'Panou hol', materialId: 'pal-alb', lengthMm: 1000, widthMm: 300, qty: 2 }],
+    });
+    const r = computeQuote(q, makeSnapshot());
+    expect(r.parts).toContainEqual(expect.objectContaining({
+      name: 'Panou hol', lengthMm: 1000, widthMm: 300, qty: 2, materialId: 'pal-alb',
+    }));
+    expect(r.cutList.find((file) => file.materialId === 'pal-alb')?.csv).toContain('Panou hol');
+  });
+
+  it('blaturile din același material se așază împreună pe plăci partajate (nu una fiecare)', () => {
+    const blat = (label: string): QuoteInput['cabinets'][number] => ({
+      input: {
+        label, type: 'BLAT', widthMm: 1000, heightMm: 38, depthMm: 300,
+        shelves: 0, doors: 0, carcassMaterialId: '', frontMaterialId: null,
+        back: { enabled: false, mount: 'FALT' },
+        edgeBands: { carcassFrontEdgeId: '', frontPerimeterId: null },
+        blat: { materialId: 'pal-alb', cantMode: 'NONE' },
+      },
+      hardwareAdjustments: null, extraParts: [],
+    });
+    const q = baseQuote({ cabinets: [blat('B1'), blat('B2'), blat('B3')] });
+    const r = computeQuote(q, makeSnapshot());
+    const need = r.costs.needs.boards.find((b) => b.materialId === 'pal-alb');
+    expect(need?.sheets).toBe(1); // 3 blaturi mici încap pe o singură placă, nu 3
+  });
+
+  it('placa liberă cu cant jur-împrejur pune banda pe toate 4 laturile', () => {
+    const q = baseQuote({
+      loosePanels: [{ name: 'Panou cant', materialId: 'pal-alb', lengthMm: 1000, widthMm: 300, qty: 1, edgeBandId: 'abs-04', edgeMode: 'ALL' }],
+    });
+    const r = computeQuote(q, makeSnapshot());
+    expect(r.parts).toContainEqual(expect.objectContaining({
+      name: 'Panou cant', edges: { l1: 'abs-04', l2: 'abs-04', w1: 'abs-04', w2: 'abs-04' },
+    }));
   });
 
   it('cotează sticla cu ramă la m² și o separă de debitarea PAL', () => {
@@ -112,7 +150,7 @@ describe('computeQuote — override-uri și piese suplimentare', () => {
     q.cabinets[0].hardwareAdjustments = zeroAllSlots([{ hardwareId: 'maner-std', qty: 10 }]);
     const r = computeQuote(q, makeSnapshot());
     expect(r.costs.breakdown.hardware).toBeCloseTo(100, 5);   // 10 × 10, nu 48
-    expect(r.costs.totalCost).toBeCloseTo(739.35, 1);          // 687.35 − 48 + 100
+    expect(r.costs.totalCost).toBeCloseTo(741.57, 1);          // 689.57 − 48 + 100
     expect(r.unresolvedHardware).toEqual([]);                  // sugestiile corpului nu mai contează
   });
 
@@ -122,7 +160,7 @@ describe('computeQuote — override-uri și piese suplimentare', () => {
     const r = computeQuote(q, makeSnapshot());
     // Laterală, Blat corp, Fund corp, Poliță, Spate, Ușă + Mască soclu
     expect(r.parts).toHaveLength(7);
-    expect(r.costs.totalCost).toBeCloseTo(687.35, 1);          // tot 1 foaie PAL
+    expect(r.costs.totalCost).toBeCloseTo(689.57, 1);          // tot 1 foaie PAL
   });
 
   it('feronerie dezactivată dar referențiată de override → tot se calculează (nu aruncă)', () => {

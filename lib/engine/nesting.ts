@@ -18,22 +18,30 @@ export function nestParts(
   sheetLengthMm: number,
   sheetWidthMm: number,
   params: NestParams,
+  allowRotate = false,
 ): NestResult {
   const usableL = sheetLengthMm - 2 * params.trimMm;
   const usableW = sheetWidthMm - 2 * params.trimMm;
 
-  for (const p of pieces) {
+  // materiale fără direcție de fibră (PFL, UNI etc.): piesa poate fi rotită → orientăm
+  // latura lungă pe lungimea plăcii, ca să încapă și piesele late-dar-scurte (ex. spate corp lat)
+  const oriented = allowRotate
+    ? pieces.map((p) => (p.lengthMm >= p.widthMm ? p : { ...p, lengthMm: p.widthMm, widthMm: p.lengthMm }))
+    : pieces;
+
+  for (const p of oriented) {
     if (p.lengthMm > usableL || p.widthMm > usableW) {
       throw new Error(
         `Piesa „${p.label}" (${p.lengthMm}×${p.widthMm} mm) nu încape pe placa de ` +
-        `${sheetLengthMm}×${sheetWidthMm} mm (arie utilă ${usableL}×${usableW} mm, fără rotație)`,
+        `${sheetLengthMm}×${sheetWidthMm} mm (arie utilă ${usableL}×${usableW} mm` +
+        `${allowRotate ? '' : ', fără rotație'})`,
       );
     }
   }
 
   // comparare directă pe string, nu localeCompare — ordinea trebuie să fie
   // independentă de locale-ul runtime-ului (rulează și în browser).
-  const sorted = [...pieces].sort((a, b) =>
+  const sorted = [...oriented].sort((a, b) =>
     b.widthMm - a.widthMm || b.lengthMm - a.lengthMm ||
     (a.label < b.label ? -1 : a.label > b.label ? 1 : 0));
 

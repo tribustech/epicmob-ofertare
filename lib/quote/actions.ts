@@ -42,6 +42,17 @@ const projectSettingsSchema = z.object({
 const freeLineSchema = z.object({
   name: z.string().trim().min(1, 'Denumirea liniei lipsește'),
   amount: z.coerce.number().finite(),
+  inCommission: z.preprocess((v) => v === 'on' || v === 'true' || v === true, z.boolean()),
+});
+
+const loosePanelSchema = z.object({
+  name: z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().trim().optional()),
+  materialId: z.string().min(1, 'Alege materialul plăcii'),
+  lengthMm: z.coerce.number().positive('Lungimea trebuie să fie > 0'),
+  widthMm: z.coerce.number().positive('Lățimea trebuie să fie > 0'),
+  qty: z.coerce.number().int().positive().default(1),
+  edgeBandId: optStr,
+  edgeMode: z.enum(['NONE', 'L1', 'L2', 'ALL']).default('NONE'),
 });
 
 const optFreeText = z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().trim().optional());
@@ -143,6 +154,7 @@ export const updateProjectDetails = formAction(async (id: string, fd: FormData) 
       name: d.name,
       clientName: d.clientName ?? null,
       clientContact: d.clientContact ?? null,
+      observatii: d.observatii ?? null,
     },
   });
   revalidatePath('/proiecte');
@@ -186,6 +198,7 @@ export const duplicateProject = formAction(async (id: string) => {
         laborPct: project.laborPct,
         yieldFactor: project.yieldFactor,
         freeLinesJson: project.freeLinesJson,
+        loosePanelsJson: project.loosePanelsJson,
         snapshotJson: project.snapshotJson,
         handleType: project.handleType,
         handleItemId: project.handleItemId,
@@ -230,7 +243,7 @@ export const duplicateProject = formAction(async (id: string) => {
 export const addFreeLine = formAction(async (projectId: string, fd: FormData) => {
   const d = freeLineSchema.parse(formDataToObject(fd));
   const project = await prisma.project.findUniqueOrThrow({ where: { id: projectId } });
-  const lines = JSON.parse(project.freeLinesJson) as { name: string; amount: number }[];
+  const lines = JSON.parse(project.freeLinesJson) as { name: string; amount: number; inCommission?: boolean }[];
   lines.push(d);
   await prisma.project.update({ where: { id: projectId }, data: { freeLinesJson: JSON.stringify(lines) } });
   revalidatePath(`/proiecte/${projectId}`);
@@ -241,6 +254,23 @@ export const removeFreeLine = formAction(async (projectId: string, index: number
   const lines = JSON.parse(project.freeLinesJson) as { name: string; amount: number }[];
   lines.splice(index, 1);
   await prisma.project.update({ where: { id: projectId }, data: { freeLinesJson: JSON.stringify(lines) } });
+  revalidatePath(`/proiecte/${projectId}`);
+});
+
+export const addLoosePanel = formAction(async (projectId: string, fd: FormData) => {
+  const d = loosePanelSchema.parse(formDataToObject(fd));
+  const project = await prisma.project.findUniqueOrThrow({ where: { id: projectId } });
+  const panels = JSON.parse(project.loosePanelsJson ?? "[]") as unknown[];
+  panels.push(d);
+  await prisma.project.update({ where: { id: projectId }, data: { loosePanelsJson: JSON.stringify(panels) } });
+  revalidatePath(`/proiecte/${projectId}`);
+});
+
+export const removeLoosePanel = formAction(async (projectId: string, index: number) => {
+  const project = await prisma.project.findUniqueOrThrow({ where: { id: projectId } });
+  const panels = JSON.parse(project.loosePanelsJson ?? "[]") as unknown[];
+  panels.splice(index, 1);
+  await prisma.project.update({ where: { id: projectId }, data: { loosePanelsJson: JSON.stringify(panels) } });
   revalidatePath(`/proiecte/${projectId}`);
 });
 
@@ -262,11 +292,51 @@ export const updateAssembly = formAction(async (assemblyId: string, fd: FormData
   revalidatePath(`/proiecte/${a.projectId}`);
 });
 
+// șterge ansamblul ȘI corpurile din el (confirmarea se face în UI, cu numărul de corpuri)
 export const deleteAssembly = formAction(async (assemblyId: string) => {
-  const count = await prisma.cabinet.count({ where: { assemblyId } });
-  if (count > 0) throw new Error('Ansamblul are corpuri — mută-le sau șterge-le întâi.');
-  const a = await prisma.assembly.delete({ where: { id: assemblyId } });
+  const a = await prisma.assembly.findUniqueOrThrow({ where: { id: assemblyId }, select: { projectId: true } });
+  await prisma.$transaction([
+    prisma.cabinet.deleteMany({ where: { assemblyId } }),
+    prisma.assembly.delete({ where: { id: assemblyId } }),
+  ]);
   revalidatePath(`/proiecte/${a.projectId}`);
+});
+
+// copiază un ansamblu (cu toate corpurile + pozițiile 3D) într-un alt proiect
+export const copyAssemblyToProject = formAction(async (assemblyId: string, fd: FormData) => {
+  const { targetProjectId } = z.object({ targetProjectId: z.string().min(1, 'Alege proiectul țintă') })
+    .parse(formDataToObject(fd));
+  const source = await prisma.assembly.findUniqueOrThrow({
+    where: { id: assemblyId }, include: { cabinets: { orderBy: { sortOrder: 'asc' } } },
+  });
+  if (source.projectId === targetProjectId) throw new Error('Alege un alt proiect decât cel curent');
+  await prisma.project.findUniqueOrThrow({ where: { id: targetProjectId } });
+  const existing = await prisma.assembly.count({ where: { projectId: targetProjectId } });
+
+  await prisma.$transaction(async (tx) => {
+    const copy = await tx.assembly.create({
+      data: {
+        projectId: targetProjectId, sortOrder: existing,
+        name: source.name, legHeightMm: source.legHeightMm, plinthMode: source.plinthMode,
+        kind: source.kind, baseHeightMm: source.baseHeightMm, blatMaterialId: source.blatMaterialId,
+        blatDepthMm: source.blatDepthMm, upperHeightMm: source.upperHeightMm,
+        roomWidthMm: source.roomWidthMm, roomDepthMm: source.roomDepthMm, roomHeightMm: source.roomHeightMm,
+        fixedElementsJson: source.fixedElementsJson, roomWallsJson: source.roomWallsJson,
+      },
+    });
+    for (const c of source.cabinets) {
+      await tx.cabinet.create({
+        data: {
+          projectId: targetProjectId, assemblyId: copy.id, sortOrder: c.sortOrder,
+          inputJson: c.inputJson, hardwareJson: c.hardwareJson, extraPartsJson: c.extraPartsJson,
+          plinthEnabled: c.plinthEnabled,
+          posXMm: c.posXMm, posZMm: c.posZMm, posYMm: c.posYMm, rotDeg: c.rotDeg,
+        },
+      });
+    }
+  });
+  revalidatePath(`/proiecte/${targetProjectId}`);
+  revalidatePath(`/proiecte/${source.projectId}`);
 });
 
 const layoutSchema = z.object({

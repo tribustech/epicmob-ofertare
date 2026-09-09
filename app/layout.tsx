@@ -11,6 +11,7 @@ export const metadata = { title: 'EpicMob Ofertare' };
 
 const NAV = [
   { href: '/proiecte', label: 'Proiecte' },
+  { href: '/schita', label: 'Schiță → Ofertă' },
   { href: '/cataloage/materiale', label: 'Materiale' },
   { href: '/cataloage/canturi', label: 'Canturi' },
   { href: '/cataloage/feronerie', label: 'Feronerie' },

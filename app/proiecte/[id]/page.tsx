@@ -8,8 +8,8 @@ import { getQuoteBasis } from '@/lib/quote/basis';
 import { HANDLE_TYPE_OPTIONS } from '@/lib/quote/handle';
 import { prisma } from '@/lib/db';
 import {
-  addAssembly, addCabinet, addFreeLine, deleteAssembly, deleteCabinet, deleteProject,
-  duplicateCabinet, refreshFrozenPrices, removeFreeLine, updateAssembly, updateProjectDetails, updateProjectSettings,
+  addAssembly, addCabinet, addFreeLine, addLoosePanel, copyAssemblyToProject, deleteAssembly, deleteCabinet, deleteProject,
+  duplicateCabinet, refreshFrozenPrices, removeFreeLine, removeLoosePanel, updateAssembly, updateProjectDetails, updateProjectSettings,
 } from '@/lib/quote/actions';
 import { ASSEMBLY_LEG_HEIGHT_PRESETS, ASSEMBLY_NAME_PRESETS } from '@/lib/quote/assembly-presets';
 import { isCabinetInputComplete } from '@/lib/quote/cabinet-form';
@@ -45,6 +45,13 @@ const CATEGORY_LABELS: [key: string, label: string][] = [
   ['boards', 'Plăci'], ['edging', 'Cant ABS'], ['cuttingService', 'Debitare'],
   ['hardware', 'Feronerie'], ['labor', 'Manoperă'], ['freeLines', 'Linii libere'],
 ];
+const EDGE_MODE_OPTIONS = [
+  { value: 'NONE', label: 'Fără cant' },
+  { value: 'L1', label: '1 latură lungă' },
+  { value: 'L2', label: '2 laturi lungi' },
+  { value: 'ALL', label: 'Jur-împrejur (4 laturi)' },
+];
+const EDGE_MODE_LABEL: Record<string, string> = { L1: '1 latură', L2: '2 laturi lungi', ALL: 'jur-împrejur' };
 const NAME_PRESET_OPTIONS = ASSEMBLY_NAME_PRESETS.map((v) => ({ value: v, label: v }));
 const LEG_HEIGHT_PRESET_OPTIONS = ASSEMBLY_LEG_HEIGHT_PRESETS.map((v) => ({ value: v, label: `${v} mm` }));
 const PLINTH_MODE_OPTIONS = [
@@ -82,8 +89,9 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
   if (!data) notFound();
   const { project, assemblies, cabinets } = data;
   const legHeightMap = legHeightByCabinet(assemblies, cabinets);
-  const freeLines = JSON.parse(project.freeLinesJson) as { name: string; amount: number }[];
-  const [handleProducts, blatMaterials, bulkMaterials, frontSuppliers, frontModels] = await Promise.all([
+  const freeLines = JSON.parse(project.freeLinesJson) as { name: string; amount: number; inCommission?: boolean }[];
+  const loosePanels = JSON.parse(project.loosePanelsJson ?? '[]') as { name?: string; materialId: string; lengthMm: number; widthMm: number; qty: number; edgeBandId?: string; edgeMode?: 'NONE' | 'L1' | 'L2' | 'ALL' }[];
+  const [handleProducts, blatMaterials, bulkMaterials, frontSuppliers, frontModels, edgeBands, otherProjects] = await Promise.all([
     prisma.hardwareItem.findMany({
       where: { active: true, category: { in: ['MANER', 'ACCESORIU'] } },
       orderBy: { name: 'asc' },
@@ -103,6 +111,8 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
       where: { active: true, supplier: { active: true, productType: 'VOPSIT' } },
       orderBy: [{ tier: 'asc' }, { code: 'asc' }],
     }),
+    prisma.edgeBand.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
+    prisma.project.findMany({ where: { id: { not: id } }, select: { id: true, name: true }, orderBy: { updatedAt: 'desc' } }),
   ]);
   const blatMaterialItems = blatMaterials.map((m) => ({
     id: m.id, name: m.name, kind: m.kind, thicknessMm: m.thicknessMm, brand: m.brand,
@@ -117,6 +127,7 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
   const bulkFrontSuppliers: BulkFrontSupplier[] = frontSuppliers.map((supplier) => ({
     id: supplier.id, name: supplier.name,
   }));
+  const bulkEdgeBands = edgeBands.map((b) => ({ id: b.id, name: b.name, thicknessMm: b.thicknessMm }));
   const bulkFrontModels: BulkFrontModel[] = frontModels.map((model) => ({
     id: model.id, supplierId: model.supplierId, code: model.code, name: model.name, tier: model.tier,
     collection: model.collection, shapeFamily: model.shapeFamily, imageUrl: model.imageUrl,
@@ -177,6 +188,8 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                 bulkFrontSuppliers={bulkFrontSuppliers}
                 bulkFrontModels={bulkFrontModels}
                 ralColors={ralColors}
+                otherProjects={otherProjects}
+                edgeBands={bulkEdgeBands}
               />
             ))}
             {assemblies.length === 0 && (
@@ -222,7 +235,14 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                 <ul className="space-y-1 text-sm">
                   {freeLines.map((l, i) => (
                     <li key={i} className="flex items-center gap-3">
-                      <span className="grow">{l.name} — {fmtLei(l.amount)}</span>
+                      <span className="grow">
+                        {l.name} — {fmtLei(l.amount)}
+                        {l.inCommission && (
+                          <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                            în comision
+                          </span>
+                        )}
+                      </span>
                       <DeleteButton action={removeFreeLine.bind(null, project.id, i)} label="Șterge" />
                     </li>
                   ))}
@@ -231,8 +251,48 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                 <ActionForm action={addFreeLine.bind(null, project.id)} className="grid grid-cols-2 items-end gap-2 md:grid-cols-4">
                   <TextInput name="name" label="Denumire" />
                   <NumberInput name="amount" label="Suma (lei)" />
+                  <label className="flex items-center gap-2 pb-2 text-sm">
+                    <input type="checkbox" name="inCommission" className="h-4 w-4 rounded border-input" />
+                    <span>În comision (adaos)</span>
+                  </label>
                   <div><SubmitButton>Adaugă</SubmitButton></div>
                 </ActionForm>
+              </CardContent>
+            </Card>
+          </section>
+
+          <section>
+            <Card>
+              <CardHeader><CardTitle>Plăci libere (PAL/MDF)</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <ul className="space-y-1 text-sm">
+                  {loosePanels.map((pnl, i) => {
+                    const mat = bulkMaterialItems.find((m) => m.id === pnl.materialId);
+                    const bandName = pnl.edgeBandId ? edgeBands.find((b) => b.id === pnl.edgeBandId)?.name : null;
+                    const cant = bandName && pnl.edgeMode && pnl.edgeMode !== 'NONE'
+                      ? ` · cant ${bandName} (${EDGE_MODE_LABEL[pnl.edgeMode]})` : '';
+                    return (
+                      <li key={i} className="flex items-center gap-3">
+                        <span className="grow">
+                          {pnl.name ? `${pnl.name} · ` : ''}{mat?.name ?? pnl.materialId} — {pnl.lengthMm}×{pnl.widthMm} mm × {pnl.qty} buc{cant}
+                        </span>
+                        <DeleteButton action={removeLoosePanel.bind(null, project.id, i)} label="Șterge" />
+                      </li>
+                    );
+                  })}
+                  {loosePanels.length === 0 && <li className="text-muted-foreground">Nicio placă liberă.</li>}
+                </ul>
+                <ActionForm action={addLoosePanel.bind(null, project.id)} className="grid grid-cols-2 items-end gap-2 md:grid-cols-6">
+                  <div className="col-span-2"><Select name="materialId" label="Material" options={bulkMaterialItems.map((m) => ({ value: m.id, label: m.name }))} /></div>
+                  <NumberInput name="lengthMm" label="Lungime (mm)" step="1" />
+                  <NumberInput name="widthMm" label="Lățime (mm)" step="1" />
+                  <NumberInput name="qty" label="Buc" step="1" defaultValue={1} />
+                  <TextInput name="name" label="Denumire (opțional)" required={false} />
+                  <div className="col-span-2"><Select name="edgeBandId" label="Cant (ABS)" options={edgeBands.map((b) => ({ value: b.id, label: b.name }))} allowEmpty /></div>
+                  <div className="col-span-2"><Select name="edgeMode" label="Laturi cant" options={EDGE_MODE_OPTIONS} defaultValue="NONE" /></div>
+                  <div className="col-span-2 md:col-span-6"><SubmitButton>Adaugă placă</SubmitButton></div>
+                </ActionForm>
+                <p className="text-xs text-muted-foreground">Plăcile libere intră în ofertă la „Plăci" — cotate din catalog și așezate pe plăci împreună cu piesele corpurilor. Cantul intră la „Cant ABS".</p>
               </CardContent>
             </Card>
           </section>
@@ -246,6 +306,12 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
                 <TextInput name="name" label="Numele proiectului" defaultValue={project.name} />
                 <TextInput name="clientName" label="Client" defaultValue={project.clientName ?? ''} required={false} />
                 <TextInput name="clientContact" label="Contact (telefon/email)" defaultValue={project.clientContact ?? ''} required={false} />
+                <div className="grid gap-1">
+                  <label htmlFor="observatii" className="text-[11px] font-semibold uppercase tracking-[0.04em] text-muted-foreground">Observații (apar în ofertă)</label>
+                  <textarea id="observatii" name="observatii" rows={4} defaultValue={project.observatii ?? ''}
+                    placeholder="Note pentru client: termene speciale, ce nu e inclus, condiții de plată suplimentare, etc."
+                    className="w-full rounded-lg border border-input bg-transparent p-2.5 text-sm outline-none focus-visible:border-ring" />
+                </div>
                 <div><SubmitButton>Salvează detaliile</SubmitButton></div>
               </ActionForm>
             </CardContent>
@@ -424,7 +490,7 @@ const ASSEMBLY_KIND_LABELS: Record<string, string> = {
 
 function AssemblyCard({
   projectId, assembly, cabinets, issues, blatMaterials,
-  bulkMaterials, bulkFrontSuppliers, bulkFrontModels, ralColors,
+  bulkMaterials, bulkFrontSuppliers, bulkFrontModels, ralColors, otherProjects, edgeBands,
 }: {
   projectId: string; assembly: Assembly; cabinets: LoadedCabinet[]; issues: Map<string, CabinetIssue>;
   blatMaterials: MaterialPickerItem[];
@@ -432,6 +498,8 @@ function AssemblyCard({
   bulkFrontSuppliers: BulkFrontSupplier[];
   bulkFrontModels: BulkFrontModel[];
   ralColors: { code: string; num: string; name_en: string; hex: string; vivid: boolean; black: boolean }[];
+  otherProjects: { id: string; name: string }[];
+  edgeBands: { id: string; name: string; thicknessMm: number }[];
 }) {
   const kindLabel = ASSEMBLY_KIND_LABELS[assembly.kind] ?? '';
   const blatSummary = assembly.kind !== 'FARA_BLAT' && assembly.baseHeightMm != null && assembly.blatDepthMm != null
@@ -466,7 +534,15 @@ function AssemblyCard({
           </Link>
         </Button>
       )}
-      deleteSlot={<DeleteButton action={deleteAssembly.bind(null, assembly.id)} label="Șterge ansamblul" />}
+      deleteSlot={(
+        <DeleteButton
+          action={deleteAssembly.bind(null, assembly.id)}
+          label="Șterge ansamblul"
+          confirmMessage={cabinets.length > 0
+            ? `Ștergi ansamblul „${assembly.name}" și cele ${cabinets.length} ${cabinets.length === 1 ? 'corp' : 'corpuri'} din el? Acțiunea nu poate fi anulată.`
+            : `Ștergi ansamblul „${assembly.name}"?`}
+        />
+      )}
       editForm={editForm}
     >
       <BulkCabinetEditor
@@ -476,6 +552,7 @@ function AssemblyCard({
         suppliers={bulkFrontSuppliers}
         models={bulkFrontModels}
         ralColors={ralColors}
+        edgeBands={edgeBands}
       >
         <CabinetsTable projectId={projectId} cabinets={cabinets} issues={issues} bulkSelectable />
       </BulkCabinetEditor>
@@ -488,6 +565,16 @@ function AssemblyCard({
           <SubmitButton>Adaugă blat</SubmitButton>
         </ActionForm>
       </div>
+
+      {otherProjects.length > 0 && (
+        <ActionForm action={copyAssemblyToProject.bind(null, assembly.id)} className="flex flex-wrap items-end gap-2 border-t pt-3">
+          <Select
+            name="targetProjectId" label="Copiază ansamblul în proiectul"
+            options={otherProjects.map((p) => ({ value: p.id, label: p.name }))}
+          />
+          <SubmitButton>Copiază</SubmitButton>
+        </ActionForm>
+      )}
     </AssemblyCardShell>
   );
 }

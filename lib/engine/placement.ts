@@ -103,39 +103,48 @@ export function assignPlacements(
         };
         break;
       }
-      case /^front-sertar:\d+$/.test(pc.key): {
-        const i = Number(pc.key.split(':')[1]);
+      case /^front-sertar:\d+(:\d+)?$/.test(pc.key): {
+        const seg = pc.key.split(':');
+        const i = Number(seg[1]);
+        const c = seg.length > 2 ? Number(seg[2]) : 0; // index coloană
         const heights = drawerFrontHeights(input, cc, legDeduct);
         let topY = carcassH - g;
         for (let k = 0; k < i; k++) topY -= heights[k] + cc.frontGapMm;
         if (isGola) topY -= cc.golaFrontDeductMm; // profilul fiecărui sertar e deasupra frontului
         pc.placement = {
-          x: frontX0, y: topY - pc.lengthMm, z: D,
+          // pc.widthMm e deja lățimea pe coloană → offset orizontal per coloană
+          x: frontX0 + c * (pc.widthMm + cc.frontGapMm), y: topY - pc.lengthMm, z: D,
           w: pc.widthMm, h: pc.lengthMm, d: FRONT_THICKNESS_MM,
         };
         break;
       }
       case pc.key.startsWith('sertar:'): {
-        const i = Number(pc.key.split(':')[1]);
+        const seg = pc.key.split(':');
+        const i = Number(seg[1]);
+        const c = Number(seg[2]);   // cheile cutiilor includ mereu index-ul de coloană
+        const partName = seg[3];    // laterala | fata | spate | fund
         const heights = drawerFrontHeights(input, cc, legDeduct);
         let topY = carcassH - g;
         for (let k = 0; k < i; k++) topY -= heights[k] + cc.frontGapMm;
         const boxBottom = Math.max(0, topY - heights[i] + 20); // cutia stă pe glisieră, aproximativ
         const { nominalMm } = pickSlideNominal(D, cc);
-        const part = pc.key.split(':')[2];
-        if (part === 'laterala') {
-          const j = Number(pc.key.split(':')[3]);
-          const x = j === 0 ? t + cc.palBoxSlideAllowanceMm / 2 : W - t - cc.palBoxSlideAllowanceMm / 2 - th;
+        const cols = Math.max(1, input.drawers?.columns ?? 1);
+        const innerW = W - 2 * t;
+        const colRegion = (innerW - (cols - 1) * cc.frontGapMm) / cols;
+        const colX = t + c * (colRegion + cc.frontGapMm); // marginea stângă interioară a coloanei
+        if (partName === 'laterala') {
+          const j = Number(seg[4]);
+          const x = j === 0 ? colX + cc.palBoxSlideAllowanceMm / 2 : colX + colRegion - cc.palBoxSlideAllowanceMm / 2 - th;
           pc.placement = { x, y: boxBottom, z: D - nominalMm, w: th, h: pc.widthMm, d: pc.lengthMm };
-        } else if (part === 'fata' || part === 'spate') {
+        } else if (partName === 'fata' || partName === 'spate') {
           pc.placement = {
-            x: t + cc.palBoxSlideAllowanceMm / 2 + th, y: boxBottom,
-            z: part === 'fata' ? D - th : D - nominalMm,
+            x: colX + cc.palBoxSlideAllowanceMm / 2 + th, y: boxBottom,
+            z: partName === 'fata' ? D - th : D - nominalMm,
             w: pc.lengthMm, h: pc.widthMm, d: th,
           };
         } else { // fund
           pc.placement = {
-            x: t + cc.palBoxSlideAllowanceMm / 2, y: boxBottom, z: D - nominalMm,
+            x: colX + cc.palBoxSlideAllowanceMm / 2, y: boxBottom, z: D - nominalMm,
             w: pc.widthMm, h: th, d: pc.lengthMm,
           };
         }

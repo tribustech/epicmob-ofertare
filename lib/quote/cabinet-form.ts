@@ -24,8 +24,17 @@ export const cabinetFormSchema = z
     shelfMaterialId: optStr,
     shelfDecorMatters: checkbox,
     shelfDecorAxis: z.enum(['LR', 'FB']).default('LR'),
+    shelfRounded: checkbox,
+    shelfRoundedSide: z.enum(['LEFT', 'RIGHT']).default('RIGHT'),
     doors: intNonNeg,
     carcassMaterialId: z.string().min(1, 'Alege materialul carcasei'),
+    // carcasă MDF vopsit — aceeași configurație ca la fronturi
+    carcassMdfSupplierId: optStr,
+    carcassMdfModelId: optStr,
+    carcassMdfFinish: z.enum(['MAT', 'LUCIOS']).default('MAT'),
+    carcassMdfFaces: z.coerce.number().int().min(1).max(2).default(2),
+    carcassMdfRalCode: optStr,
+    carcassMdfColorCategory: z.enum(['NORMALA', 'VIE', 'METALIZAT']).default('NORMALA'),
     frontKind: z.enum(['PAL', 'MDF_MELAMINAT', 'MDF_INFOLIAT', 'MDF_VOPSIT', 'STICLA_RAMA']).default('PAL'),
     frontMaterialId: optStr,
     mdfSupplierId: optStr,
@@ -42,6 +51,7 @@ export const cabinetFormSchema = z
     falsStangaMm: z.preprocess(emptyToUndefined, posNum.optional()),
     falsDreaptaMm: z.preprocess(emptyToUndefined, posNum.optional()),
     drawersCount: intNonNeg.default(0),
+    drawersColumns: z.coerce.number().int().min(1).max(6).default(1),
     drawersSystem: z.enum(['PAL_BOX', 'TANDEMBOX']).default('TANDEMBOX'),
     drawersBottomMaterialId: optStr,
     drawerFrontHeightsMm: z.preprocess(emptyToUndefined, z.string().optional()),
@@ -114,10 +124,11 @@ export function toCabinetInput(d: CabinetFormData, pieces?: PiecesConfigForm): C
     subBlat: d.type === 'BAZA' && d.subBlat ? true : undefined,
     mount: { top: d.mountTop, bottom: d.mountBottom },
     shelves,
-    shelf: (shelves > 0 || hasHoneycomb) && (d.shelfMaterialId || d.shelfDecorMatters)
+    shelf: (shelves > 0 || hasHoneycomb) && (d.shelfMaterialId || d.shelfDecorMatters || d.shelfRounded)
       ? {
           materialId: d.shelfMaterialId,
           decorAxis: d.shelfDecorMatters ? d.shelfDecorAxis : undefined,
+          roundedCorner: d.shelfRounded ? d.shelfRoundedSide : undefined,
         }
       : undefined,
     doors: d.frontType === 'USI' ? d.doors : 0,
@@ -125,12 +136,23 @@ export function toCabinetInput(d: CabinetFormData, pieces?: PiecesConfigForm): C
       d.frontType === 'SERTARE'
         ? {
             count: d.drawersCount,
+            columns: d.drawersColumns > 1 ? d.drawersColumns : undefined,
             system: d.drawersSystem,
             bottomMaterialId: d.drawersSystem === 'PAL_BOX' ? d.drawersBottomMaterialId : undefined,
             frontHeightsMm: heights.length > 0 ? heights : undefined,
           }
         : undefined,
     carcassMaterialId: d.carcassMaterialId,
+    mdfCarcass: (d.carcassMdfSupplierId && d.carcassMdfModelId)
+      ? {
+          supplierId: d.carcassMdfSupplierId,
+          modelId: d.carcassMdfModelId,
+          finish: d.carcassMdfFinish,
+          faces: d.carcassMdfFaces,
+          ralCode: d.carcassMdfRalCode ?? '',
+          colorCategory: d.carcassMdfColorCategory,
+        }
+      : undefined,
     frontKind: d.frontKind,
     frontMaterialId: isMdfVopsit ? null : (d.frontType === 'FARA' ? null : (d.frontMaterialId ?? null)),
     mdfFront: isMdfVopsit
@@ -274,6 +296,7 @@ export const blatFormSchema = z.object({
   depthMm: posNum,
   blatMaterialId: z.string().min(1, 'Alege materialul blatului'),
   manualPieces: z.preprocess(emptyToUndefined, z.coerce.number().int().min(1).optional()),
+  blatCantMode: z.enum(['NONE', 'FRONT', 'FRONT_SIDES']).default('FRONT'),
 });
 export type BlatFormData = z.infer<typeof blatFormSchema>;
 
@@ -290,6 +313,6 @@ export function toBlatInput(d: BlatFormData, thicknessMm: number): CabinetInput 
     frontMaterialId: null,
     back: { enabled: false, mount: 'FALT' },
     edgeBands: { carcassFrontEdgeId: '', frontPerimeterId: null },
-    blat: { materialId: d.blatMaterialId, manualPieces: d.manualPieces },
+    blat: { materialId: d.blatMaterialId, manualPieces: d.manualPieces, cantMode: d.blatCantMode },
   };
 }

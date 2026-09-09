@@ -14,9 +14,9 @@ describe('estimateCabinetCost', () => {
     // adâncimea PAL scade cu PFL 3 + șurub 2 (560→555) → arie PAL 1.72416
     // plăci fracționar: PAL 1.72416/(5.796×0.8)=0.3718 foi ×260=96.68 + debitare 0.3718×50=18.59
     // PFL 0.4267/(5.8995×0.8)=0.0904 foi ×100=9.04 + 0.0904×33=2.98
-    // MDF 0.4294×450=193.21; cant 3.13; feronerie 48 (holtșurub 0 lei) → cost=371.64; sell=cost×1.3=483.14
-    expect(r.cost).toBeCloseTo(371.64, 0);
-    expect(r.sell).toBeCloseTo(483.14, 0);
+    // MDF 0.4294×450=193.21; cant 5.35 (laterale pe 3 laturi); feronerie 48 (holtșurub 0 lei) → cost=373.86; sell=cost×1.3=486.02
+    expect(r.cost).toBeCloseTo(373.86, 0);
+    expect(r.sell).toBeCloseTo(486.02, 0);
     expect(r.error).toBeNull();
   });
   it('dimensiuni imposibile → error, nu throw', () => {

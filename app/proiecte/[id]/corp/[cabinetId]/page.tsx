@@ -42,9 +42,17 @@ function cabinetInputToFormValues(input: CabinetInput, cc: ConstructionConstants
     shelfMaterialId: input.shelf?.materialId ?? '',
     shelfDecorMatters: input.shelf?.decorAxis ? 'true' : 'false',
     shelfDecorAxis: input.shelf?.decorAxis ?? 'LR',
+    shelfRounded: input.shelf?.roundedCorner ? 'true' : 'false',
+    shelfRoundedSide: input.shelf?.roundedCorner ?? 'RIGHT',
     doors: String(Math.max(input.doors, 1)),
     doorOpening: input.doorOpening ?? 'BALAMALE',
     carcassMaterialId: input.carcassMaterialId,
+    carcassMdfSupplierId: input.mdfCarcass?.supplierId ?? '',
+    carcassMdfModelId: input.mdfCarcass?.modelId ?? '',
+    carcassMdfFinish: input.mdfCarcass?.finish ?? 'MAT',
+    carcassMdfFaces: String(input.mdfCarcass?.faces ?? 2),
+    carcassMdfRalCode: input.mdfCarcass?.ralCode ?? '',
+    carcassMdfColorCategory: input.mdfCarcass?.colorCategory ?? 'NORMALA',
     frontKind: input.frontKind ?? 'PAL',
     frontMaterialId: input.frontMaterialId ?? '',
     mdfSupplierId: input.mdfFront?.supplierId ?? '',
@@ -66,6 +74,7 @@ function cabinetInputToFormValues(input: CabinetInput, cc: ConstructionConstants
         : '',
     falsDreaptaMm: input.falseFronts?.dreaptaMm != null ? String(input.falseFronts.dreaptaMm) : '',
     drawersCount: String(input.drawers?.count ?? 0),
+    drawersColumns: String(input.drawers?.columns ?? 1),
     drawersSystem: input.drawers?.system ?? 'TANDEMBOX',
     drawersBottomMaterialId: input.drawers?.bottomMaterialId ?? '',
     drawerFrontHeightsMm: input.drawers?.frontHeightsMm?.join(', ') ?? '',
@@ -147,6 +156,7 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
                 depthMm: input.depthMm ? String(input.depthMm) : '',
                 blatMaterialId: input.blat?.materialId ?? '',
                 manualPieces: input.blat?.manualPieces != null ? String(input.blat.manualPieces) : '',
+                blatCantMode: input.blat?.cantMode ?? 'FRONT',
               }}
               materials={blatMaterials}
               cutPricePerPiece={settings?.blatCutPricePerPiece ?? 35}

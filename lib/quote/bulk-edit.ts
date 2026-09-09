@@ -21,6 +21,8 @@ export type BulkFrontPatch = BoardFrontPatch | PaintedFrontPatch | GlassFrontPat
 
 export interface BulkCabinetPatch {
   carcassMaterialId?: string;
+  carcassEdgeBandId?: string; // cant muchii carcasă (ABS)
+  frontEdgeBandId?: string;   // cant contur front (ABS) — doar la fronturi PAL/MDF melaminat
   front?: BulkFrontPatch;
   dimensions?: {
     widthMm?: number;
@@ -28,6 +30,9 @@ export interface BulkCabinetPatch {
     depthMm?: number;
   };
 }
+
+// fronturile care primesc cant de contur (celelalte se cotează fără cant)
+const FRONT_KINDS_WITH_PERIMETER: ReadonlySet<string> = new Set(['PAL', 'MDF_MELAMINAT']);
 
 const positiveDimension = z.number().finite().positive('Dimensiunea trebuie să fie mai mare ca 0').optional();
 const mdfFrontSchema = z.object({
@@ -41,6 +46,8 @@ const mdfFrontSchema = z.object({
 
 export const bulkCabinetPatchSchema: z.ZodType<BulkCabinetPatch> = z.object({
   carcassMaterialId: z.string().min(1).optional(),
+  carcassEdgeBandId: z.string().min(1).optional(),
+  frontEdgeBandId: z.string().min(1).optional(),
   front: z.discriminatedUnion('kind', [
     z.object({ kind: z.enum(['PAL', 'MDF_MELAMINAT', 'MDF_INFOLIAT']), materialId: z.string().min(1) }),
     z.object({ kind: z.literal('MDF_VOPSIT'), mdfFront: mdfFrontSchema }),
@@ -53,6 +60,8 @@ export const bulkCabinetPatchSchema: z.ZodType<BulkCabinetPatch> = z.object({
   }).optional(),
 }).refine((patch) => (
   patch.carcassMaterialId !== undefined
+  || patch.carcassEdgeBandId !== undefined
+  || patch.frontEdgeBandId !== undefined
   || patch.front !== undefined
   || patch.dimensions?.widthMm !== undefined
   || patch.dimensions?.heightMm !== undefined
@@ -95,6 +104,12 @@ export function applyBulkCabinetPatch(
       input.frontMaterialId = patch.front.materialId;
       delete input.mdfFront;
     }
+  }
+
+  // canturi (ABS): carcasa mereu; frontul doar la fronturile care primesc cant de contur (PAL/MDF melaminat)
+  if (patch.carcassEdgeBandId) input.edgeBands.carcassFrontEdgeId = patch.carcassEdgeBandId;
+  if (patch.frontEdgeBandId && hasFronts && FRONT_KINDS_WITH_PERIMETER.has(input.frontKind ?? 'PAL')) {
+    input.edgeBands.frontPerimeterId = patch.frontEdgeBandId;
   }
 
   return { input, frontSkipped };

@@ -45,8 +45,10 @@ const selectCls = cn(
 
 type Preview = Extract<Awaited<ReturnType<typeof previewBulkCabinetEdit>>, { ok: true }>['preview'];
 
+export type BulkEdgeBand = { id: string; name: string; thicknessMm: number };
+
 export function BulkCabinetEditor({
-  assemblyId, eligibleIds, materials, suppliers, models, ralColors, children,
+  assemblyId, eligibleIds, materials, suppliers, models, ralColors, edgeBands, children,
 }: {
   assemblyId: string;
   eligibleIds: string[];
@@ -54,12 +56,15 @@ export function BulkCabinetEditor({
   suppliers: BulkFrontSupplier[];
   models: BulkFrontModel[];
   ralColors: RalColor[];
+  edgeBands: BulkEdgeBand[];
   children: ReactNode;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [open, setOpen] = useState(false);
   const [carcassMaterialId, setCarcassMaterialId] = useState('');
+  const [carcassEdgeBandId, setCarcassEdgeBandId] = useState('');
+  const [frontEdgeBandId, setFrontEdgeBandId] = useState('');
   const [frontKind, setFrontKind] = useState<BulkFrontKind>('');
   const [frontMaterialId, setFrontMaterialId] = useState('');
   const [supplierId, setSupplierId] = useState('');
@@ -119,6 +124,8 @@ export function BulkCabinetEditor({
     };
     const patch: BulkCabinetPatch = {};
     if (carcassMaterialId) patch.carcassMaterialId = carcassMaterialId;
+    if (carcassEdgeBandId) patch.carcassEdgeBandId = carcassEdgeBandId;
+    if (frontEdgeBandId) patch.frontEdgeBandId = frontEdgeBandId;
     if (Object.values(dimensions).some((value) => value !== undefined)) patch.dimensions = dimensions;
 
     if (frontKind === 'MDF_VOPSIT') {
@@ -134,8 +141,9 @@ export function BulkCabinetEditor({
       patch.front = { kind: frontKind, materialId: frontMaterialId };
     }
 
-    if (!patch.carcassMaterialId && !patch.front && !patch.dimensions) {
-      throw new Error('Alege cel puțin un material sau o dimensiune');
+    if (!patch.carcassMaterialId && !patch.front && !patch.dimensions
+      && !patch.carcassEdgeBandId && !patch.frontEdgeBandId) {
+      throw new Error('Alege cel puțin un material, un cant sau o dimensiune');
     }
     return patch;
   };
@@ -290,6 +298,31 @@ export function BulkCabinetEditor({
                     </div>
                   </div>
                 )}
+              </section>
+
+              <section className="space-y-3 border-t pt-4">
+                <h3 className="text-sm font-semibold">Canturi ABS</h3>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-1">
+                    <Label className={fieldLabelCls}>Cant carcasă (opțional)</Label>
+                    <select className={selectCls} value={carcassEdgeBandId}
+                      onChange={(event) => { setCarcassEdgeBandId(event.target.value); invalidatePreview(); }}>
+                      <option value="">— nu modifica</option>
+                      {edgeBands.map((band) => <option key={band.id} value={band.id}>{band.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="grid gap-1">
+                    <Label className={fieldLabelCls}>Cant front (opțional)</Label>
+                    <select className={selectCls} value={frontEdgeBandId}
+                      onChange={(event) => { setFrontEdgeBandId(event.target.value); invalidatePreview(); }}>
+                      <option value="">— nu modifica</option>
+                      {edgeBands.map((band) => <option key={band.id} value={band.id}>{band.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Cantul de front se aplică doar la fronturile PAL / MDF melaminat (MDF vopsit, înfoliat și sticla nu au cant).
+                </p>
               </section>
 
               <section className="space-y-3 border-t pt-4">
