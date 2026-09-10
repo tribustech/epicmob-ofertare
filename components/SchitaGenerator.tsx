@@ -231,11 +231,11 @@ export function SchitaGenerator({ palMaterials, blatMaterials }: { palMaterials:
         <div className="space-y-3 rounded-xl border border-green-300 bg-green-50 p-4">
           <h3 className="font-semibold text-green-900">Proiect(e) create ✓</h3>
           <ul className="space-y-1 text-sm">
-            {created.projects.map((p) => (
+            {created.quotes.map((p) => (
               <li key={p.id} className="flex items-center gap-3">
                 <span className="grow">{p.name}</span>
-                <Link href={`/proiecte/${p.id}`} className="underline">Deschide proiect</Link>
-                <Link href={`/proiecte/${p.id}/oferta`} className="underline">Vezi oferta</Link>
+                <Link href={`/oferte/${p.id}`} className="underline">Deschide oferta</Link>
+                <Link href={`/oferte/${p.id}/oferta`} className="underline">Vezi oferta</Link>
               </li>
             ))}
           </ul>

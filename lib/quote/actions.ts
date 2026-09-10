@@ -19,7 +19,7 @@ import { hardwareAdjustmentsSchema, pruneAdjustments } from './hardware-adjustme
 import { buildSnapshot } from './snapshot';
 import { getQuoteBasis, isFrozenStatus } from './basis';
 import { ASSEMBLY_LEG_HEIGHT_PRESETS, ASSEMBLY_NAME_PRESETS } from './assembly-presets';
-import { parseProjectDetails } from './project-details';
+import { parseQuoteDetails } from './quote-details';
 import { PLINTH_MODES } from './plinth';
 import type { CabinetInput, CabinetType } from '@/lib/engine';
 import {
@@ -27,14 +27,16 @@ import {
   bulkCabinetPatchSchema,
   type BulkCabinetPatch,
 } from './bulk-edit';
-import { legHeightByCabinet, loadProject, toQuoteInput } from './load';
+import { legHeightByCabinet, loadQuote, toQuoteInput } from './load';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { logEvent } from '@/lib/crm/events';
 
 const optStr = z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().optional());
 
-const projectSettingsSchema = z.object({
+const quoteSettingsSchema = z.object({
   laborPct: z.coerce.number().nonnegative(),
   yieldFactor: z.coerce.number().gt(0).lte(1),
-  status: z.enum(['CIORNA', 'TRIMISA', 'ACCEPTATA']),
+  status: z.enum(['CIORNA', 'TRIMISA', 'RESPINSA']), // ACCEPTATA se setează doar din pagina proiectului (acceptQuote)
   handleType: z.enum(['APLICAT', 'BUTON', 'INGROPAT', 'PROFIL_J', 'GOLA', 'PUSH', 'FARA']),
   handleItemId: optStr,
 });
@@ -129,87 +131,86 @@ const newAssemblySchema = z
     path: ['blatMaterialId'],
   });
 
-export const createProject = formAction(async (fd: FormData) => {
-  const d = parseProjectDetails(formDataToObject(fd));
-  const settings = await prisma.appSettings.findUnique({ where: { id: 1 } });
-  if (!settings) throw new Error('Setările lipsesc — rulează npm run db:seed');
-  const project = await prisma.project.create({
-    data: {
-      name: d.name,
-      clientName: d.clientName ?? null,
-      clientContact: d.clientContact ?? null,
-      laborPct: settings.laborPct,
-      yieldFactor: settings.sheetYieldFactor,
-    },
-  });
-  revalidatePath('/proiecte');
-  redirect(`/proiecte/${project.id}`);
-});
-
-export const updateProjectDetails = formAction(async (id: string, fd: FormData) => {
-  const d = parseProjectDetails(formDataToObject(fd));
-  await prisma.project.update({
+export const updateQuoteDetails = formAction(async (id: string, fd: FormData) => {
+  const d = parseQuoteDetails(formDataToObject(fd));
+  await prisma.quote.update({
     where: { id },
     data: {
       name: d.name,
-      clientName: d.clientName ?? null,
-      clientContact: d.clientContact ?? null,
       observatii: d.observatii ?? null,
     },
   });
   revalidatePath('/proiecte');
-  revalidatePath(`/proiecte/${id}`);
-  revalidatePath(`/proiecte/${id}/oferta`);
+  revalidatePath(`/oferte/${id}`);
+  revalidatePath(`/oferte/${id}/oferta`);
 });
 
-export const updateProjectSettings = formAction(async (id: string, fd: FormData) => {
-  const d = projectSettingsSchema.parse(formDataToObject(fd));
-  const project = await prisma.project.findUniqueOrThrow({ where: { id } });
+export const updateQuoteSettings = formAction(async (id: string, fd: FormData) => {
+  const d = quoteSettingsSchema.parse(formDataToObject(fd));
+  const quote = await prisma.quote.findUniqueOrThrow({ where: { id } });
   // spread-ul cu handleItemId undefined NU șterge coloana — setăm explicit null
-  const data: Omit<typeof d, 'handleItemId'> & { snapshotJson?: string; handleItemId: string | null } = {
+  const data: Omit<typeof d, 'handleItemId' | 'status'> & { status: string; snapshotJson?: string; handleItemId: string | null } = {
     ...d,
     handleItemId: d.handleItemId ?? null,
   };
-  if (isFrozenStatus(d.status) && (!isFrozenStatus(project.status) || !project.snapshotJson)) {
+  // o ofertă ACCEPTATA își păstrează starea (se schimbă doar din pagina proiectului)
+  if (quote.status === 'ACCEPTATA') data.status = 'ACCEPTATA';
+  if (isFrozenStatus(data.status) && (!isFrozenStatus(quote.status) || !quote.snapshotJson)) {
     data.snapshotJson = JSON.stringify(await buildSnapshot());
   }
-  await prisma.project.update({ where: { id }, data });
-  revalidatePath(`/proiecte/${id}`);
+  await prisma.quote.update({ where: { id }, data });
+  if (data.status === 'TRIMISA' && quote.status !== 'TRIMISA' && quote.projectId) {
+    const me = await getCurrentUser();
+    const project = await prisma.project.findUnique({ where: { id: quote.projectId }, select: { clientId: true } });
+    await logEvent({ type: 'QUOTE_SENT', projectId: quote.projectId, clientId: project?.clientId, userId: me?.id, payload: { quoteId: id, version: quote.version } });
+    revalidatePath(`/proiecte/${quote.projectId}`);
+  }
+  revalidatePath(`/oferte/${id}`);
 });
 
-export const deleteProject = formAction(async (id: string) => {
-  await prisma.project.delete({ where: { id } });
+export const deleteQuote = formAction(async (id: string) => {
+  const quote = await prisma.quote.delete({ where: { id } });
   revalidatePath('/proiecte');
+  if (quote.projectId) {
+    revalidatePath(`/proiecte/${quote.projectId}`);
+    redirect(`/proiecte/${quote.projectId}`);
+  }
   redirect('/proiecte');
 });
 
-export const duplicateProject = formAction(async (id: string) => {
-  const project = await prisma.project.findUniqueOrThrow({
+export const duplicateQuote = formAction(async (id: string) => {
+  const quote = await prisma.quote.findUniqueOrThrow({
     where: { id },
     include: { assemblies: true, cabinets: true },
   });
 
+  const last = quote.projectId
+    ? await prisma.quote.aggregate({ where: { projectId: quote.projectId }, _max: { version: true } })
+    : null;
   const copy = await prisma.$transaction(async (tx) => {
-    const copy = await tx.project.create({
+    const copy = await tx.quote.create({
       data: {
-        name: `${project.name} (copie)`,
-        clientName: project.clientName,
-        clientContact: project.clientContact,
-        laborPct: project.laborPct,
-        yieldFactor: project.yieldFactor,
-        freeLinesJson: project.freeLinesJson,
-        loosePanelsJson: project.loosePanelsJson,
-        snapshotJson: project.snapshotJson,
-        handleType: project.handleType,
-        handleItemId: project.handleItemId,
+        name: quote.projectId ? quote.name : `${quote.name} (copie)`,
+        projectId: quote.projectId,
+        version: (last?._max.version ?? 0) + 1,
+        label: `copie a v${quote.version}${quote.label ? ` (${quote.label})` : ''}`,
+        clientName: quote.clientName,
+        clientContact: quote.clientContact,
+        laborPct: quote.laborPct,
+        yieldFactor: quote.yieldFactor,
+        freeLinesJson: quote.freeLinesJson,
+        loosePanelsJson: quote.loosePanelsJson,
+        snapshotJson: quote.snapshotJson,
+        handleType: quote.handleType,
+        handleItemId: quote.handleItemId,
       },
     });
 
     const assemblyIdMap = new Map<string, string>();
-    for (const a of project.assemblies) {
+    for (const a of quote.assemblies) {
       const newAssembly = await tx.assembly.create({
         data: {
-          projectId: copy.id,
+          quoteId: copy.id,
           name: a.name,
           legHeightMm: a.legHeightMm,
           plinthMode: a.plinthMode,
@@ -219,10 +220,10 @@ export const duplicateProject = formAction(async (id: string) => {
       assemblyIdMap.set(a.id, newAssembly.id);
     }
 
-    for (const c of project.cabinets) {
+    for (const c of quote.cabinets) {
       await tx.cabinet.create({
         data: {
-          projectId: copy.id,
+          quoteId: copy.id,
           assemblyId: c.assemblyId ? (assemblyIdMap.get(c.assemblyId) ?? null) : null,
           sortOrder: c.sortOrder,
           inputJson: c.inputJson,
@@ -237,50 +238,50 @@ export const duplicateProject = formAction(async (id: string) => {
   });
 
   revalidatePath('/proiecte');
-  redirect(`/proiecte/${copy.id}`);
+  redirect(`/oferte/${copy.id}`);
 });
 
-export const addFreeLine = formAction(async (projectId: string, fd: FormData) => {
+export const addFreeLine = formAction(async (quoteId: string, fd: FormData) => {
   const d = freeLineSchema.parse(formDataToObject(fd));
-  const project = await prisma.project.findUniqueOrThrow({ where: { id: projectId } });
-  const lines = JSON.parse(project.freeLinesJson) as { name: string; amount: number; inCommission?: boolean }[];
+  const quote = await prisma.quote.findUniqueOrThrow({ where: { id: quoteId } });
+  const lines = JSON.parse(quote.freeLinesJson) as { name: string; amount: number; inCommission?: boolean }[];
   lines.push(d);
-  await prisma.project.update({ where: { id: projectId }, data: { freeLinesJson: JSON.stringify(lines) } });
-  revalidatePath(`/proiecte/${projectId}`);
+  await prisma.quote.update({ where: { id: quoteId }, data: { freeLinesJson: JSON.stringify(lines) } });
+  revalidatePath(`/oferte/${quoteId}`);
 });
 
-export const removeFreeLine = formAction(async (projectId: string, index: number) => {
-  const project = await prisma.project.findUniqueOrThrow({ where: { id: projectId } });
-  const lines = JSON.parse(project.freeLinesJson) as { name: string; amount: number }[];
+export const removeFreeLine = formAction(async (quoteId: string, index: number) => {
+  const quote = await prisma.quote.findUniqueOrThrow({ where: { id: quoteId } });
+  const lines = JSON.parse(quote.freeLinesJson) as { name: string; amount: number }[];
   lines.splice(index, 1);
-  await prisma.project.update({ where: { id: projectId }, data: { freeLinesJson: JSON.stringify(lines) } });
-  revalidatePath(`/proiecte/${projectId}`);
+  await prisma.quote.update({ where: { id: quoteId }, data: { freeLinesJson: JSON.stringify(lines) } });
+  revalidatePath(`/oferte/${quoteId}`);
 });
 
-export const addLoosePanel = formAction(async (projectId: string, fd: FormData) => {
+export const addLoosePanel = formAction(async (quoteId: string, fd: FormData) => {
   const d = loosePanelSchema.parse(formDataToObject(fd));
-  const project = await prisma.project.findUniqueOrThrow({ where: { id: projectId } });
-  const panels = JSON.parse(project.loosePanelsJson ?? "[]") as unknown[];
+  const quote = await prisma.quote.findUniqueOrThrow({ where: { id: quoteId } });
+  const panels = JSON.parse(quote.loosePanelsJson ?? "[]") as unknown[];
   panels.push(d);
-  await prisma.project.update({ where: { id: projectId }, data: { loosePanelsJson: JSON.stringify(panels) } });
-  revalidatePath(`/proiecte/${projectId}`);
+  await prisma.quote.update({ where: { id: quoteId }, data: { loosePanelsJson: JSON.stringify(panels) } });
+  revalidatePath(`/oferte/${quoteId}`);
 });
 
-export const removeLoosePanel = formAction(async (projectId: string, index: number) => {
-  const project = await prisma.project.findUniqueOrThrow({ where: { id: projectId } });
-  const panels = JSON.parse(project.loosePanelsJson ?? "[]") as unknown[];
+export const removeLoosePanel = formAction(async (quoteId: string, index: number) => {
+  const quote = await prisma.quote.findUniqueOrThrow({ where: { id: quoteId } });
+  const panels = JSON.parse(quote.loosePanelsJson ?? "[]") as unknown[];
   panels.splice(index, 1);
-  await prisma.project.update({ where: { id: projectId }, data: { loosePanelsJson: JSON.stringify(panels) } });
-  revalidatePath(`/proiecte/${projectId}`);
+  await prisma.quote.update({ where: { id: quoteId }, data: { loosePanelsJson: JSON.stringify(panels) } });
+  revalidatePath(`/oferte/${quoteId}`);
 });
 
-export const addAssembly = formAction(async (projectId: string, fd: FormData) => {
+export const addAssembly = formAction(async (quoteId: string, fd: FormData) => {
   const d = newAssemblySchema.parse(formDataToObject(fd));
-  const count = await prisma.assembly.count({ where: { projectId } });
+  const count = await prisma.assembly.count({ where: { quoteId } });
   await prisma.assembly.create({
-    data: { projectId, name: d.name, legHeightMm: d.legHeightMm, plinthMode: d.plinthMode, sortOrder: count, ...normalizeAssemblyBlat(d) },
+    data: { quoteId, name: d.name, legHeightMm: d.legHeightMm, plinthMode: d.plinthMode, sortOrder: count, ...normalizeAssemblyBlat(d) },
   });
-  revalidatePath(`/proiecte/${projectId}`);
+  revalidatePath(`/oferte/${quoteId}`);
 });
 
 export const updateAssembly = formAction(async (assemblyId: string, fd: FormData) => {
@@ -289,34 +290,34 @@ export const updateAssembly = formAction(async (assemblyId: string, fd: FormData
     where: { id: assemblyId },
     data: { name: d.name, legHeightMm: d.legHeightMm, plinthMode: d.plinthMode, ...normalizeAssemblyBlat(d) },
   });
-  revalidatePath(`/proiecte/${a.projectId}`);
+  revalidatePath(`/oferte/${a.quoteId}`);
 });
 
 // șterge ansamblul ȘI corpurile din el (confirmarea se face în UI, cu numărul de corpuri)
 export const deleteAssembly = formAction(async (assemblyId: string) => {
-  const a = await prisma.assembly.findUniqueOrThrow({ where: { id: assemblyId }, select: { projectId: true } });
+  const a = await prisma.assembly.findUniqueOrThrow({ where: { id: assemblyId }, select: { quoteId: true } });
   await prisma.$transaction([
     prisma.cabinet.deleteMany({ where: { assemblyId } }),
     prisma.assembly.delete({ where: { id: assemblyId } }),
   ]);
-  revalidatePath(`/proiecte/${a.projectId}`);
+  revalidatePath(`/oferte/${a.quoteId}`);
 });
 
 // copiază un ansamblu (cu toate corpurile + pozițiile 3D) într-un alt proiect
-export const copyAssemblyToProject = formAction(async (assemblyId: string, fd: FormData) => {
-  const { targetProjectId } = z.object({ targetProjectId: z.string().min(1, 'Alege proiectul țintă') })
+export const copyAssemblyToQuote = formAction(async (assemblyId: string, fd: FormData) => {
+  const { targetQuoteId } = z.object({ targetQuoteId: z.string().min(1, 'Alege proiectul țintă') })
     .parse(formDataToObject(fd));
   const source = await prisma.assembly.findUniqueOrThrow({
     where: { id: assemblyId }, include: { cabinets: { orderBy: { sortOrder: 'asc' } } },
   });
-  if (source.projectId === targetProjectId) throw new Error('Alege un alt proiect decât cel curent');
-  await prisma.project.findUniqueOrThrow({ where: { id: targetProjectId } });
-  const existing = await prisma.assembly.count({ where: { projectId: targetProjectId } });
+  if (source.quoteId === targetQuoteId) throw new Error('Alege un alt proiect decât cel curent');
+  await prisma.quote.findUniqueOrThrow({ where: { id: targetQuoteId } });
+  const existing = await prisma.assembly.count({ where: { quoteId: targetQuoteId } });
 
   await prisma.$transaction(async (tx) => {
     const copy = await tx.assembly.create({
       data: {
-        projectId: targetProjectId, sortOrder: existing,
+        quoteId: targetQuoteId, sortOrder: existing,
         name: source.name, legHeightMm: source.legHeightMm, plinthMode: source.plinthMode,
         kind: source.kind, baseHeightMm: source.baseHeightMm, blatMaterialId: source.blatMaterialId,
         blatDepthMm: source.blatDepthMm, upperHeightMm: source.upperHeightMm,
@@ -327,7 +328,7 @@ export const copyAssemblyToProject = formAction(async (assemblyId: string, fd: F
     for (const c of source.cabinets) {
       await tx.cabinet.create({
         data: {
-          projectId: targetProjectId, assemblyId: copy.id, sortOrder: c.sortOrder,
+          quoteId: targetQuoteId, assemblyId: copy.id, sortOrder: c.sortOrder,
           inputJson: c.inputJson, hardwareJson: c.hardwareJson, extraPartsJson: c.extraPartsJson,
           plinthEnabled: c.plinthEnabled,
           posXMm: c.posXMm, posZMm: c.posZMm, posYMm: c.posYMm, rotDeg: c.rotDeg,
@@ -335,8 +336,8 @@ export const copyAssemblyToProject = formAction(async (assemblyId: string, fd: F
       });
     }
   });
-  revalidatePath(`/proiecte/${targetProjectId}`);
-  revalidatePath(`/proiecte/${source.projectId}`);
+  revalidatePath(`/oferte/${targetQuoteId}`);
+  revalidatePath(`/oferte/${source.quoteId}`);
 });
 
 const layoutSchema = z.object({
@@ -365,7 +366,7 @@ export async function saveAssemblyLayout(
   try {
     const d = layoutSchema.parse(payload);
     const assembly = await prisma.assembly.findUnique({
-      where: { id: assemblyId }, select: { projectId: true },
+      where: { id: assemblyId }, select: { quoteId: true },
     });
     if (!assembly) throw new Error('Ansamblul nu există');
     // doar corpurile care aparțin ansamblului pot fi actualizate
@@ -387,7 +388,7 @@ export async function saveAssemblyLayout(
         data: { posXMm: it.cx, posZMm: it.cz, posYMm: it.by, rotDeg: it.rotDeg },
       })),
     ]);
-    revalidatePath(`/proiecte/${assembly.projectId}`);
+    revalidatePath(`/oferte/${assembly.quoteId}`);
     return { ok: true };
   } catch (e) {
     if (e instanceof z.ZodError) return { error: 'Date invalide' };
@@ -395,12 +396,12 @@ export async function saveAssemblyLayout(
   }
 }
 
-export const addCabinet = formAction(async (projectId: string, assemblyId: string, type: CabinetType = 'BAZA') => {
+export const addCabinet = formAction(async (quoteId: string, assemblyId: string, type: CabinetType = 'BAZA') => {
   const assembly = await prisma.assembly.findUnique({ where: { id: assemblyId } });
-  if (!assembly || assembly.projectId !== projectId) {
+  if (!assembly || assembly.quoteId !== quoteId) {
     throw new Error('Ansamblul nu aparține acestui proiect');
   }
-  const count = await prisma.cabinet.count({ where: { projectId } });
+  const count = await prisma.cabinet.count({ where: { quoteId } });
 
   let input: CabinetInput;
   if (type === 'BLAT') {
@@ -434,10 +435,10 @@ export const addCabinet = formAction(async (projectId: string, assemblyId: strin
     };
   }
   const cab = await prisma.cabinet.create({
-    data: { projectId, assemblyId, sortOrder: count, inputJson: JSON.stringify(input) },
+    data: { quoteId, assemblyId, sortOrder: count, inputJson: JSON.stringify(input) },
   });
-  revalidatePath(`/proiecte/${projectId}`);
-  redirect(`/proiecte/${projectId}/corp/${cab.id}`);
+  revalidatePath(`/oferte/${quoteId}`);
+  redirect(`/oferte/${quoteId}/corp/${cab.id}`);
 });
 
 export const updateCabinetData = formAction(async (cabinetId: string, data: Record<string, string>) => {
@@ -458,8 +459,8 @@ export const updateCabinetData = formAction(async (cabinetId: string, data: Reco
       ...(adjustments !== undefined ? { hardwareJson: adjustments ? JSON.stringify(adjustments) : null } : {}),
     },
   });
-  revalidatePath(`/proiecte/${cab.projectId}/corp/${cabinetId}`);
-  revalidatePath(`/proiecte/${cab.projectId}`);
+  revalidatePath(`/oferte/${cab.quoteId}/corp/${cabinetId}`);
+  revalidatePath(`/oferte/${cab.quoteId}`);
 });
 
 const bulkSelectionSchema = z.object({
@@ -509,11 +510,11 @@ async function prepareBulkCabinetEdit(
   await validateBulkCatalogPatch(patch);
 
   const assembly = await prisma.assembly.findUnique({
-    where: { id: selection.assemblyId }, select: { projectId: true },
+    where: { id: selection.assemblyId }, select: { quoteId: true },
   });
   if (!assembly) throw new Error('Ansamblul nu există');
 
-  const data = await loadProject(assembly.projectId);
+  const data = await loadQuote(assembly.quoteId);
   if (!data) throw new Error('Proiectul nu există');
   const selectedIds = new Set(selection.cabinetIds);
   const selected = data.cabinets.filter((cabinet) => selectedIds.has(cabinet.id));
@@ -524,12 +525,12 @@ async function prepareBulkCabinetEdit(
     throw new Error('Blaturile nu pot fi modificate prin această operație');
   }
 
-  const basis = await getQuoteBasis(data.project);
+  const basis = await getQuoteBasis(data.quote);
   if (basis.kind === 'MISSING') {
     throw new Error('Proiectul nu are o bază de preț disponibilă');
   }
   const quoteInput = toQuoteInput(
-    data.project,
+    data.quote,
     data.cabinets,
     legHeightByCabinet(data.assemblies, data.cabinets),
     data.assemblies,
@@ -590,11 +591,11 @@ export async function applyBulkCabinetEdit(
       }),
     );
 
-    const projectId = prepared.data.project.id;
-    revalidatePath(`/proiecte/${projectId}`);
-    revalidatePath(`/proiecte/${projectId}/oferta`);
-    revalidatePath(`/proiecte/${projectId}/plan-debitare`);
-    for (const cabinetId of cabinetIds) revalidatePath(`/proiecte/${projectId}/corp/${cabinetId}`);
+    const quoteId = prepared.data.quote.id;
+    revalidatePath(`/oferte/${quoteId}`);
+    revalidatePath(`/oferte/${quoteId}/oferta`);
+    revalidatePath(`/oferte/${quoteId}/plan-debitare`);
+    for (const cabinetId of cabinetIds) revalidatePath(`/oferte/${quoteId}/corp/${cabinetId}`);
     return { ok: true };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : 'Modificările nu au putut fi salvate' };
@@ -607,9 +608,9 @@ export const updateCabinetPlinth = formAction(async (cabinetId: string, fd: Form
     where: { id: cabinetId },
     data: { plinthEnabled: d.plinthEnabled === 'true' },
   });
-  revalidatePath(`/proiecte/${cabinet.projectId}`);
-  revalidatePath(`/proiecte/${cabinet.projectId}/corp/${cabinetId}`);
-  revalidatePath(`/proiecte/${cabinet.projectId}/plan-debitare`);
+  revalidatePath(`/oferte/${cabinet.quoteId}`);
+  revalidatePath(`/oferte/${cabinet.quoteId}/corp/${cabinetId}`);
+  revalidatePath(`/oferte/${cabinet.quoteId}/plan-debitare`);
 });
 
 export const updateBlat = formAction(async (cabinetId: string, fd: FormData) => {
@@ -621,25 +622,25 @@ export const updateBlat = formAction(async (cabinetId: string, fd: FormData) => 
     where: { id: cabinetId },
     data: { inputJson: JSON.stringify(input) },
   });
-  revalidatePath(`/proiecte/${cab.projectId}/corp/${cabinetId}`);
-  revalidatePath(`/proiecte/${cab.projectId}`);
+  revalidatePath(`/oferte/${cab.quoteId}/corp/${cabinetId}`);
+  revalidatePath(`/oferte/${cab.quoteId}`);
   // la salvarea blatului ne întoarcem în pagina proiectului
-  redirect(`/proiecte/${cab.projectId}`);
+  redirect(`/oferte/${cab.quoteId}`);
 });
 
 export const deleteCabinet = formAction(async (cabinetId: string) => {
   const cab = await prisma.cabinet.delete({ where: { id: cabinetId } });
-  revalidatePath(`/proiecte/${cab.projectId}`);
+  revalidatePath(`/oferte/${cab.quoteId}`);
 });
 
 export const duplicateCabinet = formAction(async (cabinetId: string) => {
   const cab = await prisma.cabinet.findUniqueOrThrow({ where: { id: cabinetId } });
-  const count = await prisma.cabinet.count({ where: { projectId: cab.projectId } });
+  const count = await prisma.cabinet.count({ where: { quoteId: cab.quoteId } });
   const input = JSON.parse(cab.inputJson) as { label: string };
   input.label = `${input.label} (copie)`;
   await prisma.cabinet.create({
     data: {
-      projectId: cab.projectId,
+      quoteId: cab.quoteId,
       assemblyId: cab.assemblyId,
       sortOrder: count,
       inputJson: JSON.stringify(input),
@@ -648,7 +649,7 @@ export const duplicateCabinet = formAction(async (cabinetId: string) => {
       plinthEnabled: cab.plinthEnabled,
     },
   });
-  revalidatePath(`/proiecte/${cab.projectId}`);
+  revalidatePath(`/oferte/${cab.quoteId}`);
 });
 
 export const addExtraPart = formAction(async (cabinetId: string, fd: FormData) => {
@@ -657,7 +658,7 @@ export const addExtraPart = formAction(async (cabinetId: string, fd: FormData) =
   const parts = JSON.parse(cab.extraPartsJson) as unknown[];
   parts.push(d);
   await prisma.cabinet.update({ where: { id: cabinetId }, data: { extraPartsJson: JSON.stringify(parts) } });
-  revalidatePath(`/proiecte/${cab.projectId}/corp/${cabinetId}`);
+  revalidatePath(`/oferte/${cab.quoteId}/corp/${cabinetId}`);
 });
 
 export const removeExtraPart = formAction(async (cabinetId: string, index: number) => {
@@ -665,15 +666,15 @@ export const removeExtraPart = formAction(async (cabinetId: string, index: numbe
   const parts = JSON.parse(cab.extraPartsJson) as unknown[];
   parts.splice(index, 1);
   await prisma.cabinet.update({ where: { id: cabinetId }, data: { extraPartsJson: JSON.stringify(parts) } });
-  revalidatePath(`/proiecte/${cab.projectId}/corp/${cabinetId}`);
+  revalidatePath(`/oferte/${cab.quoteId}/corp/${cabinetId}`);
 });
 
-export const refreshFrozenPrices = formAction(async (projectId: string) => {
-  const project = await prisma.project.findUniqueOrThrow({ where: { id: projectId } });
-  if (!isFrozenStatus(project.status)) throw new Error('Proiectul e ciornă — prețurile sunt deja live.');
-  await prisma.project.update({
-    where: { id: projectId },
+export const refreshFrozenPrices = formAction(async (quoteId: string) => {
+  const quote = await prisma.quote.findUniqueOrThrow({ where: { id: quoteId } });
+  if (!isFrozenStatus(quote.status)) throw new Error('Proiectul e ciornă — prețurile sunt deja live.');
+  await prisma.quote.update({
+    where: { id: quoteId },
     data: { snapshotJson: JSON.stringify(await buildSnapshot()) },
   });
-  revalidatePath(`/proiecte/${projectId}`);
+  revalidatePath(`/oferte/${quoteId}`);
 });

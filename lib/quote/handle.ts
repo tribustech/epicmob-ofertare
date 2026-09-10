@@ -1,6 +1,6 @@
 import type { CabinetInput, FreeLine, HandleType } from '@/lib/engine';
 
-export interface ProjectHandle { type: HandleType; itemId: string | null }
+export interface QuoteHandle { type: HandleType; itemId: string | null }
 
 export const HANDLE_TYPE_OPTIONS: { value: HandleType; label: string }[] = [
   { value: 'APLICAT', label: 'Mâner aplicat' },
@@ -14,12 +14,12 @@ export const HANDLE_TYPE_OPTIONS: { value: HandleType; label: string }[] = [
 
 /** Moștenirea: corpul fără excepție primește mânerul proiectului; excepția de TIP
  *  fără produs ales moștenește produsul proiectului când tipul coincide. */
-export function withResolvedHandle(input: CabinetInput, project: ProjectHandle): CabinetInput {
+export function withResolvedHandle(input: CabinetInput, quote: QuoteHandle): CabinetInput {
   if (!input.handle) {
-    return { ...input, handle: { type: project.type, itemId: project.itemId ?? undefined } };
+    return { ...input, handle: { type: quote.type, itemId: quote.itemId ?? undefined } };
   }
-  if (input.handle.itemId === undefined && input.handle.type === project.type && project.itemId) {
-    return { ...input, handle: { ...input.handle, itemId: project.itemId } };
+  if (input.handle.itemId === undefined && input.handle.type === quote.type && quote.itemId) {
+    return { ...input, handle: { ...input.handle, itemId: quote.itemId } };
   }
   return input;
 }

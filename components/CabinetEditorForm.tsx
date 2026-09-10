@@ -152,7 +152,7 @@ export interface CabinetEditorFormProps {
   frontSupplierOptions: FieldOption[];
   frontModelOptions: FrontModelOption[];
   ralColors: RalColor[];
-  projectHandle: { type: string; itemId: string | null; label: string };
+  quoteHandle: { type: string; itemId: string | null; label: string };
   tandemboxHeights: number[];
   initialPieces?: PiecesConfigForm;
   save: (data: Record<string, string>) => Promise<FormState>;
@@ -165,7 +165,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     bandOptions, hardwareAdjustments, extraParts,
     extraPartsSlot, extraPartsSummary,
     frontSupplierOptions, frontModelOptions, ralColors,
-    projectHandle, tandemboxHeights, initialPieces, save,
+    quoteHandle, tandemboxHeights, initialPieces, save,
   } = props;
   const router = useRouter();
   const [values, setValues] = useState<Record<string, string>>(initial);
@@ -364,7 +364,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     if (!parsed.success) return null;
     const input = withResolvedHandle(
       toCabinetInput(parsed.data, prunePiecesConfig(piecesCfg)),
-      { type: projectHandle.type as HandleType, itemId: projectHandle.itemId },
+      { type: quoteHandle.type as HandleType, itemId: quoteHandle.itemId },
     );
     let parts: Part[] = [];
     let pieces: PieceInstance[] = [];
@@ -393,10 +393,10 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     }
     const estimate = estimateCabinetCost({ input, hardwareAdjustments: hw, extraParts }, snapExt, {
       laborPct, yieldFactor, legHeightMm,
-      projectHandle: { type: projectHandle.type as HandleType, itemId: projectHandle.itemId },
+      quoteHandle: { type: quoteHandle.type as HandleType, itemId: quoteHandle.itemId },
     });
     return { input, parts, pieces, warnings, expandError, estimate, hardwareLines, unresolvedHardware, slots };
-  }, [parsed, catalogs, cc, hw, extraParts, snapExt, laborPct, yieldFactor, legHeightMm, projectHandle, piecesCfg]);
+  }, [parsed, catalogs, cc, hw, extraParts, snapExt, laborPct, yieldFactor, legHeightMm, quoteHandle, piecesCfg]);
 
   const invalid = !parsed.success;
   // piesa selectată poate dispărea din live.pieces la regenerare (schimbare corp) — cade pe lista BOM, nu crapă
@@ -1037,7 +1037,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
                       ...(v === 'FARA' && !prev.frontExtensionMm
                         ? { frontExtensionMm: String(cc.frontExtensionDefaultMm) } : {}),
                     })); }}
-                    options={[{ value: '', label: `Ca proiectul (${projectHandle.label})` },
+                    options={[{ value: '', label: `Ca proiectul (${quoteHandle.label})` },
                       ...HANDLE_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))]}
                   />
                   {values.handleMode === 'CUSTOM' && values.handleType === 'FARA' && (

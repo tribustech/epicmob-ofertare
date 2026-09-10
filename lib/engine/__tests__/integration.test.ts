@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { computeProject, type ProjectCatalogs } from '../index';
+import { computeQuote, type QuoteCatalogs } from '../index';
 import { bazaInput, TEST_CATALOGS } from './fixtures';
 
-const CATALOGS: ProjectCatalogs = {
+const CATALOGS: QuoteCatalogs = {
   ...TEST_CATALOGS,
   hardware: [
     { id: 'blum-cliptop', name: 'Balama Blum ClipTop', category: 'BALAMA', pricePerUnit: 15 },
@@ -32,8 +32,8 @@ const CATALOGS: ProjectCatalogs = {
   eurToRon: 1,
 };
 
-describe('computeProject — corp bază de referință (calcul de mână)', () => {
-  const result = computeProject(
+describe('computeQuote — corp bază de referință (calcul de mână)', () => {
+  const result = computeQuote(
     // produsul mânerului e ales explicit — nu mai există fallback pe un default global
     { cabinets: [bazaInput({ handle: { type: 'APLICAT', itemId: 'maner-std' } })], freeLines: [], laborPct: 30, nesting: { kerfMm: 4, trimMm: 10 } },
     CATALOGS,
@@ -71,9 +71,9 @@ describe('computeProject — corp bază de referință (calcul de mână)', () =
   });
 });
 
-describe('computeProject — feronerie fără default merge în unresolved', () => {
+describe('computeQuote — feronerie fără default merge în unresolved', () => {
   it('corp suspendat fără railId → sugestia de șină rămâne nerezolvată', () => {
-    const result = computeProject(
+    const result = computeQuote(
       {
         cabinets: [bazaInput({ type: 'SUSPENDAT', depthMm: 320 })],
         freeLines: [], laborPct: 30, nesting: { kerfMm: 4, trimMm: 10 },

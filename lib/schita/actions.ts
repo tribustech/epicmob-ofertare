@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { analyzeSketch } from './analyze';
 import { proposalSchema, type Proposal } from './schema';
-import { createProjectFromProposal, resolveBuildIds, type FrontVariant } from './build';
+import { createQuoteFromProposal, resolveBuildIds, type FrontVariant } from './build';
 
 export type AnalyzeResult = { ok: true; proposal: Proposal } | { ok: false; error: string };
 
@@ -48,7 +48,7 @@ export async function analyzeSketchAction(fd: FormData): Promise<AnalyzeResult> 
 }
 
 export type CreateResult =
-  | { ok: true; projects: { id: string; name: string; variant: FrontVariant }[] }
+  | { ok: true; quotes: { id: string; name: string; variant: FrontVariant }[] }
   | { ok: false; error: string };
 
 export interface CreateOpts {
@@ -69,17 +69,17 @@ export async function createFromProposalAction(rawProposal: unknown, opts: Creat
     const variants = opts.variants.filter((v) => v === 'vopsit' || v === 'pal');
     if (variants.length === 0) return { ok: false, error: 'Alege cel puțin o variantă (vopsit / PAL).' };
     const ids = await resolveBuildIds();
-    const projects: { id: string; name: string; variant: FrontVariant }[] = [];
+    const quotes: { id: string; name: string; variant: FrontVariant }[] = [];
     for (const variant of variants) {
-      const id = await createProjectFromProposal(proposal, {
+      const id = await createQuoteFromProposal(proposal, {
         clientName: opts.clientName, front: variant, addSoclu: opts.addSoclu, cargoLine: opts.cargoLine,
         carcassMaterialId: opts.carcassMaterialId, frontPalMaterialId: opts.frontPalMaterialId,
         blatMaterialId: opts.blatMaterialId, vopsitRal: opts.vopsitRal, vopsitFinish: opts.vopsitFinish,
       }, ids);
-      projects.push({ id, name: `${proposal.assemblyName} — ${variant === 'vopsit' ? 'MDF vopsit' : 'PAL'}`, variant });
+      quotes.push({ id, name: `${proposal.assemblyName} — ${variant === 'vopsit' ? 'MDF vopsit' : 'PAL'}`, variant });
     }
     revalidatePath('/proiecte');
-    return { ok: true, projects };
+    return { ok: true, quotes };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Eroare la crearea proiectului.' };
   }

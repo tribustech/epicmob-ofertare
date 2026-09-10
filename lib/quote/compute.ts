@@ -13,7 +13,7 @@ import type {
 } from '@/lib/engine';
 import { computeBlat, type BlatResult } from '@/lib/engine';
 import { isCabinetInputComplete, type ExtraPart } from './cabinet-form';
-import { handleExtraCost, withResolvedHandle, type ProjectHandle } from './handle';
+import { handleExtraCost, withResolvedHandle, type QuoteHandle } from './handle';
 import { pickLegId } from './legs';
 import { buildPlinthParts, type PlinthAssembly } from './plinth';
 
@@ -91,7 +91,7 @@ export interface QuoteInput {
   loosePanels?: LoosePanel[];
   cabinets: QuoteCabinet[];
   assemblies?: PlinthAssembly[];
-  projectHandle: ProjectHandle;
+  quoteHandle: QuoteHandle;
 }
 
 export interface QuoteResult {
@@ -220,7 +220,7 @@ export function computeQuote(qAll: QuoteInput, snap: SnapshotData): QuoteResult 
   }
   const extraEdging = [...blatCantByBand.entries()].map(([edgeBandId, totalMl]) => ({ edgeBandId, totalMl }));
 
-  const inputs = normal.map((c) => withResolvedHandle(c.input, q.projectHandle));
+  const inputs = normal.map((c) => withResolvedHandle(c.input, q.quoteHandle));
   const expanded = inputs.map((input, i) => expandCabinet(input, catalogs, cc, normal[i].legHeightMm ?? undefined));
 
   const parts: Part[] = expanded.flatMap((e) => e.parts);

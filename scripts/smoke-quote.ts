@@ -19,7 +19,7 @@ async function main() {
     edgeBands: { carcassFrontEdgeId: band.id, frontPerimeterId: band.id },
   };
 
-  const project = await prisma.project.create({
+  const quote = await prisma.quote.create({
     data: {
       name: 'SMOKE TEST', laborPct: 120, yieldFactor: 0.8,
       cabinets: { create: [{ sortOrder: 0, inputJson: JSON.stringify(input) }] },
@@ -31,7 +31,7 @@ async function main() {
     const quote = computeQuote(
       {
         laborPct: 120, freeLines: [], cabinets: [{ input, hardwareAdjustments: null, extraParts: [] }],
-        projectHandle: { type: 'APLICAT', itemId: null },
+        quoteHandle: { type: 'APLICAT', itemId: null },
       },
       snapshot,
     );
@@ -45,7 +45,7 @@ async function main() {
       pretVanzare: quote.costs.sellPrice.toFixed(2),
     });
   } finally {
-    await prisma.project.delete({ where: { id: project.id } });
+    await prisma.quote.delete({ where: { id: quote.id } });
   }
 }
 

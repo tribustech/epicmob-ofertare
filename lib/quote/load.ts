@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db';
-import type { Assembly, Project } from '@prisma/client';
+import type { Assembly, Quote } from '@prisma/client';
 import type { CabinetInput, HandleType, HardwareAdjustments } from '@/lib/engine';
 import type { ExtraPart } from './cabinet-form';
 import { computeQuote, type QuoteInput, type QuoteResult, type SnapshotData } from './compute';
@@ -16,20 +16,20 @@ export interface LoadedCabinet {
   extraParts: ExtraPart[];
 }
 
-export async function loadProject(id: string): Promise<{
-  project: Project;
+export async function loadQuote(id: string): Promise<{
+  quote: Quote;
   assemblies: Assembly[];
   cabinets: LoadedCabinet[];
 } | null> {
-  const project = await prisma.project.findUnique({
+  const quote = await prisma.quote.findUnique({
     where: { id },
     include: {
       cabinets: { orderBy: { sortOrder: 'asc' } },
       assemblies: { orderBy: { sortOrder: 'asc' } },
     },
   });
-  if (!project) return null;
-  const cabinets: LoadedCabinet[] = project.cabinets.map((c) => ({
+  if (!quote) return null;
+  const cabinets: LoadedCabinet[] = quote.cabinets.map((c) => ({
     id: c.id,
     sortOrder: c.sortOrder,
     assemblyId: c.assemblyId,
@@ -38,7 +38,7 @@ export async function loadProject(id: string): Promise<{
     hardwareAdjustments: normalizeHardwareJson(c.hardwareJson),
     extraParts: JSON.parse(c.extraPartsJson) as ExtraPart[],
   }));
-  return { project, assemblies: project.assemblies, cabinets };
+  return { quote, assemblies: quote.assemblies, cabinets };
 }
 
 export function legHeightByCabinet(assemblies: Assembly[], cabinets: LoadedCabinet[]): Map<string, number> {
@@ -54,15 +54,15 @@ export function legHeightByCabinet(assemblies: Assembly[], cabinets: LoadedCabin
 }
 
 export function toQuoteInput(
-  project: { laborPct: number; freeLinesJson: string; loosePanelsJson?: string; handleType: string; handleItemId: string | null },
+  quote: { laborPct: number; freeLinesJson: string; loosePanelsJson?: string; handleType: string; handleItemId: string | null },
   cabinets: LoadedCabinet[],
   legHeightMap: Map<string, number> = new Map(),
   assemblies: Assembly[] = [],
 ): QuoteInput {
   return {
-    laborPct: project.laborPct,
-    freeLines: JSON.parse(project.freeLinesJson),
-    loosePanels: JSON.parse(project.loosePanelsJson ?? '[]'),
+    laborPct: quote.laborPct,
+    freeLines: JSON.parse(quote.freeLinesJson),
+    loosePanels: JSON.parse(quote.loosePanelsJson ?? '[]'),
     cabinets: cabinets.map((c) => ({
       id: c.id,
       assemblyId: c.assemblyId,
@@ -73,7 +73,7 @@ export function toQuoteInput(
       legHeightMm: legHeightMap.get(c.id) ?? null,
     })),
     assemblies: assemblies.map((a) => ({ id: a.id, name: a.name, plinthMode: a.plinthMode })),
-    projectHandle: { type: project.handleType as HandleType, itemId: project.handleItemId },
+    quoteHandle: { type: quote.handleType as HandleType, itemId: quote.handleItemId },
   };
 }
 

@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { loadProject, toQuoteInput, tryComputeQuote, legHeightByCabinet } from '../lib/quote/load';
+import { loadQuote, toQuoteInput, tryComputeQuote, legHeightByCabinet } from '../lib/quote/load';
 import { getQuoteBasis } from '../lib/quote/basis';
 import { estimateCabinetCost } from '../lib/quote/estimate';
 import type { QuoteInput } from '../lib/quote/compute';
@@ -45,10 +45,10 @@ const palify = (i: CabinetInput): CabinetInput => {
   const c = { ...i, frontKind: 'PAL', frontMaterialId: PAL_FRONT } as CabinetInput; delete (c as any).mdfFront; return c;
 };
 
-async function createProject(name: string, clientName: string, inputs: CabinetInput[]) {
-  await prisma.project.deleteMany({ where: { name } });
+async function createQuote(name: string, clientName: string, inputs: CabinetInput[]) {
+  await prisma.quote.deleteMany({ where: { name } });
   const freeLines = [{ name: 'Cargo Jolly 150 (sticle/ulei)', amount: 400, inCommission: false }];
-  const project = await prisma.project.create({
+  const quote = await prisma.quote.create({
     data: {
       name, clientName, status: 'CIORNA',
       laborPct: 120, yieldFactor: 0.8, handleType: 'APLICAT', handleItemId: 'maner-standard',
@@ -57,22 +57,22 @@ async function createProject(name: string, clientName: string, inputs: CabinetIn
     },
     include: { assemblies: true },
   });
-  const asmId = project.assemblies[0].id;
+  const asmId = quote.assemblies[0].id;
   await prisma.$transaction(inputs.map((inp, idx) => prisma.cabinet.create({
-    data: { projectId: project.id, assemblyId: inp.type === 'BLAT' ? null : asmId, sortOrder: idx, inputJson: JSON.stringify(inp), plinthEnabled: inp.type === 'BAZA' || inp.type === 'INALT' },
+    data: { quoteId: quote.id, assemblyId: inp.type === 'BLAT' ? null : asmId, sortOrder: idx, inputJson: JSON.stringify(inp), plinthEnabled: inp.type === 'BAZA' || inp.type === 'INALT' },
   })));
-  return project.id;
+  return quote.id;
 }
 
-async function priceOf(projectId: string) {
-  const data = (await loadProject(projectId))!;
-  const basis = await getQuoteBasis(data.project);
+async function priceOf(quoteId: string) {
+  const data = (await loadQuote(quoteId))!;
+  const basis = await getQuoteBasis(data.quote);
   const snap = (basis as any).snapshot;
   const legMap = legHeightByCabinet(data.assemblies, data.cabinets);
-  const q = toQuoteInput(data.project, data.cabinets, legMap, data.assemblies);
+  const q = toQuoteInput(data.quote, data.cabinets, legMap, data.assemblies);
   const _r = tryComputeQuote(q, snap); if(!_r.quote){ console.error("COMPUTE ERROR:", _r.error); } const quote = _r.quote!;
   const per = data.cabinets.map((c) => {
-    const est = estimateCabinetCost({ input: c.input, hardwareAdjustments: c.hardwareAdjustments ?? null, extraParts: c.extraParts ?? [] }, snap, { laborPct: 120, yieldFactor: 0.8, legHeightMm: legMap.get(c.id) ?? null, projectHandle: { type: 'APLICAT', itemId: 'maner-standard' } });
+    const est = estimateCabinetCost({ input: c.input, hardwareAdjustments: c.hardwareAdjustments ?? null, extraParts: c.extraParts ?? [] }, snap, { laborPct: 120, yieldFactor: 0.8, legHeightMm: legMap.get(c.id) ?? null, quoteHandle: { type: 'APLICAT', itemId: 'maner-standard' } });
     return { label: c.input.label as string, w: c.input.widthMm, sell: est.sell };
   });
   return { quote, per };
@@ -81,8 +81,8 @@ async function priceOf(projectId: string) {
 async function main() {
   const vopsitInputs = cabs();
   const palInputs = vopsitInputs.map(palify);
-  const idVopsit = await createProject('Bucătărie schiță 310×225', 'Client schiță — MDF vopsit', vopsitInputs);
-  const idPal = await createProject('Bucătărie schiță 310×225 — PAL', 'Client schiță — PAL', palInputs);
+  const idVopsit = await createQuote('Bucătărie schiță 310×225', 'Client schiță — MDF vopsit', vopsitInputs);
+  const idPal = await createQuote('Bucătărie schiță 310×225 — PAL', 'Client schiță — PAL', palInputs);
 
   for (const [name, id] of [['VOPSIT (2 fețe)', idVopsit], ['PAL', idPal]] as const) {
     const { quote: q, per } = await priceOf(id);

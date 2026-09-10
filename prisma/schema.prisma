@@ -119,15 +119,29 @@ model AppSettings {
   roundedCutPricePerPiece Float @default(0)
   roundedEdgePricePerPiece Float @default(0) // cant pe rotund, lei per poliță (separat de debitare)
   blatEdgeBandId String? // banda de cant folosită la blat (dacă lipsește, se ia orice ABS de 2mm)
+  // Finanțe
+  vatPayer         Boolean @default(false) // firma e plătitoare de TVA? (split net/TVA la documente)
+  vatDefaultPct    Float   @default(21)
+  companyName      String?
+  companyCui       String?
+  companyAddress   String?
+  overEstimatePct  Float   @default(10) // prag „peste estimat" (real > estimat cu mai mult de X%)
 }
 
-model Project {
+// Oferta (fost `Project`): ansambluri → corpuri → piese → preț. Aparține unui Project (CRM).
+model Quote {
   id            String     @id @default(cuid())
   name          String
-  clientName    String?
-  clientContact String?
+  clientName    String?    // legacy — până la verificarea migrării CRM, apoi se șterge
+  clientContact String?    // legacy — idem
   observatii    String?    // note libere afișate în ofertă
-  status        String     @default("CIORNA") // CIORNA | TRIMISA | ACCEPTATA
+  status        String     @default("CIORNA") // CIORNA | TRIMISA | ACCEPTATA | RESPINSA
+  projectId     String?    // opțional doar până la migrarea datelor; apoi obligatoriu
+  project       Project?   @relation(fields: [projectId], references: [id])
+  version       Int        @default(1)
+  label         String?    // „v2 — fronturi MDF"
+  acceptedPrice Decimal?   @db.Decimal(12, 2) // sellPrice înghețat la acceptare
+  acceptedAt    DateTime?
   laborPct      Float
   yieldFactor   Float
   handleType    String     @default("APLICAT")
@@ -139,12 +153,14 @@ model Project {
   updatedAt     DateTime   @updatedAt
   cabinets      Cabinet[]
   assemblies    Assembly[]
+
+  @@index([projectId])
 }
 
 model Assembly {
   id          String    @id @default(cuid())
-  projectId   String
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  quoteId     String
+  quote       Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   name        String
   legHeightMm Float     @default(100)
   plinthMode String     @default("NONE") // NONE | ASSEMBLY | CABINETS
@@ -168,8 +184,8 @@ model Assembly {
 
 model Cabinet {
   id             String    @id @default(cuid())
-  projectId      String
-  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  quoteId        String
+  quote          Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   assemblyId     String?
   assembly       Assembly? @relation(fields: [assemblyId], references: [id], onDelete: SetNull)
   sortOrder      Int       @default(0)
@@ -183,4 +199,312 @@ model Cabinet {
   posYMm         Float?
   rotDeg         Int?
   updatedAt      DateTime  @updatedAt
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique // stocat lowercase + trim
+  name         String
+  passwordHash String
+  active       Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  clients      Client[]
+  projects     Project[]
+  events       Event[]
+  movements    Movement[]
+  documents    Document[]
+  loans        Loan[]
+  contractChanges ContractChange[]
+  notes        Note[]
+}
+
+// ───────────── CRM ─────────────
+
+// Client = persoană sau firmă. Un lead e un client cu stage LEAD/CALIFICAT (aceeași entitate).
+model Client {
+  id              String    @id @default(cuid())
+  name            String
+  kind            String    @default("PERSOANA") // PERSOANA | FIRMA
+  phone           String?
+  email           String?
+  address         String?
+  cui             String?
+  stage           String    @default("LEAD") // LEAD | CALIFICAT | CLIENT | PIERDUT
+  source          String?   // text din LeadSource
+  wants           String?   // ce vrea (la lead)
+  budgetEstimate  Decimal?  @db.Decimal(12, 2)
+  firstContactAt  DateTime  @default(now())
+  nextActionAt    DateTime?
+  nextActionNote  String?
+  lostReason      String?   // PRET | TIMING | CONCURENTA | FARA_RASPUNS | ALTUL
+  lostNote        String?
+  remarketing     Boolean   @default(false)
+  remarketingNote String?
+  createdById     String?
+  createdBy       User?     @relation(fields: [createdById], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  projects        Project[]
+  events          Event[]
+  documents       Document[]
+  notes           Note[]
+
+  @@index([stage])
+  @@index([phone])
+}
+
+// Proiect = o lucrare pentru un client. Are oferte (Quote), deadline promis, ciclu de viață.
+model Project {
+  id          String    @id @default(cuid())
+  clientId    String?   // null doar pentru ofertele migrate „fără client"
+  client      Client?   @relation(fields: [clientId], references: [id])
+  name        String
+  description String?
+  status      String    @default("OFERTARE") // OFERTARE | ACCEPTAT | IN_PRODUCTIE | MONTAT | INCHIS | PIERDUT
+  deadlineAt  DateTime? // promis clientului; sortarea listelor
+  acceptedAt  DateTime?
+  mountedAt   DateTime?
+  closedAt    DateTime?
+  lostReason  String?
+  lostNote    String?
+  hoursWorked Float?    // completat la Montat, opțional
+  createdById String?
+  createdBy   User?     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  quotes      Quote[]
+  events      Event[]
+  allocations     DocumentAllocation[]
+  movements       Movement[]        // încasări directe (Movement IN cu projectId)
+  contractChanges ContractChange[]
+  notes           Note[]
+
+  @@index([status, deadlineAt])
+  @@index([clientId])
+}
+
+// Intrare automată în timeline (client și/sau proiect), semnată de utilizator.
+model Event {
+  id          String   @id @default(cuid())
+  clientId    String?
+  client      Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type        String   // QUOTE_CREATED | QUOTE_SENT | QUOTE_ACCEPTED | QUOTE_REJECTED | PROJECT_STATUS | CLIENT_STAGE | ...
+  payloadJson String   @default("{}") // ce s-a schimbat: din → în, sumă, referință
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([clientId, createdAt])
+  @@index([projectId, createdAt])
+}
+
+// Notiță scrisă de om, pe client sau pe proiect (exact unul). Cele „pinned" apar sus, ca importante.
+// Notițele clientului se văd pe toate proiectele lui; notițele proiectelor se văd pe client.
+model Note {
+  id          String       @id @default(cuid())
+  clientId    String?
+  client      Client?      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  projectId   String?
+  project     Project?     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  body        String
+  pinned      Boolean      @default(false)
+  createdById String?
+  createdBy   User?        @relation(fields: [createdById], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  attachments Attachment[]
+
+  @@index([clientId, createdAt])
+  @@index([projectId, createdAt])
+}
+
+// Sursele de leaduri (listă editabilă din Setări).
+model LeadSource {
+  id        String  @id @default(cuid())
+  name      String  @unique
+  sortOrder Int     @default(0)
+  active    Boolean @default(true)
+}
+
+// ───────────── Finanțe ─────────────
+
+// Sursă de bani. Soldul e derivat din mișcări, niciodată editat direct (corecția = ADJUSTMENT cu motiv).
+model Account {
+  id        String     @id @default(cuid())
+  name      String
+  kind      String     @default("BANCA") // BANCA | CASH | CARD | ALTUL
+  personal  Boolean    @default(false)   // bani personali (ex. „Card Andrew"): soldul negativ = datorie către persoană
+  currency  String     @default("RON")
+  active    Boolean    @default(true)
+  sortOrder Int        @default(0)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  movements Movement[]
+}
+
+// Fiecare leu care intră sau iese dintr-un cont.
+model Movement {
+  id               String    @id @default(cuid())
+  accountId        String
+  account          Account   @relation(fields: [accountId], references: [id])
+  type             String    // IN | OUT | TRANSFER_IN | TRANSFER_OUT | ADJUSTMENT
+  amount           Decimal   @db.Decimal(12, 2) // pozitiv; la ADJUSTMENT semnul dă direcția
+  date             DateTime
+  note             String?
+  documentId       String?   // plată / încasare pe document
+  document         Document? @relation(fields: [documentId], references: [id])
+  loanId           String?   // primire / returnare împrumut
+  loan             Loan?     @relation(fields: [loanId], references: [id])
+  projectId        String?   // încasare directă de la client, pe proiect
+  project          Project?  @relation(fields: [projectId], references: [id])
+  incomeType       String?   // AVANS | RATA | FINAL (doar la încasări pe proiect)
+  transferPairId   String?   // leagă cele două jumătăți ale unui transfer
+  adjustmentReason String?   // obligatoriu la ADJUSTMENT
+  createdById      String?
+  createdBy        User?     @relation(fields: [createdById], references: [id])
+  createdAt        DateTime  @default(now())
+
+  @@index([accountId, date])
+  @@index([documentId])
+  @@index([projectId])
+  @@index([loanId])
+}
+
+// Bani luați de la o persoană/entitate, de returnat. remaining = principal − Σ returnări.
+model Loan {
+  id          String     @id @default(cuid())
+  lenderName  String
+  principal   Decimal    @db.Decimal(12, 2)
+  receivedAt  DateTime
+  dueAt       DateTime?
+  note        String?
+  createdById String?
+  createdBy   User?      @relation(fields: [createdById], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  movements   Movement[]
+}
+
+// Factură, proformă, bon, chitanță — de la furnizor (EXPENSE) sau către client (INCOME).
+model Document {
+  id                   String               @id @default(cuid())
+  direction            String               // EXPENSE | INCOME
+  kind                 String               @default("FACTURA") // FACTURA | PROFORMA | BON | CHITANTA | ALTUL
+  counterparty         String               // furnizor sau client (text)
+  counterpartyClientId String?
+  counterpartyClient   Client?              @relation(fields: [counterpartyClientId], references: [id])
+  number               String?
+  issuedAt             DateTime
+  dueAt                DateTime?
+  amount               Decimal              @db.Decimal(12, 2) // suma totală, așa cum e pe document
+  vatPct               Float?               // null = brut, fără split (firma neplătitoare / document vechi)
+  vatIncluded          Boolean              @default(true)
+  categoryId           String?              // categoria implicită (partea nealocată → indirect)
+  category             CostCategory?        @relation(fields: [categoryId], references: [id])
+  replacesDocumentId   String?              @unique // factura finală care închide o proformă
+  replacesDocument     Document?            @relation("Replaces", fields: [replacesDocumentId], references: [id])
+  replacedBy           Document?            @relation("Replaces")
+  recurringId          String?
+  recurring            RecurringExpense?    @relation(fields: [recurringId], references: [id])
+  periodKey            String?              // '2026-09' — perioada recurentei (idempotență la generare)
+  expected             Boolean              @default(false) // generat din recurent, neconfirmat încă
+  note                 String?
+  createdById          String?
+  createdBy            User?                @relation(fields: [createdById], references: [id])
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  allocations          DocumentAllocation[]
+  movements            Movement[]
+  attachments          Attachment[]
+
+  @@unique([recurringId, periodKey])
+  @@index([direction, issuedAt])
+  @@index([dueAt])
+}
+
+// O parte din suma unui document, legată de un proiect + o categorie de cost.
+model DocumentAllocation {
+  id         String       @id @default(cuid())
+  documentId String
+  document   Document     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  projectId  String
+  project    Project      @relation(fields: [projectId], references: [id])
+  amount     Decimal      @db.Decimal(12, 2)
+  categoryId String
+  category   CostCategory @relation(fields: [categoryId], references: [id])
+  note       String?
+
+  @@index([projectId])
+  @@index([documentId])
+}
+
+// Categorii de cost, editabile. DIRECT = pe proiect, INDIRECT = firmă. quoteBucket = maparea la estimat (§5.2).
+model CostCategory {
+  id          String               @id @default(cuid())
+  name        String
+  scope       String               // DIRECT | INDIRECT
+  sortOrder   Int                  @default(0)
+  active      Boolean              @default(true)
+  quoteBucket String?              // boards | edging | cuttingService | hardware | freeLines
+  documents   Document[]
+  allocations DocumentAllocation[]
+  recurring   RecurringExpense[]
+
+  @@unique([name, scope])
+}
+
+// Șablon de cheltuială recurentă („Chirie 3000 / lunar / ziua 5"). Generează Document{expected:true} lazy.
+model RecurringExpense {
+  id           String       @id @default(cuid())
+  name         String
+  counterparty String?
+  amount       Decimal      @db.Decimal(12, 2)
+  categoryId   String
+  category     CostCategory @relation(fields: [categoryId], references: [id])
+  frequency    String       @default("LUNAR") // LUNAR | TRIMESTRIAL | ANUAL
+  dayOfMonth   Int          @default(1)
+  active       Boolean      @default(true)
+  startsAt     DateTime
+  endsAt       DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  documents    Document[]
+}
+
+// Modificare de contract după acceptare („a mai vrut 2 corpuri: +1.800").
+model ContractChange {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  amount      Decimal  @db.Decimal(12, 2) // ± față de contract
+  description String
+  date        DateTime
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([projectId])
+}
+
+// Fișier pe Cloudflare R2 (poză bon/factură; notițele vin cu Timeline).
+model Attachment {
+  id         String    @id @default(cuid())
+  key        String    @unique // cheia obiectului în bucket
+  url        String    // URL la momentul salvării (se regenerează presemnat la afișare)
+  mime       String
+  sizeBytes  Int
+  width      Int?
+  height     Int?
+  documentId String?
+  document   Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  noteId     String?
+  note       Note?     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+
+  @@index([documentId])
+  @@index([noteId])
 }

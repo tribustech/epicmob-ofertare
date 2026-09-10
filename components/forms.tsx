@@ -13,16 +13,51 @@ const selectCls = cn(
   'md:text-sm dark:bg-input/30 dark:disabled:bg-input/80',
 );
 
-export function TextInput(props: { name: string; label: string; defaultValue?: string; required?: boolean }) {
+export function TextInput(props: {
+  name: string; label: string; defaultValue?: string | null; required?: boolean;
+  type?: 'text' | 'email' | 'password' | 'date' | 'tel'; autoComplete?: string; placeholder?: string; mono?: boolean;
+  /** sugestii (datalist): utilizatorul poate alege una sau scrie orice */
+  suggestions?: string[];
+}) {
+  const listId = props.suggestions ? `${props.name}-suggestions` : undefined;
   return (
     <div className="grid gap-1">
       <Label htmlFor={props.name} className={fieldLabelCls}>{props.label}</Label>
       <Input
         id={props.name}
-        type="text"
+        type={props.type ?? 'text'}
+        autoComplete={props.autoComplete}
+        placeholder={props.placeholder}
         name={props.name}
-        defaultValue={props.defaultValue}
+        defaultValue={props.defaultValue ?? undefined}
         required={props.required ?? true}
+        className={cn(props.mono && 'font-mono')}
+        list={listId}
+      />
+      {props.suggestions && (
+        <datalist id={listId}>
+          {props.suggestions.map((s) => <option key={s} value={s} />)}
+        </datalist>
+      )}
+    </div>
+  );
+}
+
+export function TextArea(props: { name: string; label: string; defaultValue?: string | null; rows?: number; placeholder?: string; required?: boolean }) {
+  return (
+    <div className="grid gap-1">
+      <Label htmlFor={props.name} className={fieldLabelCls}>{props.label}</Label>
+      <textarea
+        id={props.name}
+        name={props.name}
+        rows={props.rows ?? 3}
+        placeholder={props.placeholder}
+        defaultValue={props.defaultValue ?? undefined}
+        required={props.required ?? false}
+        className={cn(
+          'w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-base leading-snug outline-none transition-colors',
+          'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm',
+        )}
       />
     </div>
   );

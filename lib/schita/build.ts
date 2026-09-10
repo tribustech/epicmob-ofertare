@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { ensureProjectForQuote } from '@/lib/crm/project-for-quote';
 import type { CabinetInput } from '@/lib/engine';
 import type { Proposal, ProposalCabinet } from './schema';
 
@@ -93,13 +94,13 @@ export function buildCabinetInputs(proposal: Proposal, opts: CreateOptions, ids:
 }
 
 // Creează un proiect complet din propunere. Întoarce id-ul proiectului.
-export async function createProjectFromProposal(proposal: Proposal, opts: CreateOptions, ids: BuildIds): Promise<string> {
+export async function createQuoteFromProposal(proposal: Proposal, opts: CreateOptions, ids: BuildIds): Promise<string> {
   const inputs = buildCabinetInputs(proposal, opts, ids);
   const freeLines = opts.cargoLine && proposal.cabinets.some((c) => c.role === 'cargo')
     ? [{ name: 'Cargo Jolly (sticle/ulei)', amount: 400, inCommission: false }]
     : [];
   const name = `${proposal.assemblyName} — ${opts.front === 'vopsit' ? 'MDF vopsit' : 'PAL'}`;
-  const project = await prisma.project.create({
+  const quote = await prisma.quote.create({
     data: {
       name, clientName: opts.clientName || proposal.clientName || 'Client nou', status: 'CIORNA',
       laborPct: 120, yieldFactor: 0.8, handleType: 'APLICAT', handleItemId: 'maner-standard',
@@ -108,13 +109,14 @@ export async function createProjectFromProposal(proposal: Proposal, opts: Create
     },
     include: { assemblies: true },
   });
-  const asmId = project.assemblies[0].id;
+  const asmId = quote.assemblies[0].id;
   await prisma.$transaction(inputs.map((inp, idx) => prisma.cabinet.create({
     data: {
-      projectId: project.id, assemblyId: inp.type === 'BLAT' ? null : asmId, sortOrder: idx,
+      quoteId: quote.id, assemblyId: inp.type === 'BLAT' ? null : asmId, sortOrder: idx,
       inputJson: JSON.stringify(inp),
       plinthEnabled: opts.addSoclu && (inp.type === 'BAZA' || inp.type === 'INALT'),
     },
   })));
-  return project.id;
+  await ensureProjectForQuote(quote.id);
+  return quote.id;
 }

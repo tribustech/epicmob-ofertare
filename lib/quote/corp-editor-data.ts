@@ -41,7 +41,7 @@ export function buildHardwareSelOptions(hardwareItems: HardwareItem[], settings:
 }
 
 export interface CorpEditorData {
-  project: NonNullable<Awaited<ReturnType<typeof prisma.project.findUnique>>>;
+  quote: NonNullable<Awaited<ReturnType<typeof prisma.quote.findUnique>>>;
   materials: Material[];
   edgeBands: EdgeBand[];
   settings: AppSettings | null;
@@ -52,9 +52,9 @@ export interface CorpEditorData {
   ralColors: RalColor[];
 }
 
-export async function loadCorpEditorData(projectId: string): Promise<CorpEditorData> {
-  const [project, materials, edgeBands, settings, frontSuppliers, frontModels, hardwareItems, snapshot] = await Promise.all([
-    prisma.project.findUniqueOrThrow({ where: { id: projectId } }),
+export async function loadCorpEditorData(quoteId: string): Promise<CorpEditorData> {
+  const [quote, materials, edgeBands, settings, frontSuppliers, frontModels, hardwareItems, snapshot] = await Promise.all([
+    prisma.quote.findUniqueOrThrow({ where: { id: quoteId } }),
     prisma.material.findMany({ orderBy: { name: 'asc' } }),
     prisma.edgeBand.findMany({ orderBy: { thicknessMm: 'asc' } }),
     prisma.appSettings.findUnique({ where: { id: 1 } }),
@@ -74,5 +74,5 @@ export async function loadCorpEditorData(projectId: string): Promise<CorpEditorD
     code: c.code, num: c.num, name_en: c.name_en, hex: c.hex, vivid: c.vivid, black: c.black,
   }));
 
-  return { project, materials, edgeBands, settings, hardwareItems, snapshot, frontSupplierOptions, frontModelOptions, ralColors };
+  return { quote, materials, edgeBands, settings, hardwareItems, snapshot, frontSupplierOptions, frontModelOptions, ralColors };
 }

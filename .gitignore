@@ -14,3 +14,6 @@ dev.db-journal
 
 # cataloage PDF de referință (nu cod app, ~22MB)
 MDF VOPSIT/
+
+# dump-uri DB locale
+backups/

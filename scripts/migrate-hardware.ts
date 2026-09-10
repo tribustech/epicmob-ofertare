@@ -50,7 +50,7 @@ async function migrateCabinets() {
     prisma.edgeBand.findMany(),
     prisma.hardwareItem.findMany(),
     prisma.appSettings.findUniqueOrThrow({ where: { id: 1 } }),
-    prisma.cabinet.findMany({ include: { project: true } }),
+    prisma.cabinet.findMany({ include: { quote: true } }),
   ]);
   const catalogs = toCostCatalogs(materials, edgeBands, [], []);
   const cc = parseConstruction(settings.constructionJson);
@@ -76,7 +76,7 @@ async function migrateCabinets() {
     if (isCabinetInputComplete(input)) {
       try {
         const expanded = expandCabinet(
-          withResolvedHandle(input, { type: cab.project.handleType as never, itemId: cab.project.handleItemId }),
+          withResolvedHandle(input, { type: cab.quote.handleType as never, itemId: cab.quote.handleItemId }),
           catalogs, cc,
         );
         autoSlots = expanded.hardware.map((s) => ({ slot: s.slot, category: s.category }));

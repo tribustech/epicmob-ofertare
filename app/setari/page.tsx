@@ -4,6 +4,20 @@ import { parseConstruction } from '@/lib/catalog/convert';
 import { NumberInput, Select, SubmitButton, TextInput } from '@/components/forms';
 import { ActionForm } from '@/components/ActionForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { FormModal } from '@/components/FormModal';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { createUser, resetUserPassword, setUserActive } from '@/lib/auth/user-actions';
+import { createCostCategory, setCostCategoryActive, updateCompanySettings, updateCostCategory } from '@/lib/finance/settings-actions';
+import { COST_SCOPE_LABELS, QUOTE_BUCKET_LABELS } from '@/lib/finance/constants';
+import { loadIndicators } from '@/lib/finance/indicators';
+import { createLeadSource, renameLeadSource, setLeadSourceActive } from '@/lib/crm/lead-source-actions';
+import { monthLabel } from '@/lib/finance/month';
+import { fmtLei } from '@/lib/format';
+import { cn } from '@/lib/utils';
+
+const dateTimeFmt = new Intl.DateTimeFormat('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +50,13 @@ export default async function SetariPage() {
   const edgeBands = await prisma.edgeBand.findMany({ where: { active: true }, orderBy: { name: 'asc' } });
   const byCategory = (cat: string) =>
     hardware.filter((h) => h.category === cat).map((h) => ({ value: h.id, label: h.name }));
+  const me = await getCurrentUser();
+  const users = await prisma.user.findMany({ orderBy: [{ active: 'desc' }, { name: 'asc' }] });
+  const categories = await prisma.costCategory.findMany({ orderBy: [{ scope: 'asc' }, { active: 'desc' }, { sortOrder: 'asc' }] });
+  const scopeOptions = Object.entries(COST_SCOPE_LABELS).map(([value, label]) => ({ value, label }));
+  const bucketOptions = Object.entries(QUOTE_BUCKET_LABELS).map(([value, label]) => ({ value, label }));
+  const ind = await loadIndicators();
+  const leadSources = await prisma.leadSource.findMany({ orderBy: [{ active: 'desc' }, { sortOrder: 'asc' }] });
 
   return (
     <div className="space-y-8">
@@ -106,6 +127,232 @@ export default async function SetariPage() {
             </div>
             <SubmitButton>Salvează constantele</SubmitButton>
           </ActionForm>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Firmă și TVA</CardTitle>
+          <CardDescription>
+            Datele firmei apar pe documentele către client. TVA: cât timp firma nu e plătitoare, sumele se introduc brute; la activare, documentele noi primesc split net/TVA.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ActionForm action={updateCompanySettings} className="space-y-3">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+              <TextInput name="companyName" label="Denumire firmă" defaultValue={settings.companyName} required={false} />
+              <TextInput name="companyCui" label="CUI" defaultValue={settings.companyCui} required={false} mono />
+              <div className="col-span-2"><TextInput name="companyAddress" label="Adresă" defaultValue={settings.companyAddress} required={false} /></div>
+              <label className="flex items-center gap-2 self-end pb-2 text-sm">
+                <input type="checkbox" name="vatPayer" defaultChecked={settings.vatPayer} className="size-4" />
+                Plătitoare de TVA
+              </label>
+              <NumberInput name="vatDefaultPct" label="Cotă TVA implicită (%)" defaultValue={settings.vatDefaultPct} step="1" />
+              <NumberInput name="overEstimatePct" label={'Prag „peste estimat” (%)'} defaultValue={settings.overEstimatePct} step="1" />
+            </div>
+            <SubmitButton>Salvează</SubmitButton>
+          </ActionForm>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <CardTitle>Categorii de cost</CardTitle>
+              <CardDescription>Directe = pe proiect (apar la alocări și în Estimat vs Real). Indirecte = cheltuieli fixe ale firmei.</CardDescription>
+            </div>
+            <FormModal trigger="Categorie nouă" title="Categorie nouă">
+              <ActionForm action={createCostCategory} className="grid gap-3">
+                <TextInput name="name" label="Nume" />
+                <Select name="scope" label="Tip" options={scopeOptions} defaultValue="DIRECT" />
+                <Select name="quoteBucket" label="Mapare la estimat (doar directe)" options={bucketOptions} allowEmpty />
+                <div><SubmitButton>Creează</SubmitButton></div>
+              </ActionForm>
+            </FormModal>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nume</TableHead>
+                <TableHead>Tip</TableHead>
+                <TableHead>Mapare la estimat</TableHead>
+                <TableHead>Stare</TableHead>
+                <TableHead className="text-right">Acțiuni</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {categories.map((c) => (
+                <TableRow key={c.id} className={cn(!c.active && 'text-muted-foreground')}>
+                  <TableCell className="font-medium">{c.name}</TableCell>
+                  <TableCell>{c.scope === 'DIRECT' ? 'Directă' : 'Indirectă'}</TableCell>
+                  <TableCell className="text-muted-foreground">{c.quoteBucket ? QUOTE_BUCKET_LABELS[c.quoteBucket as keyof typeof QUOTE_BUCKET_LABELS] ?? c.quoteBucket : '—'}</TableCell>
+                  <TableCell>
+                    <span className={cn('rounded-full px-2.5 py-0.5 text-[11px] font-semibold', c.active ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'bg-muted text-muted-foreground')}>
+                      {c.active ? 'Activă' : 'Inactivă'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <FormModal trigger="Editează" title={`Editează „${c.name}"`} variant="outline" size="sm">
+                        <ActionForm action={updateCostCategory.bind(null, c.id)} className="grid gap-3">
+                          <TextInput name="name" label="Nume" defaultValue={c.name} />
+                          <Select name="scope" label="Tip" options={scopeOptions} defaultValue={c.scope} />
+                          <Select name="quoteBucket" label="Mapare la estimat (doar directe)" options={bucketOptions} defaultValue={c.quoteBucket} allowEmpty />
+                          <div><SubmitButton>Salvează</SubmitButton></div>
+                        </ActionForm>
+                      </FormModal>
+                      <ActionForm action={setCostCategoryActive.bind(null, c.id, !c.active)}>
+                        <Button type="submit" variant="ghost" size="sm" className={cn(c.active && 'text-destructive')}>{c.active ? 'Dezactivează' : 'Activează'}</Button>
+                      </ActionForm>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <CardTitle>Surse leaduri</CardTitle>
+              <CardDescription>Lista din care alegi sursa la „Lead nou". Redenumirea actualizează și clienții existenți.</CardDescription>
+            </div>
+            <FormModal trigger="Sursă nouă" title="Sursă nouă">
+              <ActionForm action={createLeadSource} className="grid gap-3">
+                <TextInput name="name" label="Nume" placeholder="TikTok" />
+                <div><SubmitButton>Adaugă</SubmitButton></div>
+              </ActionForm>
+            </FormModal>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {leadSources.map((s) => (
+              <div key={s.id} className={cn('flex items-center gap-1 rounded-full border py-1 pl-3 pr-1 text-[13px]', s.active ? 'border-border bg-card' : 'border-dashed text-muted-foreground')}>
+                <span className="font-medium">{s.name}</span>
+                <FormModal trigger="✎" title={`Redenumește „${s.name}"`} variant="ghost" size="sm" className="h-6 px-1.5 text-muted-foreground">
+                  <ActionForm action={renameLeadSource.bind(null, s.id)} className="grid gap-3">
+                    <TextInput name="name" label="Nume" defaultValue={s.name} />
+                    <div><SubmitButton>Salvează</SubmitButton></div>
+                  </ActionForm>
+                </FormModal>
+                <ActionForm action={setLeadSourceActive.bind(null, s.id, !s.active)}>
+                  <Button type="submit" variant="ghost" size="sm" className="h-6 px-1.5 text-muted-foreground" title={s.active ? 'Dezactivează' : 'Activează'}>{s.active ? '×' : '↺'}</Button>
+                </ActionForm>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Indicatori</CardTitle>
+          <CardDescription>
+            Orientativi, pe ultimele 3 luni ({ind.months.map(monthLabel).reverse().join(' · ')}). Cheltuielile indirecte nu se alocă oficial pe proiecte; ratele de mai jos sunt doar o vedere informativă.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-lg bg-muted p-4">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-muted-foreground">Rată overhead</div>
+              <div className="mt-1 font-mono text-2xl font-semibold">{ind.overheadRate != null ? `${Math.round(ind.overheadRate * 100)}%` : '—'}</div>
+              <div className="mt-1 text-[12px] text-muted-foreground">
+                fixe {fmtLei(ind.fixed)} / venit recunoscut {fmtLei(ind.revenue)} · {ind.mountedProjects} {ind.mountedProjects === 1 ? 'proiect montat' : 'proiecte montate'}
+                {ind.overheadRate == null && ' · fără venit recunoscut încă'}
+              </div>
+            </div>
+            <div className="rounded-lg bg-muted p-4">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-muted-foreground">Tarif orar încărcat</div>
+              <div className="mt-1 font-mono text-2xl font-semibold">{ind.hourlyRate != null ? `${fmtLei(ind.hourlyRate)} / oră` : '—'}</div>
+              <div className="mt-1 text-[12px] text-muted-foreground">
+                salarii + taxe {fmtLei(ind.salaries)} / {ind.hours} ore · {ind.projectsWithHours} {ind.projectsWithHours === 1 ? 'proiect cu ore' : 'proiecte cu ore'}
+                {ind.hourlyRate == null && ` · se afișează de la ${ind.minProjectsForHourly} proiecte montate cu ore`}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <CardTitle>Utilizatori</CardTitle>
+              <CardDescription>Toți utilizatorii sunt administratori. Parola se resetează de aici, de un alt utilizator.</CardDescription>
+            </div>
+            <FormModal trigger="Utilizator nou" title="Utilizator nou">
+              <ActionForm action={createUser} className="grid gap-3">
+                <TextInput name="name" label="Nume" />
+                <TextInput name="email" label="Email" type="email" autoComplete="off" />
+                <TextInput name="password" label="Parolă inițială (min. 8 caractere)" type="password" autoComplete="new-password" />
+                <div><SubmitButton>Creează</SubmitButton></div>
+              </ActionForm>
+            </FormModal>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nume</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Ultima intrare</TableHead>
+                <TableHead>Stare</TableHead>
+                <TableHead className="text-right">Acțiuni</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.map((u) => (
+                <TableRow key={u.id} className={cn(!u.active && 'text-muted-foreground')}>
+                  <TableCell className="font-medium">
+                    {u.name}
+                    {u.id === me?.id && <span className="ml-1.5 text-[11px] text-muted-foreground">(tu)</span>}
+                  </TableCell>
+                  <TableCell>{u.email}</TableCell>
+                  <TableCell className="font-mono text-[12.5px]">{u.lastLoginAt ? dateTimeFmt.format(u.lastLoginAt) : '—'}</TableCell>
+                  <TableCell>
+                    <span
+                      className={cn(
+                        'rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
+                        u.active ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'bg-muted text-muted-foreground',
+                      )}
+                    >
+                      {u.active ? 'Activ' : 'Inactiv'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <FormModal trigger="Resetează parola" title={`Parolă nouă pentru ${u.name}`} variant="outline" size="sm">
+                        <ActionForm action={resetUserPassword.bind(null, u.id)} className="grid gap-3">
+                          <TextInput name="password" label="Parolă nouă (min. 8 caractere)" type="password" autoComplete="new-password" />
+                          <div><SubmitButton>Salvează</SubmitButton></div>
+                        </ActionForm>
+                      </FormModal>
+                      {u.active ? (
+                        <ActionForm
+                          action={setUserActive.bind(null, u.id, false)}
+                          confirm={`Dezactivezi utilizatorul ${u.name}? Nu va mai putea intra în aplicație.`}
+                        >
+                          <Button type="submit" variant="ghost" size="sm" className="text-destructive">Dezactivează</Button>
+                        </ActionForm>
+                      ) : (
+                        <ActionForm action={setUserActive.bind(null, u.id, true)}>
+                          <Button type="submit" variant="ghost" size="sm">Activează</Button>
+                        </ActionForm>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

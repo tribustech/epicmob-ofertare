@@ -112,7 +112,7 @@ describe('buildBulkEditPreview', () => {
     const quoteInput: QuoteInput = {
       laborPct: 30,
       freeLines: [],
-      projectHandle: { type: 'APLICAT', itemId: 'maner-std' },
+      quoteHandle: { type: 'APLICAT', itemId: 'maner-std' },
       cabinets: [{ id: 'c1', assemblyId: 'a1', input: original, hardwareAdjustments: null, extraParts: [] }],
     };
     const snapshot = makeSnapshot({
@@ -138,7 +138,7 @@ describe('buildBulkEditPreview', () => {
     const quoteInput: QuoteInput = {
       laborPct: 30,
       freeLines: [],
-      projectHandle: { type: 'APLICAT', itemId: 'maner-std' },
+      quoteHandle: { type: 'APLICAT', itemId: 'maner-std' },
       cabinets: [{ id: 'c1', assemblyId: 'a1', input, hardwareAdjustments: null, extraParts: [] }],
     };
 

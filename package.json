@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "vercel-build": "prisma generate && prisma migrate deploy && next build",
+    "vercel-build": "prisma generate && prisma migrate deploy && tsx scripts/migrate-crm.ts && tsx scripts/seed-finante.ts && next build",
     "postinstall": "prisma generate",
     "start": "next start",
     "db:up": "docker start epicmob-pg || docker run -d --name epicmob-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=epicmob -p 5433:5432 postgres:16",
@@ -16,7 +16,10 @@
     "db:seed": "prisma db seed",
     "db:seed-decoruri": "tsx scripts/seed-decoruri.ts",
     "db:seed-fronturi": "tsx scripts/seed-fronturi.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:create-user": "tsx scripts/create-user.ts",
+    "db:migrate-crm": "tsx scripts/migrate-crm.ts",
+    "db:seed-finante": "tsx scripts/seed-finante.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",
@@ -24,8 +27,10 @@
     "@prisma/client": "^6.19.3",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
+    "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "jose": "^6.2.12",
     "lucide-react": "^1.24.0",
     "next": "^15.3.0",
     "radix-ui": "^1.6.2",
@@ -39,6 +44,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.2",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

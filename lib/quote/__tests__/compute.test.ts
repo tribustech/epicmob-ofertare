@@ -6,7 +6,7 @@ function baseQuote(overrides: Partial<QuoteInput> = {}): QuoteInput {
   return {
     laborPct: 30, freeLines: [],
     cabinets: [{ input: refCabinet(), hardwareAdjustments: null, extraParts: [] }],
-    projectHandle: { type: 'APLICAT', itemId: null },
+    quoteHandle: { type: 'APLICAT', itemId: null },
     ...overrides,
   };
 }

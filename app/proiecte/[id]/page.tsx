@@ -1,635 +1,532 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Boxes, Copy } from 'lucide-react';
-import type { Assembly } from '@prisma/client';
-import { legHeightByCabinet, loadProject, toQuoteInput, tryComputeQuote, type LoadedCabinet } from '@/lib/quote/load';
-import type { CabinetIssue } from '@/lib/quote/compute';
-import { getQuoteBasis } from '@/lib/quote/basis';
-import { HANDLE_TYPE_OPTIONS } from '@/lib/quote/handle';
-import { prisma } from '@/lib/db';
-import {
-  addAssembly, addCabinet, addFreeLine, addLoosePanel, copyAssemblyToProject, deleteAssembly, deleteCabinet, deleteProject,
-  duplicateCabinet, refreshFrozenPrices, removeFreeLine, removeLoosePanel, updateAssembly, updateProjectDetails, updateProjectSettings,
-} from '@/lib/quote/actions';
-import { ASSEMBLY_LEG_HEIGHT_PRESETS, ASSEMBLY_NAME_PRESETS } from '@/lib/quote/assembly-presets';
-import { isCabinetInputComplete } from '@/lib/quote/cabinet-form';
-import { ActionForm } from '@/components/ActionForm';
+import { cn } from '@/lib/utils';
+import { fmtLei } from '@/lib/format';
+import { deadlineParts, fmtDate, toDateInput } from '@/lib/crm/dates';
+import { LOST_REASON_LABELS, NEXT_PROJECT_STATUS, PROJECT_STATUS_LABELS, type ProjectStatus } from '@/lib/crm/constants';
+import { loadProjectDetail, loadProjectOptions } from '@/lib/crm/project-queries';
+import { loadPinnedNotes, loadTimeline } from '@/lib/crm/timeline';
+import { PinnedNotes, Timeline, parseFilter } from '@/components/crm/Timeline';
+import { loadProjectMoneyDetail } from '@/lib/finance/project-money';
+import { loadEstimateVsReal } from '@/lib/finance/estimate';
+import { loadAccountOptions } from '@/lib/finance/account-queries';
+import { addContractChange, addReceipt, deleteContractChange, deleteReceipt } from '@/lib/finance/receipt-actions';
+import { DOCUMENT_KIND_LABELS, INCOME_TYPE_LABELS, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_PILL, type DocumentKind } from '@/lib/finance/constants';
 import { DeleteButton } from '@/components/DeleteButton';
-import { AssemblyKindFields } from '@/components/AssemblyKindFields';
-import { AssemblyAddModal, AssemblyCardShell } from '@/components/AssemblyShell';
-import type { MaterialPickerItem } from '@/components/MaterialPicker';
-import { NumberInput, Select, SubmitButton, TextInput } from '@/components/forms';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { fmtLei, fmtNum } from '@/lib/format';
-import { CabinetRow } from './CabinetRow';
 import {
-  BulkCabinetEditor, type BulkFrontModel, type BulkFrontSupplier,
-} from '@/components/BulkCabinetEditor';
-import { getRalColors } from '@/lib/ral';
+  acceptQuote, advanceProject, createQuoteForProject, markProjectLost, moveQuoteToProject, setHoursWorked, updateProjectDetails,
+} from '@/lib/crm/project-actions';
+import { duplicateQuote } from '@/lib/quote/actions';
+import { ActionForm } from '@/components/ActionForm';
+import { NumberInput, Select, SubmitButton, TextArea, TextInput } from '@/components/forms';
+import { FormModal } from '@/components/FormModal';
+import { ProjectStatusPill, microLabelCls, tableWrapCls, tdCls, thCls } from '@/components/crm/ui';
+import { Button } from '@/components/ui/button';
 
 export const dynamic = 'force-dynamic';
 
-const TYPE_LABELS: Record<string, string> = {
-  BAZA: 'Bază', SUSPENDAT: 'Suspendat', INALT: 'Înalt', COLT: 'Colț', BLAT: 'Blat',
+const QUOTE_STATUS: Record<string, { label: string; cls: string }> = {
+  CIORNA: { label: 'Ciornă', cls: 'bg-muted text-muted-foreground' },
+  TRIMISA: { label: 'Trimisă', cls: 'border border-accent-blue-border bg-accent-blue text-accent-blue-foreground' },
+  ACCEPTATA: { label: 'Acceptată', cls: 'border border-emerald-200 bg-emerald-50 text-emerald-700' },
+  RESPINSA: { label: 'Respinsă', cls: 'bg-muted text-muted-foreground line-through' },
 };
-const STATUS_OPTIONS = [
-  { value: 'CIORNA', label: 'Ciornă' },
-  { value: 'TRIMISA', label: 'Trimisă' },
-  { value: 'ACCEPTATA', label: 'Acceptată' },
-];
-const CATEGORY_LABELS: [key: string, label: string][] = [
-  ['boards', 'Plăci'], ['edging', 'Cant ABS'], ['cuttingService', 'Debitare'],
-  ['hardware', 'Feronerie'], ['labor', 'Manoperă'], ['freeLines', 'Linii libere'],
-];
-const EDGE_MODE_OPTIONS = [
-  { value: 'NONE', label: 'Fără cant' },
-  { value: 'L1', label: '1 latură lungă' },
-  { value: 'L2', label: '2 laturi lungi' },
-  { value: 'ALL', label: 'Jur-împrejur (4 laturi)' },
-];
-const EDGE_MODE_LABEL: Record<string, string> = { L1: '1 latură', L2: '2 laturi lungi', ALL: 'jur-împrejur' };
-const NAME_PRESET_OPTIONS = ASSEMBLY_NAME_PRESETS.map((v) => ({ value: v, label: v }));
-const LEG_HEIGHT_PRESET_OPTIONS = ASSEMBLY_LEG_HEIGHT_PRESETS.map((v) => ({ value: v, label: `${v} mm` }));
-const PLINTH_MODE_OPTIONS = [
-  { value: 'NONE', label: 'Fără plintă' },
-  { value: 'ASSEMBLY', label: 'Plintă pe tot ansamblul' },
-  { value: 'CABINETS', label: 'Plintă doar pe corpurile selectate' },
-];
 
-/** Motivele problemelor unui corp (incomplet / feronerie nerezolvată / avertismente). */
-function cabinetReasons(issue: CabinetIssue | undefined, incomplete: boolean): string[] {
-  if (incomplete) return ['incomplet'];
-  if (!issue) return [];
-  const cats = new Set(issue.unresolvedHardware.map((s) => s.category));
-  const reasons: string[] = [];
-  if (cats.has('MANER')) reasons.push('mâner neales');
-  if ([...cats].some((c) => c !== 'MANER')) reasons.push('feronerie de configurat');
-  if (issue.warnings.length > 0) reasons.push('avertismente');
-  return reasons;
-}
+const TABS = [
+  { key: 'oferte', label: 'Oferte' }, { key: 'costuri', label: 'Costuri' }, { key: 'bani', label: 'Bani' }, { key: 'timeline', label: 'Timeline' },
+] as const;
+type Tab = (typeof TABS)[number]['key'];
 
-/** Detaliul problemelor unui corp, cu cantități — pentru numărul roșu + popover pe rând. */
-function cabinetProblems(issue: CabinetIssue | undefined, incomplete: boolean): { label: string; qty: number }[] {
-  if (incomplete) return [{ label: 'Corp incomplet — completează dimensiunile', qty: 1 }];
-  if (!issue) return [];
-  const byName = new Map<string, number>();
-  for (const s of issue.unresolvedHardware) byName.set(s.name, (byName.get(s.name) ?? 0) + s.qty);
-  const items = [...byName.entries()].map(([label, qty]) => ({ label, qty }));
-  for (const w of issue.warnings) items.push({ label: w.message, qty: 1 });
-  return items;
-}
-
-export default async function ProiectPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const data = await loadProject(id);
-  if (!data) notFound();
-  const { project, assemblies, cabinets } = data;
-  const legHeightMap = legHeightByCabinet(assemblies, cabinets);
-  const freeLines = JSON.parse(project.freeLinesJson) as { name: string; amount: number; inCommission?: boolean }[];
-  const loosePanels = JSON.parse(project.loosePanelsJson ?? '[]') as { name?: string; materialId: string; lengthMm: number; widthMm: number; qty: number; edgeBandId?: string; edgeMode?: 'NONE' | 'L1' | 'L2' | 'ALL' }[];
-  const [handleProducts, blatMaterials, bulkMaterials, frontSuppliers, frontModels, edgeBands, otherProjects] = await Promise.all([
-    prisma.hardwareItem.findMany({
-      where: { active: true, category: { in: ['MANER', 'ACCESORIU'] } },
-      orderBy: { name: 'asc' },
-    }),
-    prisma.material.findMany({
-      where: { active: true, category: 'BLAT' },
-      orderBy: { name: 'asc' },
-    }),
-    prisma.material.findMany({
-      where: { active: true },
-      orderBy: { name: 'asc' },
-    }),
-    prisma.frontSupplier.findMany({
-      where: { active: true, productType: 'VOPSIT' }, orderBy: { name: 'asc' },
-    }),
-    prisma.frontModel.findMany({
-      where: { active: true, supplier: { active: true, productType: 'VOPSIT' } },
-      orderBy: [{ tier: 'asc' }, { code: 'asc' }],
-    }),
-    prisma.edgeBand.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
-    prisma.project.findMany({ where: { id: { not: id } }, select: { id: true, name: true }, orderBy: { updatedAt: 'desc' } }),
+export default async function ProiectPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string; flux?: string }> }) {
+  const [{ id }, sp] = await Promise.all([params, searchParams]);
+  const tab: Tab = TABS.some((t) => t.key === sp.tab) ? (sp.tab as Tab) : 'oferte';
+  const [project, projectOptions, timeline, pinned, bani, accounts, evr] = await Promise.all([
+    loadProjectDetail(id), loadProjectOptions(id), loadTimeline({ projectId: id }), loadPinnedNotes({ projectId: id }),
+    loadProjectMoneyDetail(id), loadAccountOptions(), loadEstimateVsReal(id),
   ]);
-  const blatMaterialItems = blatMaterials.map((m) => ({
-    id: m.id, name: m.name, kind: m.kind, thicknessMm: m.thicknessMm, brand: m.brand,
-    category: m.category, imageUrl: m.imageUrl, decorCode: m.decorCode,
-    pricePerSheet: m.pricePerSheet, pricePerSqm: m.pricePerSqm, pricingMode: m.pricingMode, active: m.active,
-  }));
-  const bulkMaterialItems: MaterialPickerItem[] = bulkMaterials.filter((m) => m.category !== 'BLAT').map((m) => ({
-    id: m.id, name: m.name, kind: m.kind, thicknessMm: m.thicknessMm, brand: m.brand,
-    category: m.category, imageUrl: m.imageUrl, decorCode: m.decorCode,
-    pricePerSheet: m.pricePerSheet, pricePerSqm: m.pricePerSqm, pricingMode: m.pricingMode, active: m.active,
-  }));
-  const bulkFrontSuppliers: BulkFrontSupplier[] = frontSuppliers.map((supplier) => ({
-    id: supplier.id, name: supplier.name,
-  }));
-  const bulkEdgeBands = edgeBands.map((b) => ({ id: b.id, name: b.name, thicknessMm: b.thicknessMm }));
-  const bulkFrontModels: BulkFrontModel[] = frontModels.map((model) => ({
-    id: model.id, supplierId: model.supplierId, code: model.code, name: model.name, tier: model.tier,
-    collection: model.collection, shapeFamily: model.shapeFamily, imageUrl: model.imageUrl,
-  }));
-  const ralColors = getRalColors().map((color) => ({
-    code: color.code, num: color.num, name_en: color.name_en, hex: color.hex,
-    vivid: color.vivid, black: color.black,
-  }));
+  if (!project) notFound();
+  const money = bani.money;
+  const accountOptions = accounts.map((a) => ({ value: a.value, label: `${a.label} · ${fmtLei(a.balance)}` }));
+  const todayInput = toDateInput(new Date());
 
-  const basis = await getQuoteBasis(project);
-  const computed = basis.kind !== 'MISSING'
-    ? tryComputeQuote(toQuoteInput(project, cabinets, legHeightMap, assemblies), basis.snapshot)
-    : null;
-  const quote = computed?.quote ?? null;
-  const snapshot = basis.kind !== 'MISSING' ? basis.snapshot : null;
-  const materialName = (mid: string) =>
-    snapshot?.materials.find((m) => m.id === mid)?.name ?? mid;
-  const bandLabel = (bid: string) =>
-    snapshot?.edgeBands.find((b) => b.id === bid)?.name ?? bid;
-
-  const cabinetsByAssembly = new Map<string, LoadedCabinet[]>();
-  for (const c of cabinets) {
-    if (!c.assemblyId) continue;
-    const list = cabinetsByAssembly.get(c.assemblyId) ?? [];
-    list.push(c);
-    cabinetsByAssembly.set(c.assemblyId, list);
-  }
-  const unassigned = cabinets.filter((c) => !c.assemblyId);
-
-  const issueByCabinetId = new Map<string, CabinetIssue>();
-  for (const it of quote?.cabinetIssues ?? []) issueByCabinetId.set(it.cabinetId, it);
+  const next = NEXT_PROJECT_STATUS[project.status as ProjectStatus] ?? null;
+  const dl = deadlineParts(project.deadlineAt);
+  const isClosed = project.status === 'INCHIS' || project.status === 'PIERDUT';
+  const accepted = project.quotes.filter((q) => q.status === 'ACCEPTATA');
+  const latest = project.quotes[project.quotes.length - 1];
+  const lostReasonOptions = Object.entries(LOST_REASON_LABELS).map(([value, label]) => ({ value, label }));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold">{project.name}</h1>
-          <p className="text-sm text-muted-foreground">
-            {project.clientName ?? 'Fără client'} {project.clientContact ? `· ${project.clientContact}` : ''}
-          </p>
-        </div>
-        <DeleteButton action={deleteProject.bind(null, project.id)} label="Șterge proiectul" />
+    <div className="space-y-4">
+      <div className="flex gap-1.5 text-[12.5px] text-muted-foreground">
+        <Link href="/proiecte" className="hover:text-foreground">Proiecte</Link>
+        {project.client && (
+          <><span>›</span><Link href={`/clienti/${project.client.id}`} className="hover:text-foreground">{project.client.name}</Link></>
+        )}
+        <span>›</span><span className="text-foreground">{project.name}</span>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <div className="space-y-6">
-          <section className="space-y-3">
-            <h2 className="font-semibold">Ansambluri</h2>
-            {assemblies.map((a) => (
-              <AssemblyCard
-                key={a.id}
-                projectId={project.id}
-                assembly={a}
-                cabinets={cabinetsByAssembly.get(a.id) ?? []}
-                issues={issueByCabinetId}
-                blatMaterials={blatMaterialItems}
-                bulkMaterials={bulkMaterialItems}
-                bulkFrontSuppliers={bulkFrontSuppliers}
-                bulkFrontModels={bulkFrontModels}
-                ralColors={ralColors}
-                otherProjects={otherProjects}
-                edgeBands={bulkEdgeBands}
-              />
-            ))}
-            {assemblies.length === 0 && (
-              <p className="text-sm text-muted-foreground">Niciun ansamblu încă — adaugă primul mai jos.</p>
+      {/* ───── antet ───── */}
+      <div className="flex flex-col gap-4 rounded-xl bg-card px-6 py-5 ring-1 ring-border">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">{project.name}</h1>
+            <div className="mt-1 flex flex-wrap items-center gap-2.5 text-[13px] text-muted-foreground">
+              {project.client ? (
+                <Link href={`/clienti/${project.client.id}`} className="hover:text-foreground">{project.client.name}</Link>
+              ) : <span>fără client</span>}
+              <span>·</span>
+              <span>
+                deadline <span className={cn('font-mono', dl.cls)}>{dl.label}</span>{dl.sub && ` ${dl.sub}`}
+              </span>
+              <FormModal trigger="schimbă" title="Detalii proiect" variant="outline" size="sm" className="h-[22px] px-2 text-[11.5px] text-muted-foreground">
+                <ActionForm action={updateProjectDetails.bind(null, project.id)} className="grid gap-4">
+                  <TextInput name="name" label="Nume" defaultValue={project.name} />
+                  <TextArea name="description" label="Descriere" defaultValue={project.description} rows={2} />
+                  <TextInput name="deadlineAt" label="Deadline promis" type="date" defaultValue={toDateInput(project.deadlineAt)} required={false} mono />
+                  <div><SubmitButton>Salvează</SubmitButton></div>
+                </ActionForm>
+              </FormModal>
+            </div>
+            {project.description && <p className="mt-2 max-w-[720px] text-[13px] text-muted-foreground">{project.description}</p>}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <ProjectStatusPill status={project.status} className="px-3 py-1 text-[12px]" />
+            {next && next === 'MONTAT' && (
+              <FormModal trigger={`Trece la ${PROJECT_STATUS_LABELS[next]} →`} title="Proiect montat">
+                <ActionForm action={advanceProject.bind(null, project.id)} className="grid gap-4">
+                  <input type="hidden" name="to" value="MONTAT" />
+                  <NumberInput name="hoursWorked" label="Ore lucrate (opțional)" defaultValue={project.hoursWorked} required={false} step="0.5" />
+                  <p className="text-[12px] text-muted-foreground">Venitul proiectului intră în raportul lunii în care e montat.</p>
+                  <div><SubmitButton>Marchează montat</SubmitButton></div>
+                </ActionForm>
+              </FormModal>
             )}
-
-            <AssemblyAddModal>
-              <ActionForm action={addAssembly.bind(null, project.id)} className="grid items-end gap-3 sm:grid-cols-2">
-                <Select name="namePreset" label="Tip (preselecție)" options={NAME_PRESET_OPTIONS} defaultValue={NAME_PRESET_OPTIONS[0].value} />
-                <TextInput name="name" label="Nume liber (opțional)" required={false} />
-                <Select name="legHeightPreset" label="Picioare (preselecție)" options={LEG_HEIGHT_PRESET_OPTIONS} defaultValue={LEG_HEIGHT_PRESET_OPTIONS[0].value} />
-                <NumberInput name="legHeightMm" label="Picioare — valoare liberă (mm)" required={false} step="1" />
-                <Select name="plinthMode" label="Plintă (100 mm)" options={PLINTH_MODE_OPTIONS} defaultValue="NONE" />
-                <AssemblyKindFields blatMaterials={blatMaterialItems} />
-                <p className="text-xs text-muted-foreground sm:col-span-2">
-                  Regulă: dacă un câmp liber e completat, el câștigă; altfel se folosește preselecția
-                  (pentru nume, „Altul" cere numele liber).
-                </p>
-                <div className="sm:col-span-2"><SubmitButton>Adaugă ansamblu</SubmitButton></div>
+            {next && next !== 'MONTAT' && (
+              <ActionForm
+                action={advanceProject.bind(null, project.id)}
+                confirm={
+                  next === 'ACCEPTAT' && accepted.length === 0
+                    ? 'Nicio ofertă nu e acceptată. Treci proiectul pe Acceptat oricum?'
+                    : next === 'INCHIS' && (money.receivable > 0.005 || money.unpaidShare > 0.005)
+                      ? `Atenție: ${money.receivable > 0.005 ? `mai sunt de încasat ${fmtLei(money.receivable)}` : ''}${money.receivable > 0.005 && money.unpaidShare > 0.005 ? ' și ' : ''}${money.unpaidShare > 0.005 ? `mai sunt facturi neplătite de ${fmtLei(money.unpaidShare)}` : ''}. Închizi proiectul oricum?`
+                      : `Treci proiectul la „${PROJECT_STATUS_LABELS[next]}"?`
+                }
+              >
+                <input type="hidden" name="to" value={next} />
+                <Button type="submit">Trece la {PROJECT_STATUS_LABELS[next]} →</Button>
               </ActionForm>
-            </AssemblyAddModal>
-          </section>
+            )}
+            {!isClosed && (
+              <FormModal trigger="Pierdut" title="Proiect pierdut" variant="outline">
+                <ActionForm action={markProjectLost.bind(null, project.id)} className="grid gap-4">
+                  <Select name="lostReason" label="Motiv" options={lostReasonOptions} />
+                  <TextInput name="lostNote" label="Detalii" required={false} />
+                  <div><SubmitButton>Marchează pierdut</SubmitButton></div>
+                </ActionForm>
+              </FormModal>
+            )}
+          </div>
+        </div>
 
-          {unassigned.length > 0 && (
-            <section>
-              <Card>
-                <CardHeader><CardTitle>Fără ansamblu</CardTitle></CardHeader>
-                <CardContent className="space-y-2">
-                  <p className="text-xs text-muted-foreground">
-                    Corpuri neasignate unui ansamblu (mutarea între ansambluri nu e încă disponibilă) —
-                    le poți deschide, duplica sau șterge de aici.
-                  </p>
-                  <CabinetsTable projectId={project.id} cabinets={unassigned} issues={issueByCabinetId} />
-                </CardContent>
-              </Card>
-            </section>
+        <div className="grid grid-cols-2 gap-4 border-t pt-4 md:grid-cols-4">
+          <div>
+            <div className={microLabelCls}>Contract</div>
+            <div className="mt-1 font-mono text-2xl font-semibold tracking-tight">{money.contract > 0 ? fmtLei(money.contract) : '—'}</div>
+            <div className="text-[12px] text-muted-foreground">
+              {accepted.length === 0 ? 'nicio ofertă acceptată' : accepted.length === 1 ? `oferta v${accepted[0].version}` : `${accepted.length} oferte acceptate`}
+              {money.contractChanges !== 0 && ` ${money.contractChanges > 0 ? '+' : '−'} ${fmtLei(Math.abs(money.contractChanges))} modificări`}
+            </div>
+          </div>
+          <div>
+            <div className={microLabelCls}>Încasat</div>
+            <div className="mt-1 font-mono text-2xl font-semibold tracking-tight text-accent-blue-foreground">{fmtLei(money.received)}</div>
+            <div className="text-[12px] text-muted-foreground">
+              {money.contract > 0 ? `de încasat ${fmtLei(Math.max(0, money.receivable))}` : 'fără contract'}
+            </div>
+          </div>
+          <div>
+            <div className={microLabelCls}>Cheltuit</div>
+            <div className="mt-1 font-mono text-2xl font-semibold tracking-tight">{fmtLei(money.spent)}</div>
+            <div className="text-[12px] text-muted-foreground">
+              {accepted.length > 0 && accepted[0].totalCost != null ? `estimat ${fmtLei(accepted.reduce((s, q) => s + (q.totalCost ?? 0), 0))}` : 'fără estimat'}
+              {money.unpaidShare > 0.005 && ` · de plătit ${fmtLei(money.unpaidShare)}`}
+            </div>
+          </div>
+          <div>
+            <div className={microLabelCls}>Contribuție la zi</div>
+            <div className={cn('mt-1 font-mono text-2xl font-semibold tracking-tight', money.contract > 0 ? (money.contribution < 0 ? 'text-red-600' : 'text-emerald-700') : 'text-muted-foreground/50')}>
+              {money.contract > 0 ? fmtLei(money.contribution) : '—'}
+            </div>
+            <div className="text-[12px] text-muted-foreground">{money.contributionPct != null ? `${money.contributionPct}% din contract` : 'contract − cheltuit'}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ───── tab-uri ───── */}
+      <div className="flex gap-5 border-b border-[#d9d7d0]">
+        {TABS.map((t) => (
+          <Link
+            key={t.key}
+            href={`/proiecte/${project.id}?tab=${t.key}`}
+            className={cn(
+              '-mb-px border-b-2 px-0.5 pb-2.5 pt-2 text-[13.5px] font-medium',
+              t.key === tab ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {t.label}
+          </Link>
+        ))}
+      </div>
+
+      {tab === 'oferte' ? (
+        <div className={tableWrapCls}>
+          <div className="flex items-center justify-between border-b px-5 py-3.5">
+            <div className="text-[15px] font-bold">Oferte</div>
+            <div className="flex gap-2">
+              {latest && (
+                <ActionForm action={duplicateQuote.bind(null, latest.id)}>
+                  <Button type="submit" variant="outline" size="sm">Duplică v{latest.version}</Button>
+                </ActionForm>
+              )}
+              <FormModal trigger="Ofertă nouă" title="Ofertă nouă" size="sm">
+                <ActionForm action={createQuoteForProject.bind(null, project.id)} className="grid gap-4">
+                  <TextInput name="label" label="Etichetă (opțional)" placeholder="fronturi MDF vopsit" required={false} />
+                  <p className="text-[12px] text-muted-foreground">Se deschide editorul de ofertă ca versiunea v{(latest?.version ?? 0) + 1}.</p>
+                  <div><SubmitButton>Creează oferta</SubmitButton></div>
+                </ActionForm>
+              </FormModal>
+            </div>
+          </div>
+          {project.quotes.length === 0 ? (
+            <div className="px-5 py-8 text-center text-[13px] text-muted-foreground">Nicio ofertă încă. Creează prima cu „Ofertă nouă".</div>
+          ) : (
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className={thCls}>Versiune</th>
+                  <th className={thCls}>Status</th>
+                  <th className={cn(thCls, 'text-right')}>Corpuri</th>
+                  <th className={cn(thCls, 'text-right')}>Cost materiale</th>
+                  <th className={cn(thCls, 'text-right')}>Preț ofertă</th>
+                  <th className={thCls}>Data</th>
+                  <th className={thCls}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {project.quotes.map((q) => {
+                  const st = QUOTE_STATUS[q.status] ?? { label: q.status, cls: 'bg-muted text-muted-foreground' };
+                  const isAccepted = q.status === 'ACCEPTATA';
+                  return (
+                    <tr key={q.id} className={cn(isAccepted && 'bg-emerald-50/40')}>
+                      <td className={cn(tdCls, 'font-semibold')}>
+                        <span className="font-mono">v{q.version}</span>
+                        {q.label && <span className="ml-1.5 font-normal text-muted-foreground">{q.label}</span>}
+                      </td>
+                      <td className={tdCls}><span className={cn('inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold', st.cls)}>{st.label}</span></td>
+                      <td className={cn(tdCls, 'text-right font-mono text-[12.5px]')}>{q.cabinetCount}</td>
+                      <td className={cn(tdCls, 'text-right font-mono text-[12.5px]')}>{q.totalCost != null ? fmtLei(q.totalCost) : '—'}</td>
+                      <td className={cn(tdCls, 'text-right font-mono text-[12.5px] font-semibold', isAccepted && 'text-emerald-700')}>
+                        {isAccepted && q.acceptedPrice != null ? fmtLei(q.acceptedPrice) : q.sellPrice != null ? fmtLei(q.sellPrice) : '—'}
+                      </td>
+                      <td className={cn(tdCls, 'font-mono text-[12px] text-muted-foreground')}>{fmtDate.format(isAccepted && q.acceptedAt ? q.acceptedAt : q.updatedAt)}</td>
+                      <td className={cn(tdCls, 'whitespace-nowrap text-right')}>
+                        <div className="flex items-center justify-end gap-1.5">
+                          {!isAccepted && !isClosed && (
+                            <FormModal trigger="Acceptă" title={`Acceptă oferta v${q.version}`} size="sm">
+                              <ActionForm
+                                action={acceptQuote.bind(null, q.id)}
+                                className="grid gap-4"
+                                confirm={project.quotes.some((o) => o.id !== q.id && o.status === 'TRIMISA') ? 'Celelalte oferte trimise vor fi marcate ca respinse. Continui?' : undefined}
+                              >
+                                <p className="text-[13px]">
+                                  Prețul se îngheață la <span className="font-mono font-semibold">{q.sellPrice != null ? fmtLei(q.sellPrice) : '—'}</span> și devine prețul contractului.
+                                  {project.status === 'OFERTARE' && ' Proiectul trece pe Acceptat.'}
+                                </p>
+                                {!project.deadlineAt && (
+                                  <TextInput name="deadlineAt" label="Deadline promis clientului" type="date" required={false} mono />
+                                )}
+                                <div><SubmitButton>Acceptă oferta</SubmitButton></div>
+                              </ActionForm>
+                            </FormModal>
+                          )}
+                          {projectOptions.length > 0 && (
+                            <FormModal trigger="Mută" title="Mută oferta în alt proiect" variant="ghost" size="sm">
+                              <ActionForm action={moveQuoteToProject.bind(null, q.id)} className="grid gap-4">
+                                <Select name="projectId" label="Proiect destinație" options={projectOptions} allowEmpty />
+                                <p className="text-[12px] text-muted-foreground">Util pentru gruparea ofertelor migrate. Oferta primește versiunea următoare în proiectul nou.</p>
+                                <div><SubmitButton>Mută oferta</SubmitButton></div>
+                              </ActionForm>
+                            </FormModal>
+                          )}
+                          <Button asChild variant="outline" size="sm">
+                            <Link href={`/oferte/${q.id}`}>Deschide →</Link>
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
+        </div>
+      ) : tab === 'costuri' ? (
+        <div className="space-y-4">
+          {/* (a) Estimat vs Real */}
+          <div className={tableWrapCls}>
+            <div className="flex items-center justify-between border-b px-5 py-3.5">
+              <div className="text-[15px] font-bold">
+                Estimat vs Real <span className="ml-1.5 font-medium text-muted-foreground">· pe categorii</span>
+                {evr.totalOver && <span className="ml-2 rounded-full border border-red-200 bg-red-50 px-2 py-px align-middle text-[10.5px] font-semibold text-red-700">peste estimat</span>}
+              </div>
+              <span className="text-[12px] text-muted-foreground">
+                {evr.estimate ? `estimat din ${accepted.length === 1 ? `oferta v${accepted[0].version}` : 'ofertele acceptate'}` : 'fără ofertă acceptată'} · prag {evr.thresholdPct}%
+              </span>
+            </div>
+            {evr.rows.length === 0 ? (
+              <div className="px-5 py-8 text-center text-[13px] text-muted-foreground">Nimic de comparat încă: fără ofertă acceptată și fără cheltuieli alocate.</div>
+            ) : (
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className={thCls}>Categorie</th>
+                    <th className={cn(thCls, 'text-right')}>Estimat</th>
+                    <th className={cn(thCls, 'text-right')}>Real</th>
+                    <th className={cn(thCls, 'text-right')}>Diferență</th>
+                    <th className={cn(thCls, 'text-right')}>Real / estimat</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {evr.rows.map((r) => (
+                    <tr key={r.key} className={cn(r.over && 'bg-red-50/60')}>
+                      <td className={cn(tdCls, 'font-medium')}>
+                        {r.label}
+                        {r.over && <span className="ml-2 rounded-full border border-red-200 bg-red-50 px-2 py-px text-[10.5px] font-semibold text-red-700">peste estimat</span>}
+                        {r.estimated == null && <span className="ml-2 text-[11px] text-muted-foreground">fără mapare la ofertă</span>}
+                      </td>
+                      <td className={cn(tdCls, 'text-right font-mono text-[12.5px]')}>{r.estimated != null ? fmtLei(r.estimated) : '—'}</td>
+                      <td className={cn(tdCls, 'text-right font-mono text-[12.5px] font-semibold')}>{fmtLei(r.real)}</td>
+                      <td className={cn(tdCls, 'text-right font-mono text-[12.5px]', r.diff != null && (r.diff > 0 ? 'text-red-600' : 'text-emerald-700'))}>
+                        {r.diff != null ? `${r.diff > 0 ? '+' : r.diff < 0 ? '−' : ''}${fmtLei(Math.abs(r.diff))}` : '—'}
+                      </td>
+                      <td className={cn(tdCls, 'text-right font-mono text-[12.5px]')}>{r.ratio != null ? `${Math.round(r.ratio * 100)}%` : '—'}</td>
+                    </tr>
+                  ))}
+                  <tr className="font-semibold">
+                    <td className={tdCls}>Total direct</td>
+                    <td className={cn(tdCls, 'text-right font-mono text-[12.5px]')}>{evr.totalEstimated != null ? fmtLei(evr.totalEstimated) : '—'}</td>
+                    <td className={cn(tdCls, 'text-right font-mono text-[12.5px]')}>{fmtLei(evr.totalReal)}</td>
+                    <td className={cn(tdCls, 'text-right font-mono text-[12.5px]', evr.totalEstimated != null && (evr.totalReal - evr.totalEstimated > 0 ? 'text-red-600' : 'text-emerald-700'))}>
+                      {evr.totalEstimated != null ? `${evr.totalReal - evr.totalEstimated > 0 ? '+' : '−'}${fmtLei(Math.abs(evr.totalReal - evr.totalEstimated))}` : '—'}
+                    </td>
+                    <td className={cn(tdCls, 'text-right font-mono text-[12.5px]')}>{evr.totalEstimated ? `${Math.round((evr.totalReal / evr.totalEstimated) * 100)}%` : '—'}</td>
+                  </tr>
+                  {evr.estimate && (
+                    <tr className="text-muted-foreground">
+                      <td className={tdCls}>Manoperă % din ofertă <span className="text-[11px]">(adaosul brut: preț − cost)</span></td>
+                      <td className={cn(tdCls, 'text-right font-mono text-[12.5px]')}>{fmtLei(evr.estimate.markup)}</td>
+                      <td className={cn(tdCls, 'text-right font-mono text-[12.5px] font-semibold', money.contribution < evr.estimate.markup ? 'text-red-600' : 'text-emerald-700')}>{fmtLei(money.contribution)}</td>
+                      <td className={cn(tdCls, 'text-right font-mono text-[12.5px]')}>{`${money.contribution - evr.estimate.markup > 0 ? '+' : '−'}${fmtLei(Math.abs(money.contribution - evr.estimate.markup))}`}</td>
+                      <td className={cn(tdCls, 'text-right text-[11px]')}>contribuția reală</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
 
-          <section>
-            <Card>
-              <CardHeader><CardTitle>Linii libere (blat, transport…)</CardTitle></CardHeader>
-              <CardContent className="space-y-3">
-                <ul className="space-y-1 text-sm">
-                  {freeLines.map((l, i) => (
-                    <li key={i} className="flex items-center gap-3">
-                      <span className="grow">
-                        {l.name} — {fmtLei(l.amount)}
-                        {l.inCommission && (
-                          <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
-                            în comision
-                          </span>
-                        )}
+          {/* (b) alocările */}
+          <div className={tableWrapCls}>
+            <div className="flex items-center justify-between border-b px-5 py-3.5">
+              <div className="text-[15px] font-bold">Cheltuieli alocate <span className="ml-1.5 font-mono text-[13px] font-medium text-muted-foreground">{fmtLei(money.spent)}</span></div>
+              <Button asChild size="sm"><Link href={`/finante/cheltuieli/noua?proiect=${project.id}`}>Adaugă cheltuială</Link></Button>
+            </div>
+            {bani.allocations.length === 0 ? (
+              <div className="px-5 py-8 text-center text-[13px] text-muted-foreground">Nicio cheltuială alocată încă. Bonurile și facturile se aloca pe proiect din „Adaugă cheltuială".</div>
+            ) : (
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className={thCls}>Document</th>
+                    <th className={thCls}>Categorie</th>
+                    <th className={cn(thCls, 'text-right')}>Alocat</th>
+                    <th className={thCls}>Plată</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bani.allocations.map((a) => (
+                    <tr key={a.id}>
+                      <td className={tdCls}>
+                        <Link href={`/finante/cheltuieli?luna=toate&doc=${a.document.id}`} className="font-semibold hover:underline">{a.document.counterparty}</Link>
+                        <div className="text-[11.5px] text-muted-foreground">
+                          {DOCUMENT_KIND_LABELS[a.document.kind as DocumentKind] ?? a.document.kind}{a.document.number && ` ${a.document.number}`} · {fmtDate.format(a.document.issuedAt)} · din {fmtLei(a.document.amount)}
+                        </div>
+                      </td>
+                      <td className={cn(tdCls, 'text-[12.5px]')}>{a.category}</td>
+                      <td className={cn(tdCls, 'text-right font-mono text-[12.5px] font-semibold')}>{fmtLei(a.amount)}</td>
+                      <td className={tdCls}>
+                        <span className={cn('inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold', PAYMENT_STATUS_PILL[a.document.status])}>{PAYMENT_STATUS_LABELS[a.document.status]}</span>
+                        {a.unpaidShare > 0.005 && <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">de plătit {fmtLei(a.unpaidShare)}</div>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            {/* (c) modificări de contract */}
+            <div className={tableWrapCls}>
+              <div className="flex items-center justify-between border-b px-5 py-3.5">
+                <div className="text-[15px] font-bold">Modificări de contract</div>
+                <FormModal trigger="Adaugă modificare" title="Modificare de contract" variant="outline" size="sm">
+                  <ActionForm action={addContractChange.bind(null, project.id)} className="grid gap-3">
+                    <TextInput name="description" label="Ce s-a schimbat" placeholder="a mai vrut 2 corpuri suspendate" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <TextInput name="amount" label="Sumă (± lei)" placeholder="1800 sau -500" mono />
+                      <TextInput name="date" label="Data" type="date" defaultValue={todayInput} mono />
+                    </div>
+                    <p className="text-[12px] text-muted-foreground">Intră în prețul contractului și în timeline. Sumă negativă = reducere.</p>
+                    <div><SubmitButton>Salvează</SubmitButton></div>
+                  </ActionForm>
+                </FormModal>
+              </div>
+              {bani.changes.length === 0 ? (
+                <div className="px-5 py-6 text-center text-[13px] text-muted-foreground">Nicio modificare după acceptare.</div>
+              ) : (
+                <ul className="divide-y">
+                  {bani.changes.map((c) => (
+                    <li key={c.id} className="flex items-center justify-between gap-2 px-5 py-2.5 text-[13px]">
+                      <span><span className="mr-2 font-mono text-[11.5px] text-muted-foreground">{fmtDate.format(c.date)}</span>{c.description}</span>
+                      <span className="flex items-center gap-2">
+                        <span className={cn('font-mono font-semibold', c.amount < 0 ? 'text-red-600' : 'text-emerald-700')}>{c.amount > 0 ? '+' : '−'}{fmtLei(Math.abs(c.amount))}</span>
+                        <DeleteButton action={deleteContractChange.bind(null, c.id)} iconOnly label="Șterge modificarea" confirmMessage="Ștergi această modificare de contract?" />
                       </span>
-                      <DeleteButton action={removeFreeLine.bind(null, project.id, i)} label="Șterge" />
                     </li>
                   ))}
-                  {freeLines.length === 0 && <li className="text-muted-foreground">Nicio linie liberă.</li>}
                 </ul>
-                <ActionForm action={addFreeLine.bind(null, project.id)} className="grid grid-cols-2 items-end gap-2 md:grid-cols-4">
-                  <TextInput name="name" label="Denumire" />
-                  <NumberInput name="amount" label="Suma (lei)" />
-                  <label className="flex items-center gap-2 pb-2 text-sm">
-                    <input type="checkbox" name="inCommission" className="h-4 w-4 rounded border-input" />
-                    <span>În comision (adaos)</span>
-                  </label>
-                  <div><SubmitButton>Adaugă</SubmitButton></div>
-                </ActionForm>
-              </CardContent>
-            </Card>
-          </section>
-
-          <section>
-            <Card>
-              <CardHeader><CardTitle>Plăci libere (PAL/MDF)</CardTitle></CardHeader>
-              <CardContent className="space-y-3">
-                <ul className="space-y-1 text-sm">
-                  {loosePanels.map((pnl, i) => {
-                    const mat = bulkMaterialItems.find((m) => m.id === pnl.materialId);
-                    const bandName = pnl.edgeBandId ? edgeBands.find((b) => b.id === pnl.edgeBandId)?.name : null;
-                    const cant = bandName && pnl.edgeMode && pnl.edgeMode !== 'NONE'
-                      ? ` · cant ${bandName} (${EDGE_MODE_LABEL[pnl.edgeMode]})` : '';
-                    return (
-                      <li key={i} className="flex items-center gap-3">
-                        <span className="grow">
-                          {pnl.name ? `${pnl.name} · ` : ''}{mat?.name ?? pnl.materialId} — {pnl.lengthMm}×{pnl.widthMm} mm × {pnl.qty} buc{cant}
-                        </span>
-                        <DeleteButton action={removeLoosePanel.bind(null, project.id, i)} label="Șterge" />
-                      </li>
-                    );
-                  })}
-                  {loosePanels.length === 0 && <li className="text-muted-foreground">Nicio placă liberă.</li>}
-                </ul>
-                <ActionForm action={addLoosePanel.bind(null, project.id)} className="grid grid-cols-2 items-end gap-2 md:grid-cols-6">
-                  <div className="col-span-2"><Select name="materialId" label="Material" options={bulkMaterialItems.map((m) => ({ value: m.id, label: m.name }))} /></div>
-                  <NumberInput name="lengthMm" label="Lungime (mm)" step="1" />
-                  <NumberInput name="widthMm" label="Lățime (mm)" step="1" />
-                  <NumberInput name="qty" label="Buc" step="1" defaultValue={1} />
-                  <TextInput name="name" label="Denumire (opțional)" required={false} />
-                  <div className="col-span-2"><Select name="edgeBandId" label="Cant (ABS)" options={edgeBands.map((b) => ({ value: b.id, label: b.name }))} allowEmpty /></div>
-                  <div className="col-span-2"><Select name="edgeMode" label="Laturi cant" options={EDGE_MODE_OPTIONS} defaultValue="NONE" /></div>
-                  <div className="col-span-2 md:col-span-6"><SubmitButton>Adaugă placă</SubmitButton></div>
-                </ActionForm>
-                <p className="text-xs text-muted-foreground">Plăcile libere intră în ofertă la „Plăci" — cotate din catalog și așezate pe plăci împreună cu piesele corpurilor. Cantul intră la „Cant ABS".</p>
-              </CardContent>
-            </Card>
-          </section>
-        </div>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader><CardTitle>Detaliile proiectului</CardTitle></CardHeader>
-            <CardContent>
-              <ActionForm action={updateProjectDetails.bind(null, project.id)} className="grid gap-3">
-                <TextInput name="name" label="Numele proiectului" defaultValue={project.name} />
-                <TextInput name="clientName" label="Client" defaultValue={project.clientName ?? ''} required={false} />
-                <TextInput name="clientContact" label="Contact (telefon/email)" defaultValue={project.clientContact ?? ''} required={false} />
-                <div className="grid gap-1">
-                  <label htmlFor="observatii" className="text-[11px] font-semibold uppercase tracking-[0.04em] text-muted-foreground">Observații (apar în ofertă)</label>
-                  <textarea id="observatii" name="observatii" rows={4} defaultValue={project.observatii ?? ''}
-                    placeholder="Note pentru client: termene speciale, ce nu e inclus, condiții de plată suplimentare, etc."
-                    className="w-full rounded-lg border border-input bg-transparent p-2.5 text-sm outline-none focus-visible:border-ring" />
-                </div>
-                <div><SubmitButton>Salvează detaliile</SubmitButton></div>
-              </ActionForm>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Setările proiectului</CardTitle></CardHeader>
-            <CardContent>
-              <ActionForm action={updateProjectSettings.bind(null, project.id)} className="grid grid-cols-2 items-end gap-2">
-                <NumberInput name="laborPct" label="Manoperă (%)" defaultValue={project.laborPct} />
-                <NumberInput name="yieldFactor" label="Factor utilizare foaie (doar estimarea per corp)" defaultValue={project.yieldFactor} step="0.01" />
-                <Select name="status" label="Stare" options={STATUS_OPTIONS} defaultValue={project.status} />
-                <Select
-                  name="handleType" label="Tip mâner (proiect)"
-                  options={HANDLE_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-                  defaultValue={project.handleType}
-                />
-                <Select
-                  name="handleItemId" label="Produs mâner implicit"
-                  options={handleProducts.map((h) => ({ value: h.id, label: `${h.name} (${h.pricePerUnit} lei)` }))}
-                  defaultValue={project.handleItemId}
-                  allowEmpty
-                />
-                <div><SubmitButton>Salvează</SubmitButton></div>
-              </ActionForm>
-              <p className="mt-2 text-xs text-muted-foreground">Corpurile fără excepție de mâner moștenesc tipul proiectului.</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle>Rezumat</CardTitle>
-                {basis.kind === 'LIVE' && (
-                  <Badge className="bg-green-600 text-white hover:bg-green-600">Prețuri live</Badge>
-                )}
-                {basis.kind === 'FROZEN' && (
-                  <Badge variant="outline" className="border-amber-500 text-amber-700">Prețuri înghețate</Badge>
-                )}
+              )}
+              <div className="flex items-center justify-between border-t px-5 py-2.5 text-[12.5px]">
+                <span className="text-muted-foreground">Preț contract</span><span className="font-mono font-semibold">{fmtLei(money.contract)}</span>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {basis.kind === 'FROZEN' && (
-                <Alert>
-                  <AlertDescription>
-                    Înghețate la {new Date(basis.snapshot.takenAt).toLocaleString('ro-RO')}.
-                    <ActionForm action={refreshFrozenPrices.bind(null, project.id)} className="mt-2">
-                      <SubmitButton>Reîmprospătează prețurile</SubmitButton>
-                    </ActionForm>
-                  </AlertDescription>
-                </Alert>
-              )}
-              {basis.kind === 'MISSING' && (
-                <Alert variant="destructive">
-                  <AlertDescription>
-                    Proiectul e într-o stare înghețată dar nu are un calcul salvat — comută starea înapoi la
-                    „Ciornă" și apoi la starea dorită pentru a genera un calcul.
-                  </AlertDescription>
-                </Alert>
-              )}
-              {computed?.error && (
-                <Alert variant="destructive"><AlertDescription>{computed.error}</AlertDescription></Alert>
-              )}
+            </div>
 
-              {quote && snapshot && (
-                <div className="space-y-4">
-                  {quote.cabinetIssues.length > 0 && (
-                    <div className="rounded border border-amber-300 bg-amber-50 p-2">
-                      <p className="text-xs font-medium text-amber-800">
-                        ⚠ {quote.cabinetIssues.length} {quote.cabinetIssues.length === 1 ? 'corp necesită' : 'corpuri necesită'} atenție
-                      </p>
-                      <ul className="mt-1 space-y-0.5">
-                        {quote.cabinetIssues.map((issue) => (
-                          <li key={issue.cabinetId}>
-                            <Link
-                              href={`/proiecte/${project.id}/corp/${issue.cabinetId}`}
-                              className="text-xs text-amber-900 hover:underline"
-                            >
-                              → {issue.label} · {cabinetReasons(issue, issue.incomplete).join(' · ') || 'necesită atenție'}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <Card size="sm">
-                      <CardContent>
-                        <div className="text-xs text-muted-foreground">Cost total</div>
-                        <div className="text-xl font-bold">{fmtLei(quote.costs.totalCost)}</div>
-                      </CardContent>
-                    </Card>
-                    <Card size="sm">
-                      <CardContent>
-                        <div className="text-xs text-muted-foreground">Preț de vânzare (manoperă {fmtNum(project.laborPct)}%)</div>
-                        <div className="text-xl font-bold">{fmtLei(quote.costs.sellPrice)}</div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <Table>
-                    <TableBody>
-                      {CATEGORY_LABELS.map(([key, label]) => (
-                        <TableRow key={key}>
-                          <TableCell className="text-muted-foreground">{label}</TableCell>
-                          <TableCell className="text-right">{fmtLei(quote.costs.breakdown[key as keyof typeof quote.costs.breakdown])}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-
-                  <div>
-                    <h3 className="mb-1 text-sm font-medium">Necesar de materiale</h3>
-                    <ul className="text-sm">
-                      {quote.costs.needs.boards.map((b) => (
-                        <li key={b.materialId}>
-                          {materialName(b.materialId)}: {fmtNum(b.totalAreaSqm)} m²
-                          {b.sheets !== null ? ` → ${b.sheets} ${b.sheets === 1 ? 'placă' : 'plăci'} (pierdere ${fmtNum(b.wastePct ?? 0, 1)}%)` : ' (la m²)'}
-                        </li>
-                      ))}
-                      {quote.costs.needs.edging.map((e) => (
-                        <li key={e.edgeBandId}>{bandLabel(e.edgeBandId)}: {fmtNum(e.totalMl)} ml</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h3 className="mb-1 text-sm font-medium">Listă feronerie</h3>
-                    <ul className="text-sm">
-                      {quote.hardwareSummary.map((h) => (
-                        <li key={h.name}>{h.qty} × {h.name}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <Button asChild variant="outline" size="sm">
-                      <Link href={`/proiecte/${project.id}/oferta`}>Ofertă pentru client (print/PDF)</Link>
-                    </Button>
-                    <Button asChild variant="outline" size="sm">
-                      <Link href={`/proiecte/${project.id}/plan-debitare`}>Plan debitare (print/PDF)</Link>
-                    </Button>
-                    {quote.cutList.map((f) => (
-                      <Button key={f.materialId} asChild variant="outline" size="sm">
-                        <a href={`/proiecte/${project.id}/export/debitare/${f.materialId}`}>CSV debitare: {f.materialName}</a>
-                      </Button>
-                    ))}
-                    {quote.glassFrontList.map((f) => (
-                      <Button key={`glass-${f.materialId}`} asChild variant="outline" size="sm">
-                        <a href={`/proiecte/${project.id}/export/debitare/${f.materialId}`}>CSV fronturi sticlă: {f.materialName}</a>
-                      </Button>
-                    ))}
-                    {quote.glassShelfList.map((f) => (
-                      <Button key={`glass-shelf-${f.materialId}`} asChild variant="outline" size="sm">
-                        <a href={`/proiecte/${project.id}/export/debitare/${f.materialId}`}>CSV polițe sticlă: {f.materialName}</a>
-                      </Button>
-                    ))}
-                    <Button asChild variant="outline" size="sm">
-                      <a href={`/proiecte/${project.id}/export/feronerie`}>CSV feronerie</a>
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            {/* (d) ore lucrate */}
+            <div className="flex flex-col gap-2 rounded-xl bg-card p-5 ring-1 ring-border">
+              <div className="text-[15px] font-bold">Ore lucrate</div>
+              <div className="font-mono text-2xl font-semibold tracking-tight">{project.hoursWorked != null ? project.hoursWorked : '—'}</div>
+              <p className="text-[12px] text-muted-foreground">Se cere la Montat, opțional. Manopera directă = ore × tarif orar încărcat, când există destule proiecte cu ore.</p>
+              <div>
+                <FormModal trigger={project.hoursWorked != null ? 'Schimbă' : 'Completează'} title="Ore lucrate" variant="outline" size="sm">
+                  <ActionForm action={setHoursWorked.bind(null, project.id)} className="grid gap-4">
+                    <NumberInput name="hoursWorked" label="Ore lucrate" defaultValue={project.hoursWorked} required={false} step="0.5" />
+                    <div><SubmitButton>Salvează</SubmitButton></div>
+                  </ActionForm>
+                </FormModal>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-const ASSEMBLY_KIND_LABELS: Record<string, string> = {
-  FARA_BLAT: '', CU_BLAT: 'cu blat', BUCATARIE: 'bucătărie',
-};
-
-function AssemblyCard({
-  projectId, assembly, cabinets, issues, blatMaterials,
-  bulkMaterials, bulkFrontSuppliers, bulkFrontModels, ralColors, otherProjects, edgeBands,
-}: {
-  projectId: string; assembly: Assembly; cabinets: LoadedCabinet[]; issues: Map<string, CabinetIssue>;
-  blatMaterials: MaterialPickerItem[];
-  bulkMaterials: MaterialPickerItem[];
-  bulkFrontSuppliers: BulkFrontSupplier[];
-  bulkFrontModels: BulkFrontModel[];
-  ralColors: { code: string; num: string; name_en: string; hex: string; vivid: boolean; black: boolean }[];
-  otherProjects: { id: string; name: string }[];
-  edgeBands: { id: string; name: string; thicknessMm: number }[];
-}) {
-  const kindLabel = ASSEMBLY_KIND_LABELS[assembly.kind] ?? '';
-  const blatSummary = assembly.kind !== 'FARA_BLAT' && assembly.baseHeightMm != null && assembly.blatDepthMm != null
-    ? ` · ${kindLabel}: bază ${fmtNum(assembly.baseHeightMm, 0)} / blat A${fmtNum(assembly.blatDepthMm, 0)} mm`
-    : kindLabel ? ` · ${kindLabel}` : '';
-  const editForm = (
-    <ActionForm action={updateAssembly.bind(null, assembly.id)} className="grid items-end gap-3 sm:grid-cols-2">
-      <TextInput name="name" label="Nume" defaultValue={assembly.name} />
-      <NumberInput name="legHeightMm" label="Picioare (mm)" defaultValue={assembly.legHeightMm} step="1" />
-      <Select name="plinthMode" label="Plintă (100 mm)" options={PLINTH_MODE_OPTIONS} defaultValue={assembly.plinthMode} />
-      <AssemblyKindFields
-        blatMaterials={blatMaterials}
-        defaults={{
-          kind: assembly.kind,
-          baseHeightMm: assembly.baseHeightMm,
-          blatMaterialId: assembly.blatMaterialId,
-          blatDepthMm: assembly.blatDepthMm,
-          upperHeightMm: assembly.upperHeightMm,
-        }}
-      />
-      <div className="sm:col-span-2"><SubmitButton>Salvează</SubmitButton></div>
-    </ActionForm>
-  );
-  return (
-    <AssemblyCardShell
-      name={assembly.name}
-      metaText={`· picioare ${fmtNum(assembly.legHeightMm, 0)} mm · ${PLINTH_MODE_OPTIONS.find((option) => option.value === assembly.plinthMode)?.label.toLowerCase() ?? 'fără plintă'}${blatSummary}`}
-      threeDSlot={(
-        <Button asChild variant="outline" size="sm" title="Așezare 3D a corpurilor">
-          <Link href={`/proiecte/${projectId}/ansamblu/${assembly.id}/asezare`}>
-            <Boxes /> Așezare 3D
-          </Link>
-        </Button>
-      )}
-      deleteSlot={(
-        <DeleteButton
-          action={deleteAssembly.bind(null, assembly.id)}
-          label="Șterge ansamblul"
-          confirmMessage={cabinets.length > 0
-            ? `Ștergi ansamblul „${assembly.name}" și cele ${cabinets.length} ${cabinets.length === 1 ? 'corp' : 'corpuri'} din el? Acțiunea nu poate fi anulată.`
-            : `Ștergi ansamblul „${assembly.name}"?`}
-        />
-      )}
-      editForm={editForm}
-    >
-      <BulkCabinetEditor
-        assemblyId={assembly.id}
-        eligibleIds={cabinets.filter((cabinet) => cabinet.input.type !== 'BLAT').map((cabinet) => cabinet.id)}
-        materials={bulkMaterials}
-        suppliers={bulkFrontSuppliers}
-        models={bulkFrontModels}
-        ralColors={ralColors}
-        edgeBands={edgeBands}
-      >
-        <CabinetsTable projectId={projectId} cabinets={cabinets} issues={issues} bulkSelectable />
-      </BulkCabinetEditor>
-
-      <div className="flex gap-2">
-        <ActionForm action={addCabinet.bind(null, projectId, assembly.id, 'BAZA')}>
-          <SubmitButton>Adaugă corp</SubmitButton>
-        </ActionForm>
-        <ActionForm action={addCabinet.bind(null, projectId, assembly.id, 'BLAT')}>
-          <SubmitButton>Adaugă blat</SubmitButton>
-        </ActionForm>
-      </div>
-
-      {otherProjects.length > 0 && (
-        <ActionForm action={copyAssemblyToProject.bind(null, assembly.id)} className="flex flex-wrap items-end gap-2 border-t pt-3">
-          <Select
-            name="targetProjectId" label="Copiază ansamblul în proiectul"
-            options={otherProjects.map((p) => ({ value: p.id, label: p.name }))}
-          />
-          <SubmitButton>Copiază</SubmitButton>
-        </ActionForm>
-      )}
-    </AssemblyCardShell>
-  );
-}
-
-function CabinetsTable({ projectId, cabinets, issues, bulkSelectable = false }: {
-  projectId: string; cabinets: LoadedCabinet[]; issues: Map<string, CabinetIssue>;
-  bulkSelectable?: boolean;
-}) {
-  if (cabinets.length === 0) {
-    return <p className="text-sm text-muted-foreground">Niciun corp încă.</p>;
-  }
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          {bulkSelectable && <TableHead className="w-10"><span className="sr-only">Selectare</span></TableHead>}
-          <TableHead>Corp</TableHead>
-          <TableHead>Tip</TableHead>
-          <TableHead>Dimensiuni (L×H×A mm)</TableHead>
-          <TableHead>Stare</TableHead>
-          <TableHead className="text-right">Acțiuni</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {cabinets.map((c) => {
-          const incomplete = !isCabinetInputComplete(c.input);
-          return (
-          <CabinetRow
-            key={c.id}
-            cabinetId={c.id}
-            showSelection={bulkSelectable}
-            selectable={bulkSelectable && c.input.type !== 'BLAT'}
-            href={`/proiecte/${projectId}/corp/${c.id}`}
-            label={c.input.label}
-            typeLabel={TYPE_LABELS[c.input.type] ?? c.input.type}
-            dims={incomplete
-              ? '—'
-              : c.input.type === 'BLAT'
-                ? `${c.input.widthMm}×${c.input.depthMm}`
-                : `${c.input.widthMm}×${c.input.heightMm}×${c.input.depthMm}`}
-            problems={cabinetProblems(issues.get(c.id), incomplete)}
-            actions={
-              <>
-                <ActionForm action={duplicateCabinet.bind(null, c.id)} confirm="Sigur duplici acest corp?">
-                  <Button type="submit" variant="ghost" size="icon-sm" title="Duplică" aria-label="Duplică">
-                    <Copy />
-                  </Button>
+      ) : tab === 'bani' ? (
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+          <div className={tableWrapCls}>
+            <div className="flex items-center justify-between border-b px-5 py-3.5">
+              <div className="text-[15px] font-bold">Încasări</div>
+              <FormModal trigger="Adaugă încasare" title="Adaugă încasare" size="sm">
+                <ActionForm action={addReceipt.bind(null, project.id)} className="grid gap-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <TextInput name="amount" label="Sumă (lei)" placeholder={money.receivable > 0 ? money.receivable.toFixed(2).replace('.', ',') : '0,00'} mono />
+                    <TextInput name="incomeType" label="Tip" placeholder="Avans, Rată, Final sau ce vrei tu" required={false} suggestions={Object.values(INCOME_TYPE_LABELS)} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Select name="accountId" label="În contul" options={accountOptions} allowEmpty />
+                    <TextInput name="date" label="Data" type="date" defaultValue={todayInput} mono />
+                  </div>
+                  <TextInput name="note" label="Notă (chitanță / factură emisă)" required={false} />
+                  <div><SubmitButton>Înregistrează</SubmitButton></div>
                 </ActionForm>
-                <DeleteButton action={deleteCabinet.bind(null, c.id)} label="Șterge corpul" iconOnly />
-              </>
-            }
+              </FormModal>
+            </div>
+            {bani.receipts.length === 0 ? (
+              <div className="px-5 py-8 text-center text-[13px] text-muted-foreground">Nicio încasare încă.</div>
+            ) : (
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className={thCls}>Data</th>
+                    <th className={thCls}>Tip</th>
+                    <th className={thCls}>Cont</th>
+                    <th className={cn(thCls, 'text-right')}>Sumă</th>
+                    <th className={thCls}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bani.receipts.map((r) => (
+                    <tr key={r.id}>
+                      <td className={cn(tdCls, 'whitespace-nowrap font-mono text-[12px]')}>{fmtDate.format(r.date)}</td>
+                      <td className={cn(tdCls, 'text-[12.5px]')}>{r.incomeType ? INCOME_TYPE_LABELS[r.incomeType as keyof typeof INCOME_TYPE_LABELS] ?? r.incomeType : 'Încasare'}{r.note && <div className="text-[11.5px] text-muted-foreground">{r.note}</div>}</td>
+                      <td className={cn(tdCls, 'text-[12.5px]')}><Link href={`/finante/conturi/${r.account.id}`} className="hover:underline">{r.account.name}</Link></td>
+                      <td className={cn(tdCls, 'text-right font-mono text-[12.5px] font-semibold text-emerald-700')}>+{fmtLei(r.amount)}</td>
+                      <td className={cn(tdCls, 'text-right')}><DeleteButton action={deleteReceipt.bind(null, r.id)} iconOnly label="Șterge încasarea" confirmMessage="Ștergi această încasare? Banii ies din cont." /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <div className="grid grid-cols-3 gap-3 border-t px-5 py-3 text-[12.5px]">
+              <div><div className={microLabelCls}>Încasat</div><div className="font-mono font-semibold text-accent-blue-foreground">{fmtLei(money.received)}</div></div>
+              <div><div className={microLabelCls}>Din contract</div><div className="font-mono font-semibold">{fmtLei(money.contract)}</div></div>
+              <div><div className={microLabelCls}>De încasat</div><div className={cn('font-mono font-semibold', money.receivable > 0 && 'text-red-600')}>{fmtLei(Math.max(0, money.receivable))}</div></div>
+            </div>
+          </div>
+
+          <div className={tableWrapCls}>
+            <div className="flex items-center justify-between border-b px-5 py-3.5">
+              <div className="text-[15px] font-bold">Facturi neplătite pe proiect</div>
+              <span className="font-mono text-[12.5px] font-semibold">{fmtLei(money.unpaidShare)}</span>
+            </div>
+            {bani.unpaidDocs.length === 0 ? (
+              <div className="px-5 py-8 text-center text-[13px] text-muted-foreground">Nimic de plătit furnizorilor pe acest proiect.</div>
+            ) : (
+              <ul className="divide-y">
+                {bani.unpaidDocs.map((a) => (
+                  <li key={a.id} className="flex items-center justify-between gap-2 px-5 py-2.5 text-[13px]">
+                    <div className="min-w-0">
+                      <Link href={`/finante/cheltuieli?luna=toate&doc=${a.document.id}`} className="font-semibold hover:underline">{a.document.counterparty}</Link>
+                      <div className="text-[11.5px] text-muted-foreground">
+                        {DOCUMENT_KIND_LABELS[a.document.kind as DocumentKind] ?? a.document.kind}{a.document.dueAt ? ` · scadent ${fmtDate.format(a.document.dueAt)}` : ''} · cota proiectului
+                      </div>
+                    </div>
+                    <span className="font-mono font-semibold">{fmtLei(a.unpaidShare)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="border-t px-5 py-2.5 text-[11.5px] text-muted-foreground">De plătit = (document − plătit) × (alocare / document). La Închis, aplicația avertizează dacă rămâne ceva aici.</div>
+          </div>
+        </div>
+      ) : (
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <Timeline
+            entries={timeline}
+            target={{ projectId: project.id }}
+            baseHref={`/proiecte/${project.id}?tab=timeline`}
+            filter={parseFilter(sp.flux)}
+            placeholder="Update pe proiect… (măsurători, ce s-a schimbat, ce ai promis)"
           />
-          );
-        })}
-      </TableBody>
-    </Table>
+          <div className="flex flex-col gap-4">
+            <PinnedNotes notes={pinned} />
+            {pinned.length === 0 && (
+              <div className="rounded-xl border border-dashed border-[#d4d4d0] px-4 py-3 text-[12.5px] text-muted-foreground">
+                Bifează „Important" la o notiță ca să apară aici, pinuită. Notițele clientului apar pe toate proiectele lui.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

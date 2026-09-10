@@ -7,7 +7,7 @@ import {
 } from '@/lib/engine';
 import type { HardwareLine, Part } from '@/lib/engine';
 import { frontVopsitCostEur, ralIsBlack } from './front-pricing';
-import { handleExtraCost, withResolvedHandle, type ProjectHandle } from './handle';
+import { handleExtraCost, withResolvedHandle, type QuoteHandle } from './handle';
 import { pickLegId } from './legs';
 import { frontCatalogsFromSnapshot, type QuoteCabinet, type SnapshotData } from './compute';
 
@@ -22,7 +22,7 @@ export interface CabinetEstimate {
 export function estimateCabinetCost(
   cabinet: QuoteCabinet,
   snap: SnapshotData,
-  opts: { laborPct: number; yieldFactor: number; legHeightMm: number | null; projectHandle: ProjectHandle },
+  opts: { laborPct: number; yieldFactor: number; legHeightMm: number | null; quoteHandle: QuoteHandle },
 ): CabinetEstimate {
   try {
     const catalogs = toCostCatalogs(
@@ -33,7 +33,7 @@ export function estimateCabinetCost(
       defaults.legId = pickLegId(snap.hardware, opts.legHeightMm, defaults.legId);
     }
     const cc = parseConstruction(snap.settings.constructionJson);
-    const input = withResolvedHandle(cabinet.input, opts.projectHandle);
+    const input = withResolvedHandle(cabinet.input, opts.quoteHandle);
     const expanded = expandCabinet(input, catalogs, cc, opts.legHeightMm ?? undefined);
 
     const parts = [...expanded.parts];

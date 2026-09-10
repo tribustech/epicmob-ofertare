@@ -8,7 +8,7 @@ import type {
   HardwareDefaults, HardwareLine, HardwareSuggestion, Part, Warning,
 } from './types';
 
-export interface ProjectInput {
+export interface QuoteInput {
   cabinets: CabinetInput[];
   freeLines: FreeLine[];
   laborPct: number;
@@ -16,11 +16,11 @@ export interface ProjectInput {
   extraHardware?: FreeLine[];
 }
 
-export interface ProjectCatalogs extends CostCatalogs {
+export interface QuoteCatalogs extends CostCatalogs {
   hardwareDefaults: HardwareDefaults;
 }
 
-export interface ProjectResult {
+export interface QuoteResult {
   cabinets: ExpandedCabinet[];
   parts: Part[];
   hardwareLines: HardwareLine[];
@@ -29,12 +29,12 @@ export interface ProjectResult {
   warnings: Warning[];
 }
 
-export function computeProject(
-  project: ProjectInput,
-  catalogs: ProjectCatalogs,
+export function computeQuote(
+  quote: QuoteInput,
+  catalogs: QuoteCatalogs,
   cc: ConstructionConstants = DEFAULT_CONSTRUCTION,
-): ProjectResult {
-  const cabinets = project.cabinets.map((c) => expandCabinet(c, catalogs, cc));
+): QuoteResult {
+  const cabinets = quote.cabinets.map((c) => expandCabinet(c, catalogs, cc));
   const parts = cabinets.flatMap((c) => c.parts);
   const suggestions = cabinets.flatMap((c) => c.hardware);
   const { lines, unresolved } = resolveSuggestions(suggestions, null, catalogs.hardwareDefaults, catalogs.hardware);
@@ -42,12 +42,12 @@ export function computeProject(
   const costs = computeCosts({
     parts,
     hardwareLines: lines,
-    cabinets: project.cabinets,
-    freeLines: project.freeLines,
-    laborPct: project.laborPct,
-    nesting: project.nesting,
+    cabinets: quote.cabinets,
+    freeLines: quote.freeLines,
+    laborPct: quote.laborPct,
+    nesting: quote.nesting,
     catalogs,
-    extraHardware: project.extraHardware,
+    extraHardware: quote.extraHardware,
   });
 
   return {

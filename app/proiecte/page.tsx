@@ -1,149 +1,104 @@
 import Link from 'next/link';
-import { prisma } from '@/lib/db';
-import { createProject, deleteProject, duplicateProject } from '@/lib/quote/actions';
-import { isFrozenStatus } from '@/lib/quote/basis';
-import { buildSnapshot } from '@/lib/quote/snapshot';
-import type { SnapshotData } from '@/lib/quote/compute';
-import { legHeightByCabinet, loadProject, toQuoteInput, tryComputeQuote } from '@/lib/quote/load';
-import { fmtLei } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { fmtLei } from '@/lib/format';
+import { deadlineParts } from '@/lib/crm/dates';
+import { countProjectTabs, loadClientOptions, loadProjectsList, type ProjectTab } from '@/lib/crm/project-queries';
+import { createProject } from '@/lib/crm/project-actions';
 import { ActionForm } from '@/components/ActionForm';
-import { DeleteButton } from '@/components/DeleteButton';
-import { NewProjectPanel } from '@/components/NewProjectPanel';
-import { SubmitButton, TextInput } from '@/components/forms';
-import { Button } from '@/components/ui/button';
+import { Select, SubmitButton, TextArea, TextInput } from '@/components/forms';
+import { FormModal } from '@/components/FormModal';
+import { LinkRow } from '@/components/crm/LinkRow';
+import { EmptyState, PageHeader, ProjectStatusPill, tableWrapCls, tdCls, thCls } from '@/components/crm/ui';
 
 export const dynamic = 'force-dynamic';
 
-const STATUS_LABELS: Record<string, string> = {
-  CIORNA: 'Ciornă', TRIMISA: 'Trimisă', ACCEPTATA: 'Acceptată',
-};
+const TABS: { key: ProjectTab; label: string }[] = [
+  { key: 'active', label: 'Active' },
+  { key: 'montate', label: 'Montate' },
+  { key: 'inchise', label: 'Închise' },
+  { key: 'pierdute', label: 'Pierdute' },
+];
 
-const STATUS_PILL_CLS: Record<string, string> = {
-  CIORNA: 'bg-muted text-muted-foreground',
-  TRIMISA: 'border border-accent-blue-border bg-accent-blue text-accent-blue-foreground',
-  ACCEPTATA: 'border border-emerald-200 bg-emerald-50 text-emerald-700',
-};
-
-const dateFmt = new Intl.DateTimeFormat('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' });
-
-type ProjectRow = {
-  id: string;
-  name: string;
-  clientName: string | null;
-  status: string;
-  cabinetCount: number;
-  updatedAt: Date;
-  totalCost: number | null;
-  sellPrice: number | null;
-};
-
-async function loadRows(): Promise<ProjectRow[]> {
-  const ids = await prisma.project.findMany({ orderBy: { updatedAt: 'desc' }, select: { id: true } });
-  const liveSnapshot = ids.length > 0 ? await buildSnapshot() : null;
-  const rows: ProjectRow[] = [];
-  for (const { id } of ids) {
-    const loaded = await loadProject(id);
-    if (!loaded) continue;
-    const { project, assemblies, cabinets } = loaded;
-    let totalCost: number | null = null;
-    let sellPrice: number | null = null;
-    try {
-      const snapshot: SnapshotData | null = isFrozenStatus(project.status)
-        ? (project.snapshotJson ? (JSON.parse(project.snapshotJson) as SnapshotData) : null)
-        : liveSnapshot;
-      if (snapshot) {
-        const { quote } = tryComputeQuote(
-          toQuoteInput(project, cabinets, legHeightByCabinet(assemblies, cabinets), assemblies),
-          snapshot,
-        );
-        if (quote) {
-          totalCost = quote.costs.totalCost;
-          sellPrice = quote.costs.sellPrice;
-        }
-      }
-    } catch {
-      // snapshot corupt sau altă eroare — prețurile rămân null → „—"
-    }
-    rows.push({
-      id: project.id,
-      name: project.name,
-      clientName: project.clientName,
-      status: project.status,
-      cabinetCount: cabinets.length,
-      updatedAt: project.updatedAt,
-      totalCost,
-      sellPrice,
-    });
-  }
-  return rows;
-}
-
-function PriceStat({ label, value, accent }: { label: string; value: number | null; accent?: boolean }) {
-  return (
-    <div>
-      <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground/70">{label}</div>
-      <div className={cn('mt-0.5 font-mono text-base font-semibold tracking-tight', accent && 'text-accent-blue-foreground')}>
-        {value != null ? fmtLei(value) : '—'}
-      </div>
-    </div>
-  );
-}
-
-export default async function ProiectePage() {
-  const rows = await loadRows();
+export default async function ProiectePage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const sp = await searchParams;
+  const tab: ProjectTab = TABS.some((t) => t.key === sp.tab) ? (sp.tab as ProjectTab) : 'active';
+  const [rows, counts, clients] = await Promise.all([loadProjectsList(tab), countProjectTabs(), loadClientOptions()]);
 
   return (
     <div className="space-y-5">
-      <NewProjectPanel
-        form={
-          <ActionForm action={createProject} className="grid grid-cols-1 items-end gap-3 md:grid-cols-4">
-            <TextInput name="name" label="Nume proiect" />
-            <TextInput name="clientName" label="Client" required={false} />
-            <TextInput name="clientContact" label="Contact (telefon/email)" required={false} />
-            <div><SubmitButton>Creează</SubmitButton></div>
+      <PageHeader title="Proiecte">
+        <FormModal trigger="Proiect nou" title="Proiect nou">
+          <ActionForm action={createProject} className="grid gap-4">
+            <Select name="clientId" label="Client" options={clients} allowEmpty />
+            <TextInput name="name" label="Nume proiect" placeholder="Apartament Pipera" />
+            <TextArea name="description" label="Descriere" rows={2} />
+            <TextInput name="deadlineAt" label="Deadline promis (dacă e știut)" type="date" required={false} mono />
+            <p className="text-[12px] text-muted-foreground">Clientul lipsește din listă? Creează-l întâi din Leaduri.</p>
+            <div><SubmitButton>Creează proiectul</SubmitButton></div>
           </ActionForm>
-        }
-      />
+        </FormModal>
+      </PageHeader>
+
+      <div className="flex items-center justify-between border-b border-[#d9d7d0]">
+        <div className="flex gap-5">
+          {TABS.map((t) => (
+            <Link
+              key={t.key}
+              href={`/proiecte?tab=${t.key}`}
+              className={cn(
+                '-mb-px border-b-2 px-0.5 pb-2.5 pt-2 text-[13.5px] font-medium',
+                t.key === tab ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {t.label} <span className="font-mono text-[11.5px] text-muted-foreground">{counts[t.key]}</span>
+            </Link>
+          ))}
+        </div>
+        <div className="pb-1.5 text-[12px] text-muted-foreground">sortat după deadline</div>
+      </div>
 
       {rows.length === 0 ? (
-        <div className="rounded-xl border-2 border-dashed p-12 text-center">
-          <p className="text-[15px] font-bold">Niciun proiect încă</p>
-          <p className="mt-1 text-sm text-muted-foreground">Creează primul proiect ca să începi oferta.</p>
-        </div>
+        <EmptyState title="Niciun proiect aici" text={tab === 'active' ? 'Creează un proiect de pe un lead sau cu butonul „Proiect nou".' : undefined} />
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {rows.map((p) => (
-            <div key={p.id} className="flex flex-col gap-3 rounded-xl bg-card p-5 ring-1 ring-border">
-              <div className="flex items-start justify-between gap-2">
-                <Link href={`/proiecte/${p.id}`} className="text-[15px] font-bold leading-snug hover:underline">
-                  {p.name}
-                </Link>
-                <span
-                  className={cn(
-                    'shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
-                    STATUS_PILL_CLS[p.status] ?? 'bg-muted text-muted-foreground',
-                  )}
-                >
-                  {STATUS_LABELS[p.status] ?? p.status}
-                </span>
-              </div>
-              <div className="text-[12.5px] text-muted-foreground">
-                {p.clientName ?? 'Fără client'} · <span className="font-mono">{p.cabinetCount}</span>{' '}
-                {p.cabinetCount === 1 ? 'corp' : 'corpuri'} · {dateFmt.format(p.updatedAt)}
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <PriceStat label="Cost materiale" value={p.totalCost} />
-                <PriceStat label="Preț ofertă" value={p.sellPrice} accent />
-              </div>
-              <div className="mt-auto flex items-center gap-2 border-t pt-3">
-                <ActionForm action={duplicateProject.bind(null, p.id)}>
-                  <Button type="submit" variant="ghost" size="sm">Duplică</Button>
-                </ActionForm>
-                <DeleteButton action={deleteProject.bind(null, p.id)} />
-              </div>
-            </div>
-          ))}
+        <div className={tableWrapCls}>
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className={thCls}>Proiect</th>
+                <th className={thCls}>Client</th>
+                <th className={thCls}>Status</th>
+                <th className={thCls}>Deadline</th>
+                <th className={cn(thCls, 'text-right')}>Contract</th>
+                <th className={cn(thCls, 'text-right')}>Încasat</th>
+                <th className={cn(thCls, 'text-right')}>Cheltuit</th>
+                <th className={cn(thCls, 'text-right')}>Contribuție la zi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((p) => {
+                const dl = deadlineParts(p.deadlineAt);
+                return (
+                  <LinkRow key={p.id} href={`/proiecte/${p.id}`}>
+                    <td className={cn(tdCls, 'text-[13.5px] font-bold')}>{p.name}</td>
+                    <td className={cn(tdCls, 'text-[#52525b]')}>{p.client?.name ?? <span className="text-muted-foreground">fără client</span>}</td>
+                    <td className={tdCls}><ProjectStatusPill status={p.status} /></td>
+                    <td className={cn(tdCls, 'whitespace-nowrap font-mono text-[12.5px]', dl.cls)}>
+                      {dl.label}{dl.sub && <span className="ml-1.5 font-sans text-[11.5px] text-muted-foreground">{dl.sub}</span>}
+                    </td>
+                    <td className={cn(tdCls, 'text-right font-mono text-[12.5px] font-semibold')}>
+                      {p.contract > 0 ? fmtLei(p.contract) : '—'}
+                      <div className="font-sans text-[11px] font-normal text-muted-foreground">{p.quoteCount} {p.quoteCount === 1 ? 'ofertă' : 'oferte'}</div>
+                    </td>
+                    <td className={cn(tdCls, 'text-right font-mono text-[12.5px] text-accent-blue-foreground')}>{p.received > 0 ? fmtLei(p.received) : '—'}</td>
+                    <td className={cn(tdCls, 'text-right font-mono text-[12.5px]')}>{p.spent > 0 ? fmtLei(p.spent) : '—'}</td>
+                    <td className={cn(tdCls, 'text-right font-mono text-[12.5px] font-semibold', p.contract > 0 && (p.contribution < 0 ? 'text-red-600' : 'text-emerald-700'))}>
+                      {p.contract > 0 ? <>{fmtLei(p.contribution)}{p.contributionPct != null && <span className="ml-1 font-normal text-muted-foreground">{p.contributionPct}%</span>}</> : '—'}
+                    </td>
+                  </LinkRow>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

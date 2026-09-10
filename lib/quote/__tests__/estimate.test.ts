@@ -9,7 +9,7 @@ describe('estimateCabinetCost', () => {
   it('corpul de referință: estimare fără rotunjire la foi, cu adaos de manoperă procentual și feronerie auto', () => {
     const r = estimateCabinetCost(
       { input: refCabinet(), hardwareAdjustments: null, extraParts: [] },
-      makeSnapshot(), { laborPct: 30, yieldFactor: 0.8, legHeightMm: null, projectHandle: { type: 'APLICAT', itemId: null } },
+      makeSnapshot(), { laborPct: 30, yieldFactor: 0.8, legHeightMm: null, quoteHandle: { type: 'APLICAT', itemId: null } },
     );
     // adâncimea PAL scade cu PFL 3 + șurub 2 (560→555) → arie PAL 1.72416
     // plăci fracționar: PAL 1.72416/(5.796×0.8)=0.3718 foi ×260=96.68 + debitare 0.3718×50=18.59
@@ -23,7 +23,7 @@ describe('estimateCabinetCost', () => {
     const bad = refCabinet(); bad.widthMm = 10;
     const r = estimateCabinetCost(
       { input: bad, hardwareAdjustments: null, extraParts: [] },
-      makeSnapshot(), { laborPct: 30, yieldFactor: 0.8, legHeightMm: null, projectHandle: { type: 'APLICAT', itemId: null } },
+      makeSnapshot(), { laborPct: 30, yieldFactor: 0.8, legHeightMm: null, quoteHandle: { type: 'APLICAT', itemId: null } },
     );
     expect(r.error).toBeTruthy();
     expect(r.cost).toBe(0);
@@ -47,7 +47,7 @@ describe('estimateCabinetCost — fronturi MDF vopsit cotate per m² (EUR × cur
     settings: { ...makeSnapshot().settings, eurToRon: 5 },
   });
 
-  const OPTS = { laborPct: 30, yieldFactor: 0.8, legHeightMm: null, projectHandle: { type: 'APLICAT' as const, itemId: null } };
+  const OPTS = { laborPct: 30, yieldFactor: 0.8, legHeightMm: null, quoteHandle: { type: 'APLICAT' as const, itemId: null } };
 
   // Aria frontului derivată EXACT din aceeași geometrie ca motorul (refCabinet are 1 ușă).
   const catalogs = toCostCatalogs(snap.materials, snap.edgeBands, snap.hardware, snap.cuttingRates, frontCatalogsFromSnapshot(snap));

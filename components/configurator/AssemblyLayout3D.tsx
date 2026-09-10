@@ -445,7 +445,7 @@ function BarField({ label, value, step = 100, onChange }: {
 export default function AssemblyLayout3D({
   assemblyId, assemblyName, backHref, initialItems, initialRoom, initialFixed,
 }: {
-  assemblyId: string; assemblyName: string; projectId: string; backHref: string;
+  assemblyId: string; assemblyName: string; quoteId: string; backHref: string;
   initialItems: LayoutItem[]; initialRoom: LayoutRoom; initialFixed: FixedItem[];
 }) {
   const [items, setItems] = useState<LayoutItem[]>(initialItems);
