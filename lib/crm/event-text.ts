@@ -31,6 +31,15 @@ export function eventText(type: string, p: Payload): { label: string; detail: st
       const from = str('from'); const to = str('to');
       return { label, detail: `${from ? fmtDate.format(new Date(from)) : 'fără'} → ${to ? fmtDate.format(new Date(to)) : 'fără'}` };
     }
+    case 'CLIENT_UPDATED':
+      return str('name') ? { label: 'a redenumit clientul', detail: `${str('from') ?? '?'} → ${str('name')}` } : { label, detail: null };
+    case 'PROJECT_CLIENT_CHANGED':
+      return { label, detail: `${str('fromName') ?? 'fără client'} → ${str('toName') ?? 'fără client'}` };
+    case 'CALENDAR_EVENT': {
+      const d = str('date');
+      const parts = [str('title'), d ? fmtDate.format(new Date(`${d}T00:00:00`)) : null, str('time')].filter(Boolean);
+      return { label, detail: parts.join(' · ') || null };
+    }
     case 'REMARKETING':
       return { label, detail: p.on ? `da${str('note') ? ` · ${str('note')}` : ''}` : 'nu' };
     case 'CLIENT_CREATED':

@@ -52,6 +52,8 @@ export const EVENT_LABELS: Record<string, string> = {
   REMARKETING: 'a schimbat remarketing',
   PROJECT_CREATED: 'a creat proiectul',
   PROJECT_STATUS: 'a schimbat starea proiectului',
+  PROJECT_CLIENT_CHANGED: 'a mutat proiectul la alt client',
+  CALENDAR_EVENT: 'a programat un eveniment',
   DEADLINE_CHANGED: 'a schimbat deadline-ul',
   QUOTE_CREATED: 'a creat o ofertă',
   QUOTE_SENT: 'a trimis oferta',
