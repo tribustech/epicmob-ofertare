@@ -11,6 +11,7 @@ import { EventForm } from './EventForm';
 const DAYS = ['Lu', 'Ma', 'Mi', 'Jo', 'Vi', 'Sâ', 'Du'];
 const MAX_PILLS = 3;
 const MAX_DOTS = 6;
+const fmtDayTitle = new Intl.DateTimeFormat('ro-RO', { weekday: 'long', day: 'numeric', month: 'long' });
 
 export function EventPill({ item, projectOptions, compact }: {
   item: CalendarItem; projectOptions: { value: string; label: string }[]; compact?: boolean;
@@ -55,21 +56,23 @@ export function MonthGrid({ cells, projectOptions, baseHref }: {
             i % 7 === 6 && 'border-r-0', i >= GRID_DAYS - 7 && 'border-b-0',
             !c.inMonth && 'bg-muted/30 text-muted-foreground', c.isToday && 'bg-accent-blue/40',
           )}>
+            {/* click pe numărul zilei = eveniment nou în ziua respectivă */}
             <div className="mb-1 flex items-center justify-between">
-              <Link href={dayHref(c.dayKey)} className={cn('rounded px-1 text-[12px] font-semibold hover:bg-muted', c.isToday && 'bg-foreground text-background hover:bg-foreground')}>
-                {c.date.getDate()}
-              </Link>
+              <FormModal trigger={String(c.date.getDate())} title={`Eveniment nou · ${fmtDayTitle.format(c.date)}`} variant="ghost" size="sm"
+                className={cn('h-auto rounded px-1 py-0 text-[12px] font-semibold hover:bg-muted', c.isToday && 'bg-foreground text-background hover:bg-foreground hover:text-background')}>
+                <EventForm projectOptions={projectOptions} defaults={{ date: c.dayKey }} />
+              </FormModal>
             </div>
-            {/* telefon: doar puncte; desktop: pastile */}
+            {/* telefon: punctele sunt link către panoul zilei (numărul zilei e ocupat de „eveniment nou") */}
             {c.items.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1 sm:hidden"
-                aria-label={`${c.items.length} ${c.items.length === 1 ? 'eveniment' : 'evenimente'}`}>
+              <Link href={dayHref(c.dayKey)} className="flex flex-wrap items-center gap-1 py-1 sm:hidden"
+                aria-label={`${c.items.length} ${c.items.length === 1 ? 'eveniment' : 'evenimente'} — vezi ziua`}>
                 {c.items.slice(0, MAX_DOTS).map((it) => (
                   <span key={it.id} role="img" aria-label={KIND_META[it.kind].label}
                     className={cn('h-1.5 w-1.5 rounded-full', KIND_META[it.kind].dot)} />
                 ))}
                 {c.items.length > MAX_DOTS && <span className="text-[9px] leading-none text-muted-foreground">+</span>}
-              </div>
+              </Link>
             )}
             <div className="hidden space-y-0.5 sm:block">
               {c.items.slice(0, MAX_PILLS).map((it) => <EventPill key={it.id} item={it} projectOptions={projectOptions} compact />)}
