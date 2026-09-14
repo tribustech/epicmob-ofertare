@@ -101,8 +101,8 @@ Antet (același stil ca „Luna"): `‹` `Septembrie 2026` `›`, buton „Azi",
 (link-uri care schimbă `tip`), buton „Adaugă eveniment" (FormModal, data implicită = azi sau `zi`).
 
 Grilă: 7 coloane Lu–Du, 6 rânduri, `rounded-xl bg-card ring-1 ring-border`. Celulă: numărul zilei
-(link către `?zi=` pentru panoul zilei), fundal ușor la „azi", text estompat pentru zilele din lunile
-vecine. Maxim 3 pastile, apoi „+N" (link către panoul zilei). Pastila: punct colorat + oră (dacă e) +
+(click = modal „Eveniment nou" cu ziua precompletată; pe telefon punctele colorate sunt link către
+panoul zilei), fundal ușor la „azi", text estompat pentru zilele din lunile vecine. Maxim 3 pastile, apoi „+N" (link către panoul zilei). Pastila: punct colorat + oră (dacă e) +
 titlu trunchiat; restanță = contur roșu subțire + „!". Pastilele cu `href` sunt `Link`; cele MANUAL
 deschid modalul de editare.
 
