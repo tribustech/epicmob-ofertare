@@ -218,6 +218,7 @@ model User {
   loans        Loan[]
   contractChanges ContractChange[]
   notes        Note[]
+  calendarEvents CalendarEvent[]
 }
 
 // ───────────── CRM ─────────────
@@ -250,6 +251,7 @@ model Client {
   events          Event[]
   documents       Document[]
   notes           Note[]
+  calendarEvents  CalendarEvent[]
 
   @@index([stage])
   @@index([phone])
@@ -280,6 +282,7 @@ model Project {
   movements       Movement[]        // încasări directe (Movement IN cu projectId)
   contractChanges ContractChange[]
   notes           Note[]
+  calendarEvents  CalendarEvent[]
 
   @@index([status, deadlineAt])
   @@index([clientId])
@@ -320,6 +323,26 @@ model Note {
 
   @@index([clientId, createdAt])
   @@index([projectId, createdAt])
+}
+
+// Eveniment scris de mână în Calendar (montaj, livrare, concediu). O singură zi, oră opțională.
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  title       String
+  date        DateTime // ziua (miezul nopții local), fără oră
+  time        String?  // 'HH:MM' opțional
+  note        String?
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  clientId    String?
+  client      Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
+  @@index([projectId])
 }
 
 // Sursele de leaduri (listă editabilă din Setări).
