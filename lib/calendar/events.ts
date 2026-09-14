@@ -80,7 +80,7 @@ export async function loadCalendarMonth(key: string, today = new Date()): Promis
     items.push({
       id: `MANUAL:${m.id}`, kind: 'MANUAL', date: dayOf(m.date), time: m.time ?? null,
       title: m.title, subtitle: m.project?.name ?? m.note ?? null, href: null, overdue: false,
-      manual: { title: m.title, time: m.time ?? null, note: m.note ?? null, projectId: m.projectId ?? null },
+      manual: { title: m.title, time: m.time ?? null, note: m.note ?? null, projectId: m.projectId ?? null, projectName: m.project?.name ?? null },
     });
   }
   return items;

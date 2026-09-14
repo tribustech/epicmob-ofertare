@@ -5,7 +5,7 @@ import { monthKey, monthLabel, parseMonthKey, shiftMonth } from '@/lib/finance/m
 import { generateExpectedDocuments } from '@/lib/finance/recurring-generate';
 import { loadProjectOptions } from '@/lib/crm/project-queries';
 import { loadCalendarMonth } from '@/lib/calendar/events';
-import { applyFilter, buildGrid, kindsParam, parseKinds } from '@/lib/calendar/grid';
+import { applyFilter, buildGrid, countOverdue, kindsParam, parseKinds } from '@/lib/calendar/grid';
 import { CALENDAR_KINDS, KIND_META } from '@/lib/calendar/types';
 import { MonthGrid } from '@/components/calendar/MonthGrid';
 import { DayPanel } from '@/components/calendar/DayPanel';
@@ -34,7 +34,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const cells = buildGrid(key, applyFilter(items, kinds), today);
   const dayCell = zi ? cells.find((c) => c.dayKey === zi) ?? null : null;
   const todayKey = monthKey(today);
-  const overdueCount = items.filter((i) => i.overdue).length;
+  const overdueCount = countOverdue(cells);
 
   return (
     <div className="space-y-4">

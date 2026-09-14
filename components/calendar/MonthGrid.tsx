@@ -2,13 +2,15 @@
 // Grila lunară: 7 coloane Lu–Du × 6 rânduri. Pastile = Link sau modal de editare (MANUAL).
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { toDateInput } from '@/lib/crm/dates';
 import { KIND_META, type CalendarItem } from '@/lib/calendar/types';
-import type { GridCell } from '@/lib/calendar/grid';
+import { GRID_DAYS, type GridCell } from '@/lib/calendar/grid';
 import { FormModal } from '@/components/FormModal';
 import { EventForm } from './EventForm';
 
 const DAYS = ['Lu', 'Ma', 'Mi', 'Jo', 'Vi', 'Sâ', 'Du'];
 const MAX_PILLS = 3;
+const MAX_DOTS = 6;
 
 export function EventPill({ item, projectOptions, compact }: {
   item: CalendarItem; projectOptions: { value: string; label: string }[]; compact?: boolean;
@@ -27,17 +29,14 @@ export function EventPill({ item, projectOptions, compact }: {
   );
   if (item.href) return <Link href={item.href} className="block min-w-0 hover:opacity-80" title={item.subtitle ?? item.title}>{body}</Link>;
   const m = item.manual!;
+  const currentProject = m.projectId ? { value: m.projectId, label: m.projectName ?? 'Proiect închis' } : undefined;
   return (
-    <FormModal trigger={`${item.time ? `${item.time} ` : ''}${item.title}`} title="Editează evenimentul" variant="ghost" size="sm"
-      className={cn('h-auto w-full justify-start rounded-md px-1.5 py-0.5 text-[11.5px] font-normal ring-1', meta.pill)}>
-      <EventForm projectOptions={projectOptions} eventId={item.id.replace(/^MANUAL:/, '')}
-        defaults={{ title: m.title, date: dayKeyOf(item.date), time: m.time, projectId: m.projectId, note: m.note }} />
+    <FormModal trigger={body} title="Editează evenimentul" variant="ghost" size="sm"
+      className="h-auto w-full min-w-0 justify-start whitespace-normal p-0 font-normal">
+      <EventForm projectOptions={projectOptions} eventId={item.id.replace(/^MANUAL:/, '')} currentProject={currentProject}
+        defaults={{ title: m.title, date: toDateInput(item.date), time: m.time, projectId: m.projectId, note: m.note }} />
     </FormModal>
   );
-}
-
-function dayKeyOf(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 export function MonthGrid({ cells, projectOptions, baseHref }: {
@@ -53,7 +52,7 @@ export function MonthGrid({ cells, projectOptions, baseHref }: {
         {cells.map((c, i) => (
           <div key={c.dayKey} className={cn(
             'min-h-[72px] border-b border-r p-1.5 sm:min-h-[104px]',
-            i % 7 === 6 && 'border-r-0', i >= 35 && 'border-b-0',
+            i % 7 === 6 && 'border-r-0', i >= GRID_DAYS - 7 && 'border-b-0',
             !c.inMonth && 'bg-muted/30 text-muted-foreground', c.isToday && 'bg-accent-blue/40',
           )}>
             <div className="mb-1 flex items-center justify-between">
@@ -62,9 +61,16 @@ export function MonthGrid({ cells, projectOptions, baseHref }: {
               </Link>
             </div>
             {/* telefon: doar puncte; desktop: pastile */}
-            <div className="flex flex-wrap gap-1 sm:hidden">
-              {c.items.map((it) => <span key={it.id} className={cn('h-1.5 w-1.5 rounded-full', KIND_META[it.kind].dot)} />)}
-            </div>
+            {c.items.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1 sm:hidden"
+                aria-label={`${c.items.length} ${c.items.length === 1 ? 'eveniment' : 'evenimente'}`}>
+                {c.items.slice(0, MAX_DOTS).map((it) => (
+                  <span key={it.id} role="img" aria-label={KIND_META[it.kind].label}
+                    className={cn('h-1.5 w-1.5 rounded-full', KIND_META[it.kind].dot)} />
+                ))}
+                {c.items.length > MAX_DOTS && <span className="text-[9px] leading-none text-muted-foreground">+</span>}
+              </div>
+            )}
             <div className="hidden space-y-0.5 sm:block">
               {c.items.slice(0, MAX_PILLS).map((it) => <EventPill key={it.id} item={it} projectOptions={projectOptions} compact />)}
               {c.items.length > MAX_PILLS && (

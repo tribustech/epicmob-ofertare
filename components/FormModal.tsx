@@ -8,7 +8,7 @@ import { ModalCloseContext } from '@/components/modal-close';
 /** Buton care deschide un formular (server) într-un modal; se închide singur la submit reușit
  *  (ActionForm consumă ModalCloseContext). */
 export function FormModal({ trigger, title, variant, size, className, children }: {
-  trigger: string;
+  trigger: ReactNode;
   title: string;
   variant?: 'default' | 'outline' | 'ghost';
   size?: 'default' | 'sm';

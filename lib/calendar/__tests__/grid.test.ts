@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyFilter, buildGrid, gridRange, isValidTime, parseKinds } from '../grid';
+import { applyFilter, buildGrid, countOverdue, gridRange, isValidTime, parseKinds } from '../grid';
 import type { CalendarItem } from '../types';
 
 const item = (o: Partial<CalendarItem> & { id: string; date: Date }): CalendarItem => ({
@@ -20,7 +20,7 @@ describe('gridRange', () => {
   });
   it('februarie 2027 (1 = luni, 28 zile) tot 42 de celule', () => {
     const r = gridRange('2027-02');
-    expect((r.end.getTime() - r.start.getTime()) / 86_400_000).toBe(42);
+    expect(r.end).toEqual(new Date(2027, 2, 15));
   });
 });
 
@@ -50,6 +50,23 @@ describe('buildGrid', () => {
   it('ignoră ce e în afara grilei', () => {
     const cells = buildGrid('2026-09', [item({ id: 'far', date: new Date(2026, 11, 1) })], today);
     expect(cells.flatMap((c) => c.items)).toHaveLength(0);
+  });
+});
+
+describe('countOverdue', () => {
+  const today = new Date(2026, 8, 14);
+  it('numără doar restanțele din zilele lunii curente (inMonth)', () => {
+    const items = [
+      item({ id: 'in-month', date: new Date(2026, 8, 10), overdue: true }),
+      item({ id: 'leading', date: new Date(2026, 7, 31), overdue: true }), // zi din luna anterioară afișată în grilă
+      item({ id: 'not-overdue', date: new Date(2026, 8, 20), overdue: false }),
+    ];
+    const cells = buildGrid('2026-09', items, today);
+    expect(countOverdue(cells)).toBe(1);
+  });
+  it('0 când nu există restanțe', () => {
+    const cells = buildGrid('2026-09', [], today);
+    expect(countOverdue(cells)).toBe(0);
   });
 });
 

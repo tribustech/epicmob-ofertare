@@ -10,7 +10,7 @@ export interface CalendarItem {
   subtitle: string | null; // clientul / nota / restul de plată
   href: string | null;     // null la MANUAL (se deschide modalul de editare)
   overdue: boolean;        // date < azi și încă activ
-  manual?: { title: string; time: string | null; note: string | null; projectId: string | null };
+  manual?: { title: string; time: string | null; note: string | null; projectId: string | null; projectName: string | null };
 }
 
 /** Etichete, parametrul din URL și clasele Tailwind pentru fiecare tip. */

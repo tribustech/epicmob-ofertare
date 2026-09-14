@@ -1,5 +1,5 @@
 // components/calendar/EventForm.tsx
-// Formularul de eveniment manual: folosit la criere (fără eventId) și la editare (cu eventId + ștergere).
+// Formularul de eveniment manual: folosit la creare (fără eventId) și la editare (cu eventId + ștergere).
 import { ActionForm } from '@/components/ActionForm';
 import { DeleteButton } from '@/components/DeleteButton';
 import { Select, SubmitButton, TextArea, TextInput } from '@/components/forms';
@@ -7,12 +7,17 @@ import { createCalendarEvent, deleteCalendarEvent, updateCalendarEvent } from '@
 
 export interface EventDefaults { title?: string; date?: string; time?: string | null; projectId?: string | null; note?: string | null }
 
-export function EventForm({ projectOptions, defaults, eventId }: {
+export function EventForm({ projectOptions, defaults, eventId, currentProject }: {
   projectOptions: { value: string; label: string }[];
   defaults?: EventDefaults;
   eventId?: string;
+  currentProject?: { value: string; label: string };
 }) {
   const action = eventId ? updateCalendarEvent.bind(null, eventId) : createCalendarEvent;
+  const hasCurrent = currentProject && !projectOptions.some((o) => o.value === currentProject.value);
+  const options = hasCurrent
+    ? [{ value: currentProject.value, label: `${currentProject.label} (închis)` }, ...projectOptions]
+    : projectOptions;
   return (
     <div className="grid gap-4">
       <ActionForm action={action} className="grid gap-4">
@@ -21,7 +26,7 @@ export function EventForm({ projectOptions, defaults, eventId }: {
           <TextInput name="date" label="Ziua" type="date" defaultValue={defaults?.date} mono />
           <TextInput name="time" label="Ora (opțional)" type="time" defaultValue={defaults?.time} required={false} mono />
         </div>
-        <Select name="projectId" label="Proiect (opțional)" options={projectOptions} defaultValue={defaults?.projectId} allowEmpty />
+        <Select name="projectId" label="Proiect (opțional)" options={options} defaultValue={defaults?.projectId} allowEmpty />
         <TextArea name="note" label="Notă" defaultValue={defaults?.note} rows={2} />
         <div><SubmitButton>{eventId ? 'Salvează' : 'Adaugă'}</SubmitButton></div>
       </ActionForm>

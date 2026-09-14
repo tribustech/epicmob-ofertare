@@ -11,7 +11,7 @@ export interface GridCell {
   items: CalendarItem[];
 }
 
-const GRID_DAYS = 42;
+export const GRID_DAYS = 42;
 
 /** Luni din săptămâna zilei 1 → 42 de zile (end exclusiv). Cheie invalidă → luna curentă. */
 export function gridRange(key: string): { start: Date; end: Date } {
@@ -68,6 +68,11 @@ export function applyFilter(items: CalendarItem[], kinds: CalendarKind[]): Calen
 
 export function isValidTime(s: string): boolean {
   return /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
+}
+
+/** Restanțele afișate pe grilă: doar zilele din luna curentă (nu cele din lunile vecine). */
+export function countOverdue(cells: GridCell[]): number {
+  return cells.reduce((n, c) => (c.inMonth ? n + c.items.filter((i) => i.overdue).length : n), 0);
 }
 
 /** Cheia de URL pentru un set de tipuri (toate → fără parametru). */
