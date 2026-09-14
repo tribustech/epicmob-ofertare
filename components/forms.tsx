@@ -15,7 +15,7 @@ const selectCls = cn(
 
 export function TextInput(props: {
   name: string; label: string; defaultValue?: string | null; required?: boolean;
-  type?: 'text' | 'email' | 'password' | 'date' | 'tel'; autoComplete?: string; placeholder?: string; mono?: boolean;
+  type?: 'text' | 'email' | 'password' | 'date' | 'tel' | 'time'; autoComplete?: string; placeholder?: string; mono?: boolean;
   /** sugestii (datalist): utilizatorul poate alege una sau scrie orice */
   suggestions?: string[];
 }) {
