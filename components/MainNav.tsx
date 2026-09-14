@@ -11,6 +11,7 @@ export const MAIN_NAV = [
   { href: '/proiecte', label: 'Proiecte' },
   { href: '/finante', label: 'Finanțe' },
   { href: '/luna', label: 'Luna' },
+  { href: '/calendar', label: 'Calendar' },
   { href: '/cataloage', label: 'Cataloage' },
   { href: '/setari', label: 'Setări' },
 ] as const;
