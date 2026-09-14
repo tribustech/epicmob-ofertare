@@ -7,6 +7,7 @@ import { KIND_META, type CalendarItem } from '@/lib/calendar/types';
 import { GRID_DAYS, type GridCell } from '@/lib/calendar/grid';
 import { FormModal } from '@/components/FormModal';
 import { EventForm } from './EventForm';
+import { DayCell } from './DayCell';
 
 const DAYS = ['Lu', 'Ma', 'Mi', 'Jo', 'Vi', 'Sâ', 'Du'];
 const MAX_PILLS = 3;
@@ -51,17 +52,18 @@ export function MonthGrid({ cells, projectOptions, baseHref }: {
       </div>
       <div className="grid grid-cols-7">
         {cells.map((c, i) => (
-          <div key={c.dayKey} className={cn(
-            'min-h-[72px] border-b border-r p-1.5 sm:min-h-[104px]',
-            i % 7 === 6 && 'border-r-0', i >= GRID_DAYS - 7 && 'border-b-0',
-            !c.inMonth && 'bg-muted/30 text-muted-foreground', c.isToday && 'bg-accent-blue/40',
-          )}>
-            {/* click pe numărul zilei = eveniment nou în ziua respectivă */}
+          // click oriunde pe spațiul liber al celulei (sau pe număr) = eveniment nou în ziua respectivă
+          <DayCell key={c.dayKey} title={`Eveniment nou · ${fmtDayTitle.format(c.date)}`}
+            form={<EventForm projectOptions={projectOptions} defaults={{ date: c.dayKey }} />}
+            className={cn(
+              'min-h-[72px] cursor-pointer border-b border-r p-1.5 transition-colors hover:bg-muted/40 sm:min-h-[104px]',
+              i % 7 === 6 && 'border-r-0', i >= GRID_DAYS - 7 && 'border-b-0',
+              !c.inMonth && 'bg-muted/30 text-muted-foreground', c.isToday && 'bg-accent-blue/40 hover:bg-accent-blue/60',
+            )}>
             <div className="mb-1 flex items-center justify-between">
-              <FormModal trigger={String(c.date.getDate())} title={`Eveniment nou · ${fmtDayTitle.format(c.date)}`} variant="ghost" size="sm"
-                className={cn('h-auto rounded px-1 py-0 text-[12px] font-semibold hover:bg-muted', c.isToday && 'bg-foreground text-background hover:bg-foreground hover:text-background')}>
-                <EventForm projectOptions={projectOptions} defaults={{ date: c.dayKey }} />
-              </FormModal>
+              <span className={cn('rounded px-1 text-[12px] font-semibold', c.isToday && 'bg-foreground text-background')}>
+                {c.date.getDate()}
+              </span>
             </div>
             {/* telefon: punctele sunt link către panoul zilei (numărul zilei e ocupat de „eveniment nou") */}
             {c.items.length > 0 && (
@@ -80,7 +82,7 @@ export function MonthGrid({ cells, projectOptions, baseHref }: {
                 <Link href={dayHref(c.dayKey)} className="block px-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground">+{c.items.length - MAX_PILLS}</Link>
               )}
             </div>
-          </div>
+          </DayCell>
         ))}
       </div>
     </div>
