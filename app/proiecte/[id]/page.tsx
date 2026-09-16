@@ -4,12 +4,17 @@ import { cn } from '@/lib/utils';
 import { fmtLei } from '@/lib/format';
 import { deadlineParts, fmtDate, toDateInput } from '@/lib/crm/dates';
 import { LOST_REASON_LABELS, NEXT_PROJECT_STATUS, PROJECT_STATUS_LABELS, type ProjectStatus } from '@/lib/crm/constants';
-import { loadProjectDetail, loadProjectOptions } from '@/lib/crm/project-queries';
+import { loadClientOptions, loadProjectDetail, loadProjectOptions } from '@/lib/crm/project-queries';
 import { loadPinnedNotes, loadTimeline } from '@/lib/crm/timeline';
 import { PinnedNotes, Timeline, parseFilter } from '@/components/crm/Timeline';
 import { loadProjectMoneyDetail } from '@/lib/finance/project-money';
 import { loadEstimateVsReal } from '@/lib/finance/estimate';
+import { expectedText, splitReceipts } from '@/lib/finance/receivables';
 import { loadAccountOptions } from '@/lib/finance/account-queries';
+import { loadExpenseFormOptions } from '@/lib/finance/document-queries';
+import { createExpense } from '@/lib/finance/document-actions';
+import { ExpenseForm } from '@/components/finance/ExpenseForm';
+import { SidePanel } from '@/components/SidePanel';
 import { addContractChange, addReceipt, deleteContractChange, deleteReceipt } from '@/lib/finance/receipt-actions';
 import { DOCUMENT_KIND_LABELS, INCOME_TYPE_LABELS, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_PILL, type DocumentKind } from '@/lib/finance/constants';
 import { DeleteButton } from '@/components/DeleteButton';
@@ -40,12 +45,18 @@ type Tab = (typeof TABS)[number]['key'];
 export default async function ProiectPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string; flux?: string }> }) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   const tab: Tab = TABS.some((t) => t.key === sp.tab) ? (sp.tab as Tab) : 'oferte';
-  const [project, projectOptions, timeline, pinned, bani, accounts, evr] = await Promise.all([
-    loadProjectDetail(id), loadProjectOptions(id), loadTimeline({ projectId: id }), loadPinnedNotes({ projectId: id }),
-    loadProjectMoneyDetail(id), loadAccountOptions(), loadEstimateVsReal(id),
+  const [project, projectOptions, clientOptions, timeline, pinned, bani, accounts, evr, expenseOptions] = await Promise.all([
+    loadProjectDetail(id), loadProjectOptions(id), loadClientOptions(), loadTimeline({ projectId: id }), loadPinnedNotes({ projectId: id }),
+    loadProjectMoneyDetail(id), loadAccountOptions(), loadEstimateVsReal(id), loadExpenseFormOptions(),
   ]);
   if (!project) notFound();
   const money = bani.money;
+  const split = splitReceipts(bani.receipts);
+  const splitText = [
+    split.advance > 0 && `avans ${fmtLei(split.advance)}`, split.installments > 0 && `rate ${fmtLei(split.installments)}`,
+    split.final > 0 && `final ${fmtLei(split.final)}`, split.other > 0 && `altele ${fmtLei(split.other)}`,
+  ].filter(Boolean).join(' · ');
+  const expected = expectedText(project, (d) => fmtDate.format(d));
   const accountOptions = accounts.map((a) => ({ value: a.value, label: `${a.label} · ${fmtLei(a.balance)}` }));
   const todayInput = toDateInput(new Date());
 
@@ -70,7 +81,18 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
       <div className="flex flex-col gap-4 rounded-xl bg-card px-6 py-5 ring-1 ring-border">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{project.name}</h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-bold tracking-tight">{project.name}</h1>
+              <FormModal trigger="Editează" title="Editează proiectul" variant="outline" size="sm">
+                <ActionForm action={updateProjectDetails.bind(null, project.id)} className="grid gap-4">
+                  <TextInput name="name" label="Nume" defaultValue={project.name} />
+                  <TextInput name="clientName" label="Client" defaultValue={project.client?.name} required={false} suggestions={clientOptions.map((c) => c.label)} placeholder="scrie numele sau alege un client existent" />
+                  <TextArea name="description" label="Descriere" defaultValue={project.description} rows={2} />
+                  <TextInput name="deadlineAt" label="Deadline promis" type="date" defaultValue={toDateInput(project.deadlineAt)} required={false} mono />
+                  <div><SubmitButton>Salvează</SubmitButton></div>
+                </ActionForm>
+              </FormModal>
+            </div>
             <div className="mt-1 flex flex-wrap items-center gap-2.5 text-[13px] text-muted-foreground">
               {project.client ? (
                 <Link href={`/clienti/${project.client.id}`} className="hover:text-foreground">{project.client.name}</Link>
@@ -79,14 +101,6 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
               <span>
                 deadline <span className={cn('font-mono', dl.cls)}>{dl.label}</span>{dl.sub && ` ${dl.sub}`}
               </span>
-              <FormModal trigger="schimbă" title="Detalii proiect" variant="outline" size="sm" className="h-[22px] px-2 text-[11.5px] text-muted-foreground">
-                <ActionForm action={updateProjectDetails.bind(null, project.id)} className="grid gap-4">
-                  <TextInput name="name" label="Nume" defaultValue={project.name} />
-                  <TextArea name="description" label="Descriere" defaultValue={project.description} rows={2} />
-                  <TextInput name="deadlineAt" label="Deadline promis" type="date" defaultValue={toDateInput(project.deadlineAt)} required={false} mono />
-                  <div><SubmitButton>Salvează</SubmitButton></div>
-                </ActionForm>
-              </FormModal>
             </div>
             {project.description && <p className="mt-2 max-w-[720px] text-[13px] text-muted-foreground">{project.description}</p>}
           </div>
@@ -130,7 +144,7 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 border-t pt-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 border-t pt-4 md:grid-cols-5">
           <div>
             <div className={microLabelCls}>Contract</div>
             <div className="mt-1 font-mono text-2xl font-semibold tracking-tight">{money.contract > 0 ? fmtLei(money.contract) : '—'}</div>
@@ -143,9 +157,21 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
             <div className={microLabelCls}>Încasat</div>
             <div className="mt-1 font-mono text-2xl font-semibold tracking-tight text-accent-blue-foreground">{fmtLei(money.received)}</div>
             <div className="text-[12px] text-muted-foreground">
-              {money.contract > 0 ? `de încasat ${fmtLei(Math.max(0, money.receivable))}` : 'fără contract'}
+              {splitText || (money.contract > 0 ? 'nimic încasat încă' : 'fără contract')}
             </div>
           </div>
+          <Link href={`/proiecte/${project.id}?tab=bani`} className="-m-2 rounded-lg p-2 transition-colors hover:bg-muted/60" title="Încasările proiectului">
+            <div className="flex items-center justify-between">
+              <div className={microLabelCls}>De încasat</div>
+              <span className="text-[11px] font-medium text-accent-blue-foreground">Bani →</span>
+            </div>
+            <div className={cn('mt-1 font-mono text-2xl font-semibold tracking-tight', money.receivable > 0.005 ? (expected.late ? 'text-red-600' : 'text-accent-blue-foreground') : 'text-muted-foreground/50')}>
+              {money.contract > 0 ? fmtLei(Math.max(0, money.receivable)) : '—'}
+            </div>
+            <div className={cn('text-[12px]', expected.late && money.receivable > 0.005 ? 'text-red-600' : 'text-muted-foreground')}>
+              {money.contract <= 0 ? 'fără contract' : money.receivable <= 0.005 ? 'încasat integral' : expected.text}
+            </div>
+          </Link>
           <div>
             <div className={microLabelCls}>Cheltuit</div>
             <div className="mt-1 font-mono text-2xl font-semibold tracking-tight">{fmtLei(money.spent)}</div>
@@ -205,7 +231,7 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
             <table className="w-full border-collapse">
               <thead>
                 <tr>
-                  <th className={thCls}>Versiune</th>
+                  <th className={thCls}>Ofertă</th>
                   <th className={thCls}>Status</th>
                   <th className={cn(thCls, 'text-right')}>Corpuri</th>
                   <th className={cn(thCls, 'text-right')}>Cost materiale</th>
@@ -221,7 +247,7 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
                   return (
                     <tr key={q.id} className={cn(isAccepted && 'bg-emerald-50/40')}>
                       <td className={cn(tdCls, 'font-semibold')}>
-                        <span className="font-mono">v{q.version}</span>
+                        <span className="font-mono">#{q.version}</span>
                         {q.label && <span className="ml-1.5 font-normal text-muted-foreground">{q.label}</span>}
                       </td>
                       <td className={tdCls}><span className={cn('inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold', st.cls)}>{st.label}</span></td>
@@ -234,7 +260,7 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
                       <td className={cn(tdCls, 'whitespace-nowrap text-right')}>
                         <div className="flex items-center justify-end gap-1.5">
                           {!isAccepted && !isClosed && (
-                            <FormModal trigger="Acceptă" title={`Acceptă oferta v${q.version}`} size="sm">
+                            <FormModal trigger="Acceptă" title={`Acceptă oferta #${q.version}`} size="sm">
                               <ActionForm
                                 action={acceptQuote.bind(null, q.id)}
                                 className="grid gap-4"
@@ -341,7 +367,10 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
           <div className={tableWrapCls}>
             <div className="flex items-center justify-between border-b px-5 py-3.5">
               <div className="text-[15px] font-bold">Cheltuieli alocate <span className="ml-1.5 font-mono text-[13px] font-medium text-muted-foreground">{fmtLei(money.spent)}</span></div>
-              <Button asChild size="sm"><Link href={`/finante/cheltuieli/noua?proiect=${project.id}`}>Adaugă cheltuială</Link></Button>
+              {/* formularul se deschide aici, pe proiect; după salvare rămânem pe tab-ul Costuri */}
+              <SidePanel trigger="Adaugă cheltuială" title="Adaugă cheltuială" size="sm" className="max-w-[560px]" hint="Documentul → alocarea pe acest proiect → plata. Rămâi pe pagina proiectului după salvare.">
+                <ExpenseForm options={expenseOptions} action={createExpense} defaultProjectId={project.id} redirectTo={`/proiecte/${project.id}?tab=costuri`} />
+              </SidePanel>
             </div>
             {bani.allocations.length === 0 ? (
               <div className="px-5 py-8 text-center text-[13px] text-muted-foreground">Nicio cheltuială alocată încă. Bonurile și facturile se aloca pe proiect din „Adaugă cheltuială".</div>
@@ -476,10 +505,25 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
                 </tbody>
               </table>
             )}
-            <div className="grid grid-cols-3 gap-3 border-t px-5 py-3 text-[12.5px]">
-              <div><div className={microLabelCls}>Încasat</div><div className="font-mono font-semibold text-accent-blue-foreground">{fmtLei(money.received)}</div></div>
+            <div className="grid grid-cols-2 gap-3 border-t px-5 py-3 text-[12.5px] md:grid-cols-4">
               <div><div className={microLabelCls}>Din contract</div><div className="font-mono font-semibold">{fmtLei(money.contract)}</div></div>
-              <div><div className={microLabelCls}>De încasat</div><div className={cn('font-mono font-semibold', money.receivable > 0 && 'text-red-600')}>{fmtLei(Math.max(0, money.receivable))}</div></div>
+              <div>
+                <div className={microLabelCls}>Încasat</div>
+                <div className="font-mono font-semibold text-emerald-700">{fmtLei(money.received)}</div>
+                {splitText && <div className="text-[11.5px] text-muted-foreground">{splitText}</div>}
+              </div>
+              <div>
+                <div className={microLabelCls}>De încasat</div>
+                <div className={cn('font-mono font-semibold', money.receivable > 0.005 && (expected.late ? 'text-red-600' : 'text-accent-blue-foreground'))}>{fmtLei(Math.max(0, money.receivable))}</div>
+                <div className="text-[11.5px] text-muted-foreground">contract − încasat</div>
+              </div>
+              <div>
+                <div className={microLabelCls}>Așteptat</div>
+                <div className={cn('text-[12.5px]', expected.late && money.receivable > 0.005 ? 'font-semibold text-red-600' : '')}>
+                  {money.receivable <= 0.005 ? 'încasat integral' : expected.text}
+                </div>
+                <Link href="/finante/incasari" className="text-[11.5px] text-accent-blue-foreground hover:underline">toate încasările →</Link>
+              </div>
             </div>
           </div>
 
