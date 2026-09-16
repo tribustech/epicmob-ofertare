@@ -28,11 +28,24 @@ export function daysFromToday(d: Date): number {
 
 export const fmtDate = new Intl.DateTimeFormat('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
+export type DeadlineTier = 'NONE' | 'LATE' | 'TODAY' | 'SOON' | 'APROAPE' | 'OK';
+
+/** Cât de urgent e termenul: întârziat, azi, sub 7 zile, mai departe. */
+export function deadlineTier(deadlineAt: Date | null): DeadlineTier {
+  if (!deadlineAt) return 'NONE';
+  const d = daysFromToday(deadlineAt);
+  if (d < 0) return 'LATE';
+  if (d === 0) return 'TODAY';
+  if (d < 7) return 'SOON';
+  return d <= 14 ? 'APROAPE' : 'OK';
+}
+
 /** Eticheta unui deadline: data + „în N z / întârziat N z", roșu sub 7 zile, gri dacă lipsește. */
-export function deadlineParts(deadlineAt: Date | null): { label: string; sub: string; cls: string } {
-  if (!deadlineAt) return { label: 'fără deadline', sub: '', cls: 'text-muted-foreground' };
+export function deadlineParts(deadlineAt: Date | null): { label: string; sub: string; cls: string; tier: DeadlineTier } {
+  const tier = deadlineTier(deadlineAt);
+  if (!deadlineAt) return { label: 'fără deadline', sub: '', cls: 'text-muted-foreground', tier };
   const d = daysFromToday(deadlineAt);
   const sub = d < 0 ? `întârziat ${-d} z` : d === 0 ? 'azi' : `în ${d} z`;
-  return { label: fmtDate.format(deadlineAt), sub, cls: d < 7 ? 'text-red-600' : '' };
+  return { label: fmtDate.format(deadlineAt), sub, cls: d < 7 ? 'text-red-600' : '', tier };
 }
 export const fmtDateTime = new Intl.DateTimeFormat('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });

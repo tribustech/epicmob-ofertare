@@ -1,14 +1,13 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { fmtLei } from '@/lib/format';
-import { deadlineParts } from '@/lib/crm/dates';
 import { countProjectTabs, loadClientOptions, loadProjectsList, type ProjectTab } from '@/lib/crm/project-queries';
 import { createProject } from '@/lib/crm/project-actions';
 import { ActionForm } from '@/components/ActionForm';
 import { Select, SubmitButton, TextArea, TextInput } from '@/components/forms';
 import { FormModal } from '@/components/FormModal';
 import { LinkRow } from '@/components/crm/LinkRow';
-import { EmptyState, PageHeader, ProjectStatusPill, tableWrapCls, tdCls, thCls } from '@/components/crm/ui';
+import { DeadlineBadge, EmptyState, PageHeader, ProjectStatusPill, tableWrapCls, tdCls, thCls } from '@/components/crm/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,14 +75,13 @@ export default async function ProiectePage({ searchParams }: { searchParams: Pro
             </thead>
             <tbody>
               {rows.map((p) => {
-                const dl = deadlineParts(p.deadlineAt);
                 return (
                   <LinkRow key={p.id} href={`/proiecte/${p.id}`}>
                     <td className={cn(tdCls, 'text-[13.5px] font-bold')}>{p.name}</td>
                     <td className={cn(tdCls, 'text-[#52525b]')}>{p.client?.name ?? <span className="text-muted-foreground">fără client</span>}</td>
                     <td className={tdCls}><ProjectStatusPill status={p.status} /></td>
-                    <td className={cn(tdCls, 'whitespace-nowrap font-mono text-[12.5px]', dl.cls)}>
-                      {dl.label}{dl.sub && <span className="ml-1.5 font-sans text-[11.5px] text-muted-foreground">{dl.sub}</span>}
+                    <td className={cn(tdCls, 'whitespace-nowrap')}>
+                      <DeadlineBadge deadlineAt={p.deadlineAt} size="sm" />
                     </td>
                     <td className={cn(tdCls, 'text-right font-mono text-[12.5px] font-semibold')}>
                       {p.contract > 0 ? fmtLei(p.contract) : '—'}

@@ -18,15 +18,18 @@ export function EventPill({ item, projectOptions, compact }: {
   item: CalendarItem; projectOptions: { value: string; label: string }[]; compact?: boolean;
 }) {
   const meta = KIND_META[item.kind];
+  const isDeadline = item.kind === 'DEADLINE';
   const body = (
     <span className={cn(
       'flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[11.5px] leading-tight ring-1',
-      meta.pill, item.overdue && 'ring-2 ring-red-400',
+      meta.pill,
+      item.overdue && (isDeadline ? 'ring-2 ring-red-900' : 'ring-2 ring-red-400'),
     )}>
-      <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', meta.dot)} />
+      <span className={cn('shrink-0 rounded-full', isDeadline ? 'h-2 w-2' : 'h-1.5 w-1.5', meta.dot)} />
+      {isDeadline && <span className="shrink-0 text-[9.5px] font-bold uppercase tracking-[0.06em] opacity-90">Termen</span>}
       {item.time && <span className="shrink-0 font-mono text-[10.5px]">{item.time}</span>}
       <span className="truncate">{item.overdue && '! '}{item.title}</span>
-      {!compact && item.subtitle && <span className="ml-auto shrink-0 truncate text-[10.5px] opacity-70">{item.subtitle}</span>}
+      {!compact && item.subtitle && <span className="ml-auto shrink-0 truncate text-[10.5px] opacity-80">{item.subtitle}</span>}
     </span>
   );
   if (item.href) return <Link href={item.href} className="block min-w-0 hover:opacity-80" title={item.subtitle ?? item.title}>{body}</Link>;
@@ -56,12 +59,15 @@ export function MonthGrid({ cells, projectOptions, baseHref }: {
           <DayCell key={c.dayKey} title={`Eveniment nou · ${fmtDayTitle.format(c.date)}`}
             form={<EventForm projectOptions={projectOptions} defaults={{ date: c.dayKey }} />}
             className={cn(
-              'min-h-[72px] cursor-pointer border-b border-r p-1.5 transition-colors hover:bg-muted/40 sm:min-h-[104px]',
+              'relative min-h-[72px] cursor-pointer border-b border-r p-1.5 transition-colors hover:bg-muted/40 sm:min-h-[104px]',
               i % 7 === 6 && 'border-r-0', i >= GRID_DAYS - 7 && 'border-b-0',
               !c.inMonth && 'bg-muted/30 text-muted-foreground', c.isToday && 'bg-accent-blue/40 hover:bg-accent-blue/60',
+              // ziua cu deadline: fundal roșu discret + bară roșie sus, vizibilă din capătul camerei
+              c.items.some((it) => it.kind === 'DEADLINE') && 'bg-red-50 shadow-[inset_0_3px_0_0_var(--color-red-600,#dc2626)] hover:bg-red-100',
             )}>
             <div className="mb-1 flex items-center justify-between">
-              <span className={cn('rounded px-1 text-[12px] font-semibold', c.isToday && 'bg-foreground text-background')}>
+              <span className={cn('rounded px-1 text-[12px] font-semibold', c.isToday && 'bg-foreground text-background',
+                !c.isToday && c.items.some((it) => it.kind === 'DEADLINE') && 'text-red-700')}>
                 {c.date.getDate()}
               </span>
             </div>
@@ -71,7 +77,7 @@ export function MonthGrid({ cells, projectOptions, baseHref }: {
                 aria-label={`${c.items.length} ${c.items.length === 1 ? 'eveniment' : 'evenimente'} — vezi ziua`}>
                 {c.items.slice(0, MAX_DOTS).map((it) => (
                   <span key={it.id} role="img" aria-label={KIND_META[it.kind].label}
-                    className={cn('h-1.5 w-1.5 rounded-full', KIND_META[it.kind].dot)} />
+                    className={cn('rounded-full', it.kind === 'DEADLINE' ? 'h-2.5 w-2.5 bg-red-600 ring-1 ring-red-700' : 'h-1.5 w-1.5', it.kind !== 'DEADLINE' && KIND_META[it.kind].dot)} />
                 ))}
                 {c.items.length > MAX_DOTS && <span className="text-[9px] leading-none text-muted-foreground">+</span>}
               </Link>

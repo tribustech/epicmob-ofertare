@@ -15,7 +15,8 @@ export interface CalendarItem {
 
 /** Etichete, parametrul din URL și clasele Tailwind pentru fiecare tip. */
 export const KIND_META: Record<CalendarKind, { label: string; param: string; dot: string; pill: string }> = {
-  DEADLINE: { label: 'Deadline', param: 'deadline', dot: 'bg-red-500', pill: 'bg-red-50 text-red-700 ring-red-200' },
+  // DEADLINE e plin, nu palid: termenul promis clientului trebuie să sară în ochi din grilă
+  DEADLINE: { label: 'Deadline', param: 'deadline', dot: 'bg-white', pill: 'bg-red-600 text-white ring-red-700 font-semibold shadow-sm' },
   ACTIUNE: { label: 'Acțiune', param: 'actiune', dot: 'bg-blue-500', pill: 'bg-blue-50 text-blue-700 ring-blue-200' },
   BANI: { label: 'Bani', param: 'bani', dot: 'bg-emerald-500', pill: 'bg-emerald-50 text-emerald-700 ring-emerald-200' },
   MANUAL: { label: 'Eveniment', param: 'manual', dot: 'bg-violet-500', pill: 'bg-violet-50 text-violet-700 ring-violet-200' },

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { fmtLei } from '@/lib/format';
-import { daysFromToday, deadlineParts, fmtDate, toDateInput } from '@/lib/crm/dates';
+import { daysFromToday, fmtDate, toDateInput } from '@/lib/crm/dates';
 import { LOST_REASON_LABELS } from '@/lib/crm/constants';
 import { loadLeadSources } from '@/lib/crm/client-queries';
 import { markLost, setNextAction } from '@/lib/crm/client-actions';
@@ -14,7 +14,7 @@ import { Select, SubmitButton, TextInput } from '@/components/forms';
 import { FormModal } from '@/components/FormModal';
 import { SidePanel } from '@/components/SidePanel';
 import { ClientEditForm } from '@/components/crm/ClientEditForm';
-import { ProjectStatusPill, microLabelCls } from '@/components/crm/ui';
+import { DeadlineBadge, ProjectStatusPill, microLabelCls } from '@/components/crm/ui';
 import { Button } from '@/components/ui/button';
 
 export const dynamic = 'force-dynamic';
@@ -118,7 +118,6 @@ export default async function Dashboard() {
           <Empty text="Niciun proiect activ." />
         ) : (
           projects.map((p) => {
-            const dl = deadlineParts(p.deadlineAt);
             return (
               <Link
                 key={p.id}
@@ -130,10 +129,7 @@ export default async function Dashboard() {
                   <div className="truncate text-[12px] text-muted-foreground">{p.client ?? 'fără client'}</div>
                 </div>
                 <ProjectStatusPill status={p.status} className="justify-self-start" />
-                <div className={cn('font-mono text-[12.5px]', dl.cls)}>
-                  {dl.label}
-                  {dl.sub && <div className="font-sans text-[11.5px] text-muted-foreground">{dl.sub}</div>}
-                </div>
+                <div className="min-w-0"><DeadlineBadge deadlineAt={p.deadlineAt} size="sm" /></div>
                 <div className="text-right font-mono text-[12.5px] font-semibold">{p.contract > 0 ? fmtLei(p.contract) : <span className="font-normal text-muted-foreground">fără contract</span>}</div>
               </Link>
             );

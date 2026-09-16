@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { fmtLei } from '@/lib/format';
-import { deadlineParts, fmtDate, toDateInput } from '@/lib/crm/dates';
+import { fmtDate, toDateInput } from '@/lib/crm/dates';
 import { LOST_REASON_LABELS, NEXT_PROJECT_STATUS, PROJECT_STATUS_LABELS, type ProjectStatus } from '@/lib/crm/constants';
 import { loadClientOptions, loadProjectDetail, loadProjectOptions } from '@/lib/crm/project-queries';
 import { loadPinnedNotes, loadTimeline } from '@/lib/crm/timeline';
@@ -25,7 +25,7 @@ import { duplicateQuote } from '@/lib/quote/actions';
 import { ActionForm } from '@/components/ActionForm';
 import { NumberInput, Select, SubmitButton, TextArea, TextInput } from '@/components/forms';
 import { FormModal } from '@/components/FormModal';
-import { ProjectStatusPill, microLabelCls, tableWrapCls, tdCls, thCls } from '@/components/crm/ui';
+import { DeadlineBadge, ProjectStatusPill, microLabelCls, tableWrapCls, tdCls, thCls } from '@/components/crm/ui';
 import { Button } from '@/components/ui/button';
 
 export const dynamic = 'force-dynamic';
@@ -61,7 +61,6 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
   const todayInput = toDateInput(new Date());
 
   const next = NEXT_PROJECT_STATUS[project.status as ProjectStatus] ?? null;
-  const dl = deadlineParts(project.deadlineAt);
   const isClosed = project.status === 'INCHIS' || project.status === 'PIERDUT';
   const accepted = project.quotes.filter((q) => q.status === 'ACCEPTATA');
   const latest = project.quotes[project.quotes.length - 1];
@@ -93,14 +92,12 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
                 </ActionForm>
               </FormModal>
             </div>
-            <div className="mt-1 flex flex-wrap items-center gap-2.5 text-[13px] text-muted-foreground">
+            <div className="mt-2 flex flex-wrap items-center gap-2.5 text-[13px] text-muted-foreground">
               {project.client ? (
                 <Link href={`/clienti/${project.client.id}`} className="hover:text-foreground">{project.client.name}</Link>
               ) : <span>fără client</span>}
               <span>·</span>
-              <span>
-                deadline <span className={cn('font-mono', dl.cls)}>{dl.label}</span>{dl.sub && ` ${dl.sub}`}
-              </span>
+              <DeadlineBadge deadlineAt={project.deadlineAt} />
             </div>
             {project.description && <p className="mt-2 max-w-[720px] text-[13px] text-muted-foreground">{project.description}</p>}
           </div>
