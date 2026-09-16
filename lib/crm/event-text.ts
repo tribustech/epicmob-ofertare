@@ -1,5 +1,6 @@
 import { fmtLei } from '@/lib/format';
 import { fmtDate } from './dates';
+import { QUOTE_STATUS_LABELS, type QuoteStatus } from '@/lib/quote/status';
 import { CLIENT_STAGE_LABELS, EVENT_LABELS, LOST_REASON_LABELS, PROJECT_STATUS_LABELS, type ClientStage, type ProjectStatus } from './constants';
 
 export type Payload = Record<string, unknown>;
@@ -35,6 +36,15 @@ export function eventText(type: string, p: Payload): { label: string; detail: st
       return str('name') ? { label: 'a redenumit clientul', detail: `${str('from') ?? '?'} → ${str('name')}` } : { label, detail: null };
     case 'PROJECT_CLIENT_CHANGED':
       return { label, detail: `${str('fromName') ?? 'fără client'} → ${str('toName') ?? 'fără client'}` };
+    case 'QUOTE_STATUS': {
+      const lbl = (s: string | null) => (s ? QUOTE_STATUS_LABELS[s as QuoteStatus] ?? s : '?');
+      return { label, detail: `v${num('version') ?? '?'} · ${lbl(str('from'))} → ${lbl(str('to'))}` };
+    }
+    case 'QUOTE_FOLLOWUP': {
+      const at = str('at');
+      if (!at) return { label: 'a șters data de revenire', detail: `v${num('version') ?? '?'}` };
+      return { label, detail: `v${num('version') ?? '?'} · ${fmtDate.format(new Date(`${at}T00:00:00`))}${str('note') ? ` · ${str('note')}` : ''}` };
+    }
     case 'CALENDAR_EVENT': {
       const d = str('date');
       const parts = [str('title'), d ? fmtDate.format(new Date(`${d}T00:00:00`)) : null, str('time')].filter(Boolean);

@@ -22,20 +22,16 @@ import {
   acceptQuote, advanceProject, createQuoteForProject, markProjectLost, moveQuoteToProject, setHoursWorked, updateProjectDetails,
 } from '@/lib/crm/project-actions';
 import { duplicateQuote } from '@/lib/quote/actions';
+import { isWaitingStatus } from '@/lib/quote/status';
 import { ActionForm } from '@/components/ActionForm';
 import { NumberInput, Select, SubmitButton, TextArea, TextInput } from '@/components/forms';
 import { FormModal } from '@/components/FormModal';
-import { DeadlineBadge, ProjectStatusPill, microLabelCls, tableWrapCls, tdCls, thCls } from '@/components/crm/ui';
+import { DeadlineBadge, ProjectStatusPill, QuoteStatusPill, microLabelCls, tableWrapCls, tdCls, thCls } from '@/components/crm/ui';
+import { QuoteStatusSelect } from '@/components/crm/QuoteStatusSelect';
+import { setQuoteFollowUp, setQuoteStatus } from '@/lib/quote/actions';
 import { Button } from '@/components/ui/button';
 
 export const dynamic = 'force-dynamic';
-
-const QUOTE_STATUS: Record<string, { label: string; cls: string }> = {
-  CIORNA: { label: 'Ciornă', cls: 'bg-muted text-muted-foreground' },
-  TRIMISA: { label: 'Trimisă', cls: 'border border-accent-blue-border bg-accent-blue text-accent-blue-foreground' },
-  ACCEPTATA: { label: 'Acceptată', cls: 'border border-emerald-200 bg-emerald-50 text-emerald-700' },
-  RESPINSA: { label: 'Respinsă', cls: 'bg-muted text-muted-foreground line-through' },
-};
 
 const TABS = [
   { key: 'oferte', label: 'Oferte' }, { key: 'costuri', label: 'Costuri' }, { key: 'bani', label: 'Bani' }, { key: 'timeline', label: 'Timeline' },
@@ -64,6 +60,9 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
   const isClosed = project.status === 'INCHIS' || project.status === 'PIERDUT';
   const accepted = project.quotes.filter((q) => q.status === 'ACCEPTATA');
   const latest = project.quotes[project.quotes.length - 1];
+  // în antet arătăm oferta acceptată dacă există, altfel ultima versiune
+  const latestQuote = accepted[accepted.length - 1] ?? latest;
+  const needsFollowUp = latestQuote && isWaitingStatus(latestQuote.status) && !latestQuote.followUpAt && !isClosed;
   const lostReasonOptions = Object.entries(LOST_REASON_LABELS).map(([value, label]) => ({ value, label }));
 
   return (
@@ -100,9 +99,27 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
               <DeadlineBadge deadlineAt={project.deadlineAt} />
             </div>
             {project.description && <p className="mt-2 max-w-[720px] text-[13px] text-muted-foreground">{project.description}</p>}
+            {needsFollowUp && (
+              // oferta e la client fără dată de revenire — o pui aici, în două mișcări
+              <ActionForm action={setQuoteFollowUp.bind(null, latestQuote.id)} className="mt-3 flex flex-wrap items-end gap-2 rounded-lg bg-amber-50 px-3 py-2 ring-1 ring-amber-200">
+                <span className="pb-1.5 text-[12.5px] font-semibold text-amber-900">Când revii la client?</span>
+                <TextInput name="followUpAt" label="Data" type="date" required={false} mono />
+                <TextInput name="followUpNote" label="Notă" required={false} placeholder="sună după concediu" />
+                <div className="pb-0.5"><SubmitButton>Salvează</SubmitButton></div>
+              </ActionForm>
+            )}
+            {latestQuote?.followUpAt && isWaitingStatus(latestQuote.status) && (
+              <div className="mt-2 text-[12.5px] text-muted-foreground">
+                Revii la client pe <span className="font-mono font-semibold text-foreground">{fmtDate.format(latestQuote.followUpAt)}</span>
+                {latestQuote.followUpNote && ` · ${latestQuote.followUpNote}`}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
+            {latestQuote && (
+              <QuoteStatusSelect action={setQuoteStatus.bind(null, latestQuote.id)} status={latestQuote.status} version={latestQuote.version} disabled={isClosed} />
+            )}
             <ProjectStatusPill status={project.status} className="px-3 py-1 text-[12px]" />
             {next && next === 'MONTAT' && (
               <FormModal trigger={`Trece la ${PROJECT_STATUS_LABELS[next]} →`} title="Proiect montat">
@@ -239,7 +256,6 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
               </thead>
               <tbody>
                 {project.quotes.map((q) => {
-                  const st = QUOTE_STATUS[q.status] ?? { label: q.status, cls: 'bg-muted text-muted-foreground' };
                   const isAccepted = q.status === 'ACCEPTATA';
                   return (
                     <tr key={q.id} className={cn(isAccepted && 'bg-emerald-50/40')}>
@@ -247,7 +263,12 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
                         <span className="font-mono">#{q.version}</span>
                         {q.label && <span className="ml-1.5 font-normal text-muted-foreground">{q.label}</span>}
                       </td>
-                      <td className={tdCls}><span className={cn('inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold', st.cls)}>{st.label}</span></td>
+                      <td className={tdCls}>
+                        <QuoteStatusPill status={q.status} />
+                        {q.followUpAt && isWaitingStatus(q.status) && (
+                          <div className="mt-1 font-mono text-[11px] text-muted-foreground">revin {fmtDate.format(q.followUpAt)}</div>
+                        )}
+                      </td>
                       <td className={cn(tdCls, 'text-right font-mono text-[12.5px]')}>{q.cabinetCount}</td>
                       <td className={cn(tdCls, 'text-right font-mono text-[12.5px]')}>{q.totalCost != null ? fmtLei(q.totalCost) : '—'}</td>
                       <td className={cn(tdCls, 'text-right font-mono text-[12.5px] font-semibold', isAccepted && 'text-emerald-700')}>

@@ -57,6 +57,8 @@ export const EVENT_LABELS: Record<string, string> = {
   DEADLINE_CHANGED: 'a schimbat deadline-ul',
   QUOTE_CREATED: 'a creat o ofertă',
   QUOTE_SENT: 'a trimis oferta',
+  QUOTE_STATUS: 'a schimbat starea ofertei',
+  QUOTE_FOLLOWUP: 'a stabilit când revine la client',
   QUOTE_ACCEPTED: 'a acceptat oferta',
   QUOTE_REJECTED: 'a respins oferta',
   QUOTE_MOVED: 'a mutat o ofertă aici',

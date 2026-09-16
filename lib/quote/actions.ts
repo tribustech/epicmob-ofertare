@@ -30,13 +30,18 @@ import {
 import { legHeightByCabinet, loadQuote, toQuoteInput } from './load';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { logEvent } from '@/lib/crm/events';
+import { parseDateInput, toDateInput } from '@/lib/crm/dates';
+import { QUOTE_STATUSES, type QuoteStatus } from './status';
+
+/** stările pe care le poate trimite un formular (fără ACCEPTATA, care trece prin acceptQuote) */
+const SELECTABLE_STATUSES = QUOTE_STATUSES.filter((s) => s !== 'ACCEPTATA') as [QuoteStatus, ...QuoteStatus[]];
 
 const optStr = z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().optional());
 
 const quoteSettingsSchema = z.object({
   laborPct: z.coerce.number().nonnegative(),
   yieldFactor: z.coerce.number().gt(0).lte(1),
-  status: z.enum(['CIORNA', 'TRIMISA', 'RESPINSA']), // ACCEPTATA se setează doar din pagina proiectului (acceptQuote)
+  status: z.enum(SELECTABLE_STATUSES), // ACCEPTATA se setează doar din pagina proiectului (acceptQuote)
   handleType: z.enum(['APLICAT', 'BUTON', 'INGROPAT', 'PROFIL_J', 'GOLA', 'PUSH', 'FARA']),
   handleItemId: optStr,
 });
@@ -145,26 +150,79 @@ export const updateQuoteDetails = formAction(async (id: string, fd: FormData) =>
   revalidatePath(`/oferte/${id}/oferta`);
 });
 
+/** Efectele unei schimbări de stare, comune formularului din ofertă și selectorului din proiect:
+ *  snapshot la prima înghețare, `sentAt` la trimitere, curățarea relansării când nu mai aștepți
+ *  răspuns, și intrarea în timeline. Întoarce câmpurile de scris pe ofertă. */
+async function statusChangeData(
+  quote: { id: string; status: string; version: number; projectId: string | null; snapshotJson: string | null },
+  next: string,
+): Promise<{ status: string; snapshotJson?: string; sentAt?: Date; followUpAt?: null; followUpNote?: null }> {
+  const data: { status: string; snapshotJson?: string; sentAt?: Date; followUpAt?: null; followUpNote?: null } = { status: next };
+  if (isFrozenStatus(next) && (!isFrozenStatus(quote.status) || !quote.snapshotJson)) {
+    data.snapshotJson = JSON.stringify(await buildSnapshot());
+  }
+  if (next === 'TRIMISA' && quote.status !== 'TRIMISA') data.sentAt = new Date();
+  if (next === 'RESPINSA' || next === 'ACCEPTATA') { data.followUpAt = null; data.followUpNote = null; }
+  return data;
+}
+
+/** Intrarea în timeline pentru o schimbare de stare (nimic dacă starea nu s-a schimbat). */
+async function logStatusChange(
+  quote: { id: string; status: string; version: number; projectId: string | null },
+  next: string,
+): Promise<void> {
+  if (next === quote.status || !quote.projectId) return;
+  const me = await getCurrentUser();
+  const project = await prisma.project.findUnique({ where: { id: quote.projectId }, select: { clientId: true } });
+  const common = { projectId: quote.projectId, clientId: project?.clientId, userId: me?.id };
+  await logEvent(next === 'TRIMISA'
+    ? { type: 'QUOTE_SENT', ...common, payload: { quoteId: quote.id, version: quote.version } }
+    : { type: 'QUOTE_STATUS', ...common, payload: { quoteId: quote.id, version: quote.version, from: quote.status, to: next } });
+  revalidatePath(`/proiecte/${quote.projectId}`);
+}
+
 export const updateQuoteSettings = formAction(async (id: string, fd: FormData) => {
   const d = quoteSettingsSchema.parse(formDataToObject(fd));
   const quote = await prisma.quote.findUniqueOrThrow({ where: { id } });
+  // o ofertă ACCEPTATA își păstrează starea (se schimbă doar din pagina proiectului)
+  const next = quote.status === 'ACCEPTATA' ? 'ACCEPTATA' : d.status;
   // spread-ul cu handleItemId undefined NU șterge coloana — setăm explicit null
-  const data: Omit<typeof d, 'handleItemId' | 'status'> & { status: string; snapshotJson?: string; handleItemId: string | null } = {
+  const data = {
     ...d,
     handleItemId: d.handleItemId ?? null,
+    ...(await statusChangeData(quote, next)),
   };
-  // o ofertă ACCEPTATA își păstrează starea (se schimbă doar din pagina proiectului)
-  if (quote.status === 'ACCEPTATA') data.status = 'ACCEPTATA';
-  if (isFrozenStatus(data.status) && (!isFrozenStatus(quote.status) || !quote.snapshotJson)) {
-    data.snapshotJson = JSON.stringify(await buildSnapshot());
-  }
   await prisma.quote.update({ where: { id }, data });
-  if (data.status === 'TRIMISA' && quote.status !== 'TRIMISA' && quote.projectId) {
+  await logStatusChange(quote, next);
+  revalidatePath(`/oferte/${id}`);
+});
+
+/** Selectorul de stare din antetul proiectului. */
+export const setQuoteStatus = formAction(async (id: string, fd: FormData) => {
+  const { status: next } = z.object({ status: z.enum(SELECTABLE_STATUSES) }).parse(formDataToObject(fd));
+  const quote = await prisma.quote.findUniqueOrThrow({ where: { id } });
+  if (quote.status === 'ACCEPTATA') throw new Error('Oferta e acceptată — starea se schimbă din tabul Oferte.');
+  await prisma.quote.update({ where: { id }, data: await statusChangeData(quote, next) });
+  await logStatusChange(quote, next);
+  revalidatePath(`/oferte/${id}`);
+});
+
+/** Data la care revii la client pentru oferta asta („de relansat"). Goală = scoasă din listă. */
+export const setQuoteFollowUp = formAction(async (id: string, fd: FormData) => {
+  const d = z.object({ followUpAt: optStr, followUpNote: optStr }).parse(formDataToObject(fd));
+  const quote = await prisma.quote.findUniqueOrThrow({ where: { id } });
+  const followUpAt = parseDateInput(d.followUpAt);
+  await prisma.quote.update({ where: { id }, data: { followUpAt, followUpNote: d.followUpNote?.trim() || null } });
+  if (quote.projectId) {
     const me = await getCurrentUser();
     const project = await prisma.project.findUnique({ where: { id: quote.projectId }, select: { clientId: true } });
-    await logEvent({ type: 'QUOTE_SENT', projectId: quote.projectId, clientId: project?.clientId, userId: me?.id, payload: { quoteId: id, version: quote.version } });
+    await logEvent({
+      type: 'QUOTE_FOLLOWUP', projectId: quote.projectId, clientId: project?.clientId, userId: me?.id,
+      payload: { quoteId: id, version: quote.version, at: followUpAt ? toDateInput(followUpAt) : null, note: d.followUpNote?.trim() || null },
+    });
     revalidatePath(`/proiecte/${quote.projectId}`);
   }
+  revalidatePath('/');
   revalidatePath(`/oferte/${id}`);
 });
 

@@ -60,6 +60,7 @@ export async function loadProjectDetail(id: string) {
       id: q.id, version: q.version, label: q.label, status: q.status, name: q.name,
       acceptedPrice: q.acceptedPrice ? q.acceptedPrice.toNumber() : null, acceptedAt: q.acceptedAt,
       createdAt: q.createdAt, updatedAt: q.updatedAt,
+      sentAt: q.sentAt, followUpAt: q.followUpAt, followUpNote: q.followUpNote,
       ...(prices.get(q.id) ?? { cabinetCount: 0, totalCost: null, sellPrice: null }),
     })),
   };

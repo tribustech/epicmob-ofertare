@@ -5,7 +5,7 @@ import { daysFromToday, fmtDate, toDateInput } from '@/lib/crm/dates';
 import { LOST_REASON_LABELS } from '@/lib/crm/constants';
 import { loadLeadSources } from '@/lib/crm/client-queries';
 import { markLost, setNextAction } from '@/lib/crm/client-actions';
-import { loadActiveProjects, loadLeadsToContact, loadStaleQuotes } from '@/lib/crm/dashboard-queries';
+import { loadActiveProjects, loadLeadsToContact, loadQuotesToFollowUp, loadStaleQuotes } from '@/lib/crm/dashboard-queries';
 import { loadDashboardMoney } from '@/lib/finance/dashboard-money';
 import { generateExpectedDocuments } from '@/lib/finance/recurring-generate';
 import { DOCUMENT_KIND_LABELS, type DocumentKind } from '@/lib/finance/constants';
@@ -14,7 +14,7 @@ import { Select, SubmitButton, TextInput } from '@/components/forms';
 import { FormModal } from '@/components/FormModal';
 import { SidePanel } from '@/components/SidePanel';
 import { ClientEditForm } from '@/components/crm/ClientEditForm';
-import { DeadlineBadge, ProjectStatusPill, microLabelCls } from '@/components/crm/ui';
+import { DeadlineBadge, ProjectStatusPill, QuoteStatusPill, microLabelCls } from '@/components/crm/ui';
 import { Button } from '@/components/ui/button';
 
 export const dynamic = 'force-dynamic';
@@ -43,8 +43,8 @@ function Empty({ text }: { text: string }) {
 
 export default async function Dashboard() {
   await generateExpectedDocuments(); // recurentele „așteptate" se generează lazy, fără cron
-  const [projects, leads, staleQuotes, money, sources] = await Promise.all([
-    loadActiveProjects(), loadLeadsToContact(), loadStaleQuotes(), loadDashboardMoney(), loadLeadSources(),
+  const [projects, leads, followUps, staleQuotes, money, sources] = await Promise.all([
+    loadActiveProjects(), loadLeadsToContact(), loadQuotesToFollowUp(), loadStaleQuotes(), loadDashboardMoney(), loadLeadSources(),
   ]);
   const lostOptions = Object.entries(LOST_REASON_LABELS).map(([value, label]) => ({ value, label }));
   const today = fmtLong.format(new Date());
@@ -188,21 +188,41 @@ export default async function Dashboard() {
           )}
         </Panel>
 
-        <Panel title="Oferte fără răspuns" sub="› 7 zile">
+        <Panel title="De relansat" sub="oferte cu dată de revenire">
+          {followUps.length === 0 ? (
+            <Empty text="Nicio ofertă de relansat azi." />
+          ) : (
+            followUps.map((q) => (
+              <Link key={q.id} href={`/proiecte/${q.project?.id}`} className="block border-b px-5 py-3 transition-colors last:border-b-0 hover:bg-muted/50">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-[13.5px] font-semibold">{q.project?.name}</span>
+                  <QuoteStatusPill status={q.status} />
+                </div>
+                <div className="mt-0.5 text-[12.5px] text-muted-foreground">
+                  {q.project?.client?.name ?? 'fără client'} · #{q.version} · {fmtDate.format(q.followUpAt)}{' '}
+                  {q.lateDays > 0 ? <span className="text-red-600">({q.lateDays} zile întârziere)</span> : <span className="text-amber-700">azi</span>}
+                </div>
+                {q.followUpNote && <div className="mt-0.5 truncate text-[12.5px]">{q.followUpNote}</div>}
+              </Link>
+            ))
+          )}
+        </Panel>
+
+        <Panel title="Oferte fără răspuns" sub="fără dată, › 7 zile">
           {staleQuotes.length === 0 ? (
             <Empty text="Nicio ofertă trimisă care așteaptă de peste 7 zile." />
           ) : (
             staleQuotes.map((q) => (
-              <div key={q.id} className="border-b px-5 py-3 last:border-b-0">
+              <Link key={q.id} href={`/proiecte/${q.project?.id}`} className="block border-b px-5 py-3 transition-colors last:border-b-0 hover:bg-muted/50">
                 <div className="flex items-center justify-between gap-2">
-                  <Link href={`/proiecte/${q.project?.id}`} className="text-[13.5px] font-semibold hover:underline">{q.project?.name}</Link>
+                  <span className="truncate text-[13.5px] font-semibold">{q.project?.name}</span>
                   <span className="font-mono text-[12.5px] font-semibold">{q.sellPrice != null ? fmtLei(q.sellPrice) : '—'}</span>
                 </div>
                 <div className="mt-0.5 text-[12.5px] text-muted-foreground">
                   {q.project?.client?.name ?? 'fără client'} · #{q.version} · trimisă {fmtDate.format(q.sentAt)}{' '}
                   <span className="text-red-600">({q.days} zile)</span>
                 </div>
-              </div>
+              </Link>
             ))
           )}
         </Panel>

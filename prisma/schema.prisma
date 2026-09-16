@@ -135,7 +135,11 @@ model Quote {
   clientName    String?    // legacy — până la verificarea migrării CRM, apoi se șterge
   clientContact String?    // legacy — idem
   observatii    String?    // note libere afișate în ofertă
-  status        String     @default("CIORNA") // CIORNA | TRIMISA | ACCEPTATA | RESPINSA
+  // DE_FACUT | CIORNA | TRIMISA | IN_NEGOCIERE | AMANATA | ACCEPTATA | RESPINSA (lib/quote/status.ts)
+  status        String     @default("CIORNA")
+  sentAt        DateTime?  // când a plecat la client
+  followUpAt    DateTime?  // când revin la client („de relansat")
+  followUpNote  String?
   projectId     String?    // opțional doar până la migrarea datelor; apoi obligatoriu
   project       Project?   @relation(fields: [projectId], references: [id])
   version       Int        @default(1)
@@ -155,6 +159,7 @@ model Quote {
   assemblies    Assembly[]
 
   @@index([projectId])
+  @@index([followUpAt])
 }
 
 model Assembly {

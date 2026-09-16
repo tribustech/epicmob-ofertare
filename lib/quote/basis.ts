@@ -1,15 +1,14 @@
 import type { Quote } from '@prisma/client';
 import { buildSnapshot } from './snapshot';
 import type { SnapshotData } from './compute';
+import { isFrozenStatus } from './status';
 
 export type QuoteBasis =
   | { kind: 'LIVE'; snapshot: SnapshotData }
   | { kind: 'FROZEN'; snapshot: SnapshotData }
   | { kind: 'MISSING' };
 
-export function isFrozenStatus(status: string): boolean {
-  return status === 'TRIMISA' || status === 'ACCEPTATA';
-}
+export { isFrozenStatus } from './status';
 
 export async function getQuoteBasis(quote: Pick<Quote, 'status' | 'snapshotJson'>): Promise<QuoteBasis> {
   if (isFrozenStatus(quote.status)) {

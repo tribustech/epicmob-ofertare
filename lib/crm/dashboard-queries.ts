@@ -1,6 +1,11 @@
 import { prisma } from '@/lib/db';
 import { summarizeQuotePrices } from '@/lib/quote/price-summary';
+import { QUOTE_STATUSES, isWaitingStatus } from '@/lib/quote/status';
+import { startOfToday } from './dates';
 import { contractOf, PROJECT_TAB_STATUSES } from './project-queries';
+
+const WAITING_STATUSES = QUOTE_STATUSES.filter(isWaitingStatus);
+const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
 const DAY_MS = 86_400_000;
 
@@ -30,33 +35,48 @@ export async function loadLeadsToContact() {
   return rows.map((c) => ({ ...c, budgetEstimate: c.budgetEstimate ? c.budgetEstimate.toNumber() : null }));
 }
 
-/** Oferte TRIMISA fără răspuns de peste N zile (data trimiterii = ultimul eveniment QUOTE_SENT, altfel updatedAt). */
-export async function loadStaleQuotes(days = 7) {
+/** Ofertele de relansat: au dată de revenire azi sau în trecut. Sortate cu cele mai vechi întâi. */
+export async function loadQuotesToFollowUp() {
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
   const quotes = await prisma.quote.findMany({
-    where: { status: 'TRIMISA', project: { status: { in: PROJECT_TAB_STATUSES.active } } },
+    where: {
+      followUpAt: { lte: end },
+      status: { in: WAITING_STATUSES },
+      project: { status: { in: PROJECT_TAB_STATUSES.active } },
+    },
+    orderBy: { followUpAt: 'asc' },
     include: { project: { select: { id: true, name: true, client: { select: { name: true } } } } },
   });
-  if (quotes.length === 0) return [];
-  const sentEvents = await prisma.event.findMany({
-    where: { type: 'QUOTE_SENT', projectId: { in: quotes.map((q) => q.projectId!).filter(Boolean) } },
-    orderBy: { createdAt: 'desc' },
-    select: { projectId: true, payloadJson: true, createdAt: true },
+  const prices = await summarizeQuotePrices(quotes.map((q) => q.id));
+  return quotes.map((q) => ({
+    id: q.id, version: q.version, status: q.status, label: q.label,
+    followUpAt: q.followUpAt!, followUpNote: q.followUpNote,
+    lateDays: Math.max(0, Math.round((startOfToday().getTime() - startOfDay(q.followUpAt!).getTime()) / DAY_MS)),
+    project: q.project, sellPrice: prices.get(q.id)?.sellPrice ?? null,
+  }));
+}
+
+/** Oferte la client fără dată de revenire, mai vechi de N zile. Plasa de siguranță pentru
+ *  ofertele pentru care n-ai apucat să stabilești când revii. */
+export async function loadStaleQuotes(days = 7) {
+  const cutoff = new Date(Date.now() - days * DAY_MS);
+  const quotes = await prisma.quote.findMany({
+    where: {
+      status: { in: WAITING_STATUSES },
+      followUpAt: null,
+      project: { status: { in: PROJECT_TAB_STATUSES.active } },
+    },
+    include: { project: { select: { id: true, name: true, client: { select: { name: true } } } } },
   });
-  const sentAtByQuote = new Map<string, Date>();
-  for (const e of sentEvents) {
-    try {
-      const { quoteId } = JSON.parse(e.payloadJson) as { quoteId?: string };
-      if (quoteId && !sentAtByQuote.has(quoteId)) sentAtByQuote.set(quoteId, e.createdAt);
-    } catch { /* payload corupt */ }
-  }
-  const cutoff = Date.now() - days * DAY_MS;
+  // ofertele vechi n-au `sentAt` (coloană adăugată ulterior) — cad pe updatedAt, ca înainte
   const stale = quotes
-    .map((q) => ({ ...q, sentAt: sentAtByQuote.get(q.id) ?? q.updatedAt }))
-    .filter((q) => q.sentAt.getTime() <= cutoff)
+    .map((q) => ({ ...q, sentAt: q.sentAt ?? q.updatedAt }))
+    .filter((q) => q.sentAt <= cutoff)
     .sort((a, b) => a.sentAt.getTime() - b.sentAt.getTime());
   const prices = await summarizeQuotePrices(stale.map((q) => q.id));
   return stale.map((q) => ({
-    id: q.id, version: q.version, label: q.label, sentAt: q.sentAt,
+    id: q.id, version: q.version, status: q.status, label: q.label, sentAt: q.sentAt,
     days: Math.round((Date.now() - q.sentAt.getTime()) / DAY_MS),
     project: q.project, sellPrice: prices.get(q.id)?.sellPrice ?? null,
   }));

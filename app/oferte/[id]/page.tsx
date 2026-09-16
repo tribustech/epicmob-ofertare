@@ -5,6 +5,7 @@ import type { Assembly } from '@prisma/client';
 import { legHeightByCabinet, loadQuote, toQuoteInput, tryComputeQuote, type LoadedCabinet } from '@/lib/quote/load';
 import type { CabinetIssue } from '@/lib/quote/compute';
 import { getQuoteBasis } from '@/lib/quote/basis';
+import { QUOTE_STATUS_LABELS, selectableStatuses } from '@/lib/quote/status';
 import { HANDLE_TYPE_OPTIONS } from '@/lib/quote/handle';
 import { prisma } from '@/lib/db';
 import {
@@ -38,12 +39,8 @@ const TYPE_LABELS: Record<string, string> = {
   BAZA: 'Bază', SUSPENDAT: 'Suspendat', INALT: 'Înalt', COLT: 'Colț', BLAT: 'Blat',
 };
 // ACCEPTATA se setează doar din pagina proiectului („Acceptă oferta"), unde se îngheață și prețul
-const STATUS_OPTIONS = [
-  { value: 'CIORNA', label: 'Ciornă' },
-  { value: 'TRIMISA', label: 'Trimisă' },
-  { value: 'RESPINSA', label: 'Respinsă' },
-];
-const STATUS_LABELS: Record<string, string> = { CIORNA: 'Ciornă', TRIMISA: 'Trimisă', ACCEPTATA: 'Acceptată', RESPINSA: 'Respinsă' };
+const STATUS_OPTIONS = selectableStatuses('CIORNA').map((s) => ({ value: s, label: QUOTE_STATUS_LABELS[s] }));
+const STATUS_LABELS: Record<string, string> = QUOTE_STATUS_LABELS;
 const CATEGORY_LABELS: [key: string, label: string][] = [
   ['boards', 'Plăci'], ['edging', 'Cant ABS'], ['cuttingService', 'Debitare'],
   ['hardware', 'Feronerie'], ['labor', 'Manoperă'], ['freeLines', 'Linii libere'],

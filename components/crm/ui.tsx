@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { deadlineParts, type DeadlineTier } from '@/lib/crm/dates';
+import { QUOTE_STATUS_LABELS, QUOTE_STATUS_PILL, type QuoteStatus } from '@/lib/quote/status';
 import {
   CLIENT_STAGE_LABELS, CLIENT_STAGE_PILL, PILL_BASE, PROJECT_STATUS_LABELS, PROJECT_STATUS_PILL,
   type ClientStage, type ProjectStatus,
@@ -74,6 +75,16 @@ export function DeadlineBadge({ deadlineAt, size = 'md', className }: {
       <span className="text-[10px] font-bold uppercase tracking-[0.06em] opacity-80">Termen</span>
       <span className="font-mono">{dl.label}</span>
       {dl.sub && <span className={cn('opacity-90', !strong && 'text-muted-foreground')}>· {dl.sub}</span>}
+    </span>
+  );
+}
+
+/** Starea unei oferte, cu culoarea ei din lib/quote/status.ts. */
+export function QuoteStatusPill({ status, className }: { status: string; className?: string }) {
+  const s = status as QuoteStatus;
+  return (
+    <span className={cn(PILL_BASE, QUOTE_STATUS_PILL[s] ?? 'bg-muted text-muted-foreground', className)}>
+      {QUOTE_STATUS_LABELS[s] ?? status}
     </span>
   );
 }
