@@ -139,7 +139,7 @@ export default async function Dashboard() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Panel
-          title="Leaduri de contactat"
+          title="De contactat azi"
           action={<Link href="/leaduri" className="text-[12.5px] font-medium text-accent-blue-foreground hover:underline">Toate →</Link>}
         >
           {leads.length === 0 ? (

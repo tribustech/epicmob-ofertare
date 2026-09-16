@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db';
 import { summarizeQuotePrices } from '@/lib/quote/price-summary';
 import { QUOTE_STATUSES, isFollowUpStatus, isWaitingStatus } from '@/lib/quote/status';
+import { NEXT_ACTION_STAGES } from './client-stages';
 import { startOfToday } from './dates';
 import { contractOf, PROJECT_TAB_STATUSES } from './project-queries';
 
@@ -26,7 +27,7 @@ export async function loadLeadsToContact() {
   const end = new Date();
   end.setHours(23, 59, 59, 999);
   const rows = await prisma.client.findMany({
-    where: { stage: { in: ['LEAD', 'CALIFICAT'] }, nextActionAt: { lte: end } },
+    where: { stage: { in: NEXT_ACTION_STAGES }, nextActionAt: { lte: end } },
     orderBy: { nextActionAt: 'asc' },
     select: {
       id: true, name: true, kind: true, phone: true, email: true, address: true, cui: true, source: true, wants: true,

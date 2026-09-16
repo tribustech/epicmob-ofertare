@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { CLIENTS_STAGES, LEAD_ACTIVE_STAGES } from './client-stages';
 
 const dec = (d: { toNumber(): number } | null | undefined) => (d ? d.toNumber() : 0);
 
@@ -18,7 +19,7 @@ export async function loadLeads(tab: LeadTab, source?: string) {
   const where =
     tab === 'pierduti' ? { stage: 'PIERDUT' as const }
     : tab === 'remarketing' ? { remarketing: true }
-    : { stage: { in: ['LEAD', 'CALIFICAT'] } };
+    : { stage: { in: LEAD_ACTIVE_STAGES } };
   const rows = await prisma.client.findMany({
     where: { ...where, ...(source ? { source } : {}) },
     orderBy: [{ nextActionAt: { sort: 'asc', nulls: 'last' } }, { createdAt: 'desc' }],
@@ -28,7 +29,7 @@ export async function loadLeads(tab: LeadTab, source?: string) {
 
 export async function countLeadTabs() {
   const [activi, pierduti, remarketing] = await Promise.all([
-    prisma.client.count({ where: { stage: { in: ['LEAD', 'CALIFICAT'] } } }),
+    prisma.client.count({ where: { stage: { in: LEAD_ACTIVE_STAGES } } }),
     prisma.client.count({ where: { stage: 'PIERDUT' } }),
     prisma.client.count({ where: { remarketing: true } }),
   ]);
@@ -43,7 +44,7 @@ export async function loadClientsList(q?: string) {
   const search = q?.trim();
   const rows = await prisma.client.findMany({
     where: {
-      stage: { in: ['CLIENT', 'CALIFICAT'] },
+      stage: { in: CLIENTS_STAGES },
       ...(search
         ? { OR: [{ name: { contains: search, mode: 'insensitive' } }, { phone: { contains: search } }] }
         : {}),
