@@ -21,6 +21,41 @@ export function movementDescription(m: MovementRow): { text: string; href?: stri
   return { text: m.note ?? MOVEMENT_TYPE_LABELS[m.type as MovementType] ?? m.type };
 }
 
+/** Pe ce client / proiect e mișcarea. Fără client → „Atelier" la ieșiri, „—" la restul. */
+export function movementParties(m: MovementRow): { client: { id: string; name: string } | null; project: { id: string; name: string } | null }[] {
+  if (m.project) return [{ client: m.project.client ?? null, project: { id: m.project.id, name: m.project.name } }];
+  if (m.document) {
+    if (m.document.allocations.length > 0) {
+      return m.document.allocations.map((a) => ({ client: a.project.client ?? null, project: { id: a.project.id, name: a.project.name } }));
+    }
+    if (m.document.counterpartyClient) return [{ client: m.document.counterpartyClient, project: null }];
+  }
+  return [];
+}
+
+export function MovementParties({ m }: { m: MovementRow }) {
+  const parties = movementParties(m);
+  if (parties.length === 0) {
+    const ours = m.type === 'OUT' || (m.type === 'IN' && !m.loan);
+    return <span className="text-muted-foreground">{ours ? 'Atelier' : '—'}</span>;
+  }
+  return (
+    <div className="flex flex-col gap-0.5">
+      {parties.map((p, i) => (
+        <div key={i} className="text-[12.5px]">
+          {p.client ? <Link href={`/clienti/${p.client.id}`} className="font-medium hover:underline">{p.client.name}</Link> : <span className="text-muted-foreground">fără client</span>}
+          {p.project && (
+            <>
+              <span className="text-muted-foreground"> · </span>
+              <Link href={`/proiecte/${p.project.id}?tab=bani`} className="text-muted-foreground hover:underline">{p.project.name}</Link>
+            </>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function SignedAmount({ type, amount, className }: { type: string; amount: number; className?: string }) {
   const v = signedAmount({ type, amount });
   return (

@@ -8,7 +8,7 @@ import { ACCOUNT_KIND_LABELS, MOVEMENT_TYPE_LABELS, type AccountKind, type Movem
 import { loadBalances, loadMovements } from '@/lib/finance/account-queries';
 import { monthKey, monthLabel, recentMonthKeys } from '@/lib/finance/month';
 import { balanceOf } from '@/lib/finance/balance';
-import { MovementText, SignedAmount } from '@/components/finance/MovementLabel';
+import { MovementParties, MovementText, SignedAmount } from '@/components/finance/MovementLabel';
 import { ParamSelect } from '@/components/crm/ParamSelect';
 import { tableWrapCls, tdCls, thCls } from '@/components/crm/ui';
 
@@ -55,6 +55,7 @@ export default async function RegistruContPage({ params, searchParams }: { param
                 <th className={thCls}>Data</th>
                 <th className={thCls}>Tip</th>
                 <th className={thCls}>Explicație</th>
+                <th className={thCls}>Client</th>
                 <th className={cn(thCls, 'text-right')}>Sumă</th>
                 <th className={thCls}>Notă</th>
                 <th className={thCls}>Utilizator</th>
@@ -66,6 +67,7 @@ export default async function RegistruContPage({ params, searchParams }: { param
                   <td className={cn(tdCls, 'whitespace-nowrap font-mono text-[12px]')}>{fmtDate.format(m.date)}</td>
                   <td className={cn(tdCls, 'text-[12.5px]')}>{MOVEMENT_TYPE_LABELS[m.type as MovementType] ?? m.type}</td>
                   <td className={tdCls}><MovementText m={m} /></td>
+                  <td className={tdCls}><MovementParties m={m} /></td>
                   <td className={cn(tdCls, 'text-right')}><SignedAmount type={m.type} amount={m.amount} className="text-[12.5px] font-semibold" /></td>
                   <td className={cn(tdCls, 'max-w-[260px] text-[12.5px] text-muted-foreground')}>{m.type === 'ADJUSTMENT' ? '' : m.note ?? ''}</td>
                   <td className={cn(tdCls, 'text-[12.5px] text-muted-foreground')}>{m.user ?? '—'}</td>

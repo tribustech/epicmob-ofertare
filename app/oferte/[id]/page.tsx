@@ -175,13 +175,13 @@ export default async function ProiectPage({ params }: { params: Promise<{ id: st
           <><span>›</span><Link href={`/proiecte/${ctx.project.id}`} className="hover:text-foreground">{ctx.project.name}</Link></>
         )}
         <span>›</span>
-        <span className="text-foreground">Oferta v{ctx?.version ?? quoteRow.version}</span>
+        <span className="text-foreground">Oferta #{ctx?.version ?? quoteRow.version}</span>
       </div>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">
             {quoteRow.name}
-            <span className="ml-2 font-mono text-[13px] font-medium text-muted-foreground">v{quoteRow.version}</span>
+            <span className="ml-2 font-mono text-[13px] font-medium text-muted-foreground">#{quoteRow.version}</span>
             {quoteRow.label && <span className="ml-1.5 text-[13px] font-medium text-muted-foreground">· {quoteRow.label}</span>}
           </h1>
           <p className="text-sm text-muted-foreground">

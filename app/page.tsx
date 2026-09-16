@@ -1,11 +1,19 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { fmtLei } from '@/lib/format';
-import { daysFromToday, deadlineParts, fmtDate } from '@/lib/crm/dates';
+import { daysFromToday, deadlineParts, fmtDate, toDateInput } from '@/lib/crm/dates';
+import { LOST_REASON_LABELS } from '@/lib/crm/constants';
+import { loadLeadSources } from '@/lib/crm/client-queries';
+import { markLost, setNextAction } from '@/lib/crm/client-actions';
 import { loadActiveProjects, loadLeadsToContact, loadStaleQuotes } from '@/lib/crm/dashboard-queries';
 import { loadDashboardMoney } from '@/lib/finance/dashboard-money';
 import { generateExpectedDocuments } from '@/lib/finance/recurring-generate';
 import { DOCUMENT_KIND_LABELS, type DocumentKind } from '@/lib/finance/constants';
+import { ActionForm } from '@/components/ActionForm';
+import { Select, SubmitButton, TextInput } from '@/components/forms';
+import { FormModal } from '@/components/FormModal';
+import { SidePanel } from '@/components/SidePanel';
+import { ClientEditForm } from '@/components/crm/ClientEditForm';
 import { ProjectStatusPill, microLabelCls } from '@/components/crm/ui';
 import { Button } from '@/components/ui/button';
 
@@ -35,7 +43,10 @@ function Empty({ text }: { text: string }) {
 
 export default async function Dashboard() {
   await generateExpectedDocuments(); // recurentele „așteptate" se generează lazy, fără cron
-  const [projects, leads, staleQuotes, money] = await Promise.all([loadActiveProjects(), loadLeadsToContact(), loadStaleQuotes(), loadDashboardMoney()]);
+  const [projects, leads, staleQuotes, money, sources] = await Promise.all([
+    loadActiveProjects(), loadLeadsToContact(), loadStaleQuotes(), loadDashboardMoney(), loadLeadSources(),
+  ]);
+  const lostOptions = Object.entries(LOST_REASON_LABELS).map(([value, label]) => ({ value, label }));
   const today = fmtLong.format(new Date());
   const in14 = Date.now() + 14 * 86_400_000;
   const payables = money.unpaid.filter((d) => !d.dueAt || d.dueAt.getTime() <= in14);
@@ -70,16 +81,19 @@ export default async function Dashboard() {
             <div className={row}><span>− Împrumuturi scadente 30 z</span><span className="font-mono">{fmtLei(money.loansDue30)}</span></div>
           </div>
         </div>
-        <div className={moneyCard}>
-          <div className={microLabelCls}>De încasat</div>
+        <Link href="/finante/incasari" className={cn(moneyCard, 'transition-shadow hover:ring-2 hover:ring-accent-blue-foreground/40')} title="De unde am încasat și încasările viitoare">
+          <div className="flex items-center justify-between">
+            <div className={microLabelCls}>De încasat</div>
+            <span className="text-[11.5px] font-medium text-accent-blue-foreground">Detalii →</span>
+          </div>
           <div className="font-mono text-2xl font-semibold tracking-tight text-accent-blue-foreground">{fmtLei(money.receivableTotal)}</div>
           <div className="mt-auto flex flex-col gap-1 border-t pt-2">
             {money.receivables.slice(0, 3).map((p) => (
-              <Link key={p.id} href={`/proiecte/${p.id}?tab=bani`} className={cn(row, 'hover:underline')}><span className="truncate">{p.name}</span><span className="font-mono">{fmtLei(p.remaining)}</span></Link>
+              <div key={p.id} className={row}><span className="truncate">{p.name}</span><span className="font-mono">{fmtLei(p.remaining)}</span></div>
             ))}
             {money.receivables.length === 0 && <div className="text-[12.5px] text-muted-foreground">nimic de încasat</div>}
           </div>
-        </div>
+        </Link>
         <div className={moneyCard}>
           <div className={microLabelCls}>Datorii</div>
           <div className={cn('font-mono text-2xl font-semibold tracking-tight', money.debtsTotal > 0 && 'text-red-600')}>{fmtLei(money.debtsTotal)}</div>
@@ -149,8 +163,28 @@ export default async function Dashboard() {
                     {l.phone && <span className="font-mono">{l.phone}</span>}{l.phone && l.wants && ' · '}{l.wants}
                   </div>
                   {l.nextActionNote && <div className="mt-0.5 text-[12.5px]">{l.nextActionNote}</div>}
-                  <div className="mt-2">
-                    <Button asChild variant="outline" size="sm"><Link href={`/clienti/${l.id}`}>Notează</Link></Button>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <FormModal trigger="Următoarea acțiune" title={`Următoarea acțiune · ${l.name}`} variant="outline" size="sm">
+                      <ActionForm action={setNextAction.bind(null, l.id)} className="grid gap-4">
+                        <div className="grid grid-cols-[150px_1fr] gap-3">
+                          <TextInput name="nextActionAt" label="Data" type="date" defaultValue={toDateInput(l.nextActionAt)} required={false} mono />
+                          <TextInput name="nextActionNote" label="Ce faci" defaultValue={l.nextActionNote} required={false} placeholder="Sună cu preț orientativ" />
+                        </div>
+                        <p className="text-[12px] text-muted-foreground">Lasă data goală ca să ștergi acțiunea (leadul dispare din listă).</p>
+                        <div><SubmitButton>Salvează</SubmitButton></div>
+                      </ActionForm>
+                    </FormModal>
+                    <SidePanel trigger="Editează" title="Editează leadul" variant="ghost" size="sm">
+                      <ClientEditForm client={l} sources={sources} />
+                    </SidePanel>
+                    <FormModal trigger="Pierdut" title={`Lead pierdut · ${l.name}`} variant="ghost" size="sm">
+                      <ActionForm action={markLost.bind(null, l.id)} className="grid gap-4">
+                        <Select name="lostReason" label="Motiv" options={lostOptions} />
+                        <TextInput name="lostNote" label="Detalii" required={false} />
+                        <div><SubmitButton>Marchează pierdut</SubmitButton></div>
+                      </ActionForm>
+                    </FormModal>
+                    <Button asChild variant="ghost" size="sm"><Link href={`/clienti/${l.id}`}>Deschide</Link></Button>
                   </div>
                 </div>
               );
@@ -169,7 +203,7 @@ export default async function Dashboard() {
                   <span className="font-mono text-[12.5px] font-semibold">{q.sellPrice != null ? fmtLei(q.sellPrice) : '—'}</span>
                 </div>
                 <div className="mt-0.5 text-[12.5px] text-muted-foreground">
-                  {q.project?.client?.name ?? 'fără client'} · v{q.version} · trimisă {fmtDate.format(q.sentAt)}{' '}
+                  {q.project?.client?.name ?? 'fără client'} · #{q.version} · trimisă {fmtDate.format(q.sentAt)}{' '}
                   <span className="text-red-600">({q.days} zile)</span>
                 </div>
               </div>

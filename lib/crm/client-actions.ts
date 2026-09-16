@@ -16,6 +16,7 @@ import {
 const money = (n: number | undefined) => (n == null ? null : new Prisma.Decimal(n.toFixed(2)));
 
 function revalidateClient(id: string) {
+  revalidatePath('/'); // dashboard: „Leaduri de contactat"
   revalidatePath('/leaduri');
   revalidatePath('/clienti');
   revalidatePath(`/clienti/${id}`);

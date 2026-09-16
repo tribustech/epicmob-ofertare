@@ -23,9 +23,15 @@ export async function loadMovements(accountId: string, monthKey?: string | null)
     where: { accountId, ...(month ? { date: { gte: month.start, lt: month.end } } : {}) },
     orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
     include: {
-      document: { select: { id: true, counterparty: true, kind: true, number: true, direction: true } },
+      document: {
+        select: {
+          id: true, counterparty: true, kind: true, number: true, direction: true,
+          counterpartyClient: { select: { id: true, name: true } },
+          allocations: { select: { amount: true, project: { select: { id: true, name: true, client: { select: { id: true, name: true } } } } } },
+        },
+      },
       loan: { select: { id: true, lenderName: true } },
-      project: { select: { id: true, name: true } },
+      project: { select: { id: true, name: true, client: { select: { id: true, name: true } } } },
       createdBy: { select: { name: true } },
     },
   });
@@ -40,7 +46,10 @@ export async function loadMovements(accountId: string, monthKey?: string | null)
   return rows.map((r) => ({
     id: r.id, type: r.type, amount: dec(r.amount), date: r.date, note: r.note,
     incomeType: r.incomeType, adjustmentReason: r.adjustmentReason,
-    document: r.document, loan: r.loan, project: r.project,
+    document: r.document
+      ? { ...r.document, allocations: r.document.allocations.map((a) => ({ amount: dec(a.amount), project: a.project })) }
+      : null,
+    loan: r.loan, project: r.project,
     counterAccount: r.transferPairId ? counter.get(r.transferPairId) ?? null : null,
     user: r.createdBy?.name ?? null,
   }));

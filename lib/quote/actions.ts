@@ -193,7 +193,7 @@ export const duplicateQuote = formAction(async (id: string) => {
         name: quote.projectId ? quote.name : `${quote.name} (copie)`,
         projectId: quote.projectId,
         version: (last?._max.version ?? 0) + 1,
-        label: `copie a v${quote.version}${quote.label ? ` (${quote.label})` : ''}`,
+        label: `copie a #${quote.version}${quote.label ? ` (${quote.label})` : ''}`,
         clientName: quote.clientName,
         clientContact: quote.clientContact,
         laborPct: quote.laborPct,

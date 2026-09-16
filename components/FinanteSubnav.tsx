@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 
 const ITEMS = [
   { href: '/finante', label: 'Conturi', exact: true },
+  { href: '/finante/incasari', label: 'Încasări' },
   { href: '/finante/cheltuieli', label: 'Cheltuieli' },
   { href: '/finante/recurente', label: 'Recurente' },
   { href: '/finante/imprumuturi', label: 'Împrumuturi' },

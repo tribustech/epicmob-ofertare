@@ -19,11 +19,15 @@ export async function loadActiveProjects(limit = 12) {
 export async function loadLeadsToContact() {
   const end = new Date();
   end.setHours(23, 59, 59, 999);
-  return prisma.client.findMany({
+  const rows = await prisma.client.findMany({
     where: { stage: { in: ['LEAD', 'CALIFICAT'] }, nextActionAt: { lte: end } },
     orderBy: { nextActionAt: 'asc' },
-    select: { id: true, name: true, phone: true, wants: true, nextActionAt: true, nextActionNote: true },
+    select: {
+      id: true, name: true, kind: true, phone: true, email: true, address: true, cui: true, source: true, wants: true,
+      budgetEstimate: true, nextActionAt: true, nextActionNote: true,
+    },
   });
+  return rows.map((c) => ({ ...c, budgetEstimate: c.budgetEstimate ? c.budgetEstimate.toNumber() : null }));
 }
 
 /** Oferte TRIMISA fără răspuns de peste N zile (data trimiterii = ultimul eveniment QUOTE_SENT, altfel updatedAt). */

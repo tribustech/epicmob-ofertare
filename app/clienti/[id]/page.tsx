@@ -8,12 +8,13 @@ import { loadClientDetail, loadLeadSources } from '@/lib/crm/client-queries';
 import { loadPinnedNotes, loadTimeline } from '@/lib/crm/timeline';
 import { PinnedNotes, Timeline, parseFilter } from '@/components/crm/Timeline';
 import {
-  createProjectForClient, markLost, reactivateClient, setNextAction, setRemarketing, updateClient,
+  createProjectForClient, markLost, reactivateClient, setNextAction, setRemarketing,
 } from '@/lib/crm/client-actions';
 import { ActionForm } from '@/components/ActionForm';
 import { Select, SubmitButton, TextArea, TextInput } from '@/components/forms';
 import { FormModal } from '@/components/FormModal';
 import { SidePanel } from '@/components/SidePanel';
+import { ClientEditForm } from '@/components/crm/ClientEditForm';
 import { ProjectStatusPill, StagePill, microLabelCls } from '@/components/crm/ui';
 import { Button } from '@/components/ui/button';
 
@@ -26,7 +27,6 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
   ]);
   if (!client) notFound();
   const sourceOptions = sources.map((s) => ({ value: s.name, label: s.name }));
-  const kindOptions = Object.entries(CLIENT_KIND_LABELS).map(([value, label]) => ({ value, label }));
   const nextDays = client.nextActionAt ? daysFromToday(client.nextActionAt) : null;
   const isLeadStage = client.stage === 'LEAD' || client.stage === 'CALIFICAT';
 
@@ -86,22 +86,7 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
 
             <div className="flex flex-wrap gap-1.5 border-t pt-3">
               <SidePanel trigger="Editează" title="Editează clientul" variant="outline" size="sm">
-                <ActionForm action={updateClient.bind(null, client.id)} className="grid gap-4">
-                  <TextInput name="name" label="Nume" defaultValue={client.name} />
-                  <div className="grid grid-cols-2 gap-3">
-                    <TextInput name="phone" label="Telefon" type="tel" defaultValue={client.phone} required={false} mono />
-                    <Select name="kind" label="Tip" options={kindOptions} defaultValue={client.kind} />
-                  </div>
-                  <TextInput name="email" label="Email" type="email" defaultValue={client.email} required={false} />
-                  <TextInput name="address" label="Adresă" defaultValue={client.address} required={false} />
-                  <TextInput name="cui" label="CUI (firmă)" defaultValue={client.cui} required={false} mono />
-                  <div className="grid grid-cols-2 gap-3 border-t pt-4">
-                    <Select name="source" label="Sursă" options={sourceOptions} defaultValue={client.source} allowEmpty />
-                    <TextInput name="budgetEstimate" label="Buget estimat (lei)" defaultValue={client.budgetEstimate != null ? String(client.budgetEstimate) : ''} required={false} mono />
-                  </div>
-                  <TextArea name="wants" label="Ce vrea" defaultValue={client.wants} />
-                  <div className="pt-1"><SubmitButton>Salvează</SubmitButton></div>
-                </ActionForm>
+                <ClientEditForm client={client} sources={sources} />
               </SidePanel>
 
               <FormModal trigger="Remarketing" title="Remarketing" variant="ghost" size="sm">

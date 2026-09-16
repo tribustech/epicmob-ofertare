@@ -15,6 +15,7 @@ import type { SnapshotData } from '@/lib/quote/compute';
 import { logEvent } from './events';
 import { parseDateInput } from './dates';
 import { LOST_REASONS, PROJECT_STATUSES } from './constants';
+import { planClientChange } from './project-client';
 
 const optText = z.preprocess((v) => (v === '' || v == null ? undefined : v), z.string().trim().optional());
 const optNum = z.preprocess((v) => (v === '' || v == null ? undefined : v), z.coerce.number().nonnegative().optional());
@@ -47,19 +48,53 @@ export const createProject = formAction(async (fd: FormData) => {
   redirect(`/proiecte/${project.id}`);
 });
 
+/** Detalii proiect: nume, descriere, deadline și clientul ca text liber (vezi planClientChange):
+ *  nume existent → proiectul se mută pe acel client; nume nou → clientul curent e redenumit
+ *  (sau, fără client, se creează unul CALIFICAT). La mutare: eveniment pe proiect + pe clientul vechi,
+ *  ofertele își sincronizează câmpurile legacy clientName/clientContact, un LEAD devine CALIFICAT. */
 export const updateProjectDetails = formAction(async (id: string, fd: FormData) => {
   const me = await requireUser();
-  const d = z.object({ name: z.string().trim().min(1, 'Numele lipsește'), description: optText, deadlineAt: optText }).parse(formDataToObject(fd));
-  const before = await prisma.project.findUniqueOrThrow({ where: { id } });
+  const d = z.object({ name: z.string().trim().min(1, 'Numele lipsește'), description: optText, deadlineAt: optText, clientName: optText })
+    .parse(formDataToObject(fd));
+  const before = await prisma.project.findUniqueOrThrow({ where: { id }, include: { client: { select: { name: true } } } });
   const deadlineAt = parseDateInput(d.deadlineAt);
-  await prisma.project.update({ where: { id }, data: { name: d.name, description: d.description ?? null, deadlineAt } });
+
+  const clients = d.clientName ? await prisma.client.findMany({ select: { id: true, name: true } }) : [];
+  const plan = planClientChange(d.clientName ?? '', before.clientId, clients);
+  let newClient: { id: string; name: string; phone: string | null; email: string | null; stage: string } | null = null;
+  if (plan.kind === 'move') {
+    newClient = await prisma.client.findUniqueOrThrow({ where: { id: plan.clientId }, select: { id: true, name: true, phone: true, email: true, stage: true } });
+  } else if (plan.kind === 'create') {
+    newClient = await prisma.client.create({ data: { name: plan.name, stage: 'CALIFICAT', source: 'Altul', createdById: me.id }, select: { id: true, name: true, phone: true, email: true, stage: true } });
+    await logEvent({ type: 'CLIENT_CREATED', clientId: newClient.id, userId: me.id, payload: { source: 'Altul' } });
+  } else if (plan.kind === 'rename') {
+    await prisma.client.update({ where: { id: plan.clientId }, data: { name: plan.name } });
+    await prisma.quote.updateMany({ where: { project: { clientId: plan.clientId } }, data: { clientName: plan.name } });
+    await logEvent({ type: 'CLIENT_UPDATED', clientId: plan.clientId, userId: me.id, payload: { name: plan.name, from: before.client?.name ?? null } });
+  }
+
+  await prisma.project.update({
+    where: { id },
+    data: { name: d.name, description: d.description ?? null, deadlineAt, ...(newClient ? { clientId: newClient.id } : {}) },
+  });
   if ((before.deadlineAt?.getTime() ?? null) !== (deadlineAt?.getTime() ?? null)) {
     await logEvent({
-      type: 'DEADLINE_CHANGED', projectId: id, clientId: before.clientId, userId: me.id,
+      type: 'DEADLINE_CHANGED', projectId: id, clientId: newClient?.id ?? before.clientId, userId: me.id,
       payload: { from: before.deadlineAt?.toISOString() ?? null, to: deadlineAt?.toISOString() ?? null },
     });
   }
-  revalidateProject(id, before.clientId);
+  if (newClient) {
+    await prisma.quote.updateMany({ where: { projectId: id }, data: { clientName: newClient.name, clientContact: newClient.phone ?? newClient.email ?? null } });
+    const payload = { fromName: before.client?.name ?? null, toName: newClient.name, fromClientId: before.clientId, toClientId: newClient.id };
+    await logEvent({ type: 'PROJECT_CLIENT_CHANGED', projectId: id, clientId: newClient.id, userId: me.id, payload });
+    if (before.clientId) await logEvent({ type: 'PROJECT_CLIENT_CHANGED', clientId: before.clientId, userId: me.id, payload });
+    if (newClient.stage === 'LEAD') {
+      await prisma.client.update({ where: { id: newClient.id }, data: { stage: 'CALIFICAT' } });
+      await logEvent({ type: 'CLIENT_STAGE', clientId: newClient.id, userId: me.id, payload: { from: 'LEAD', to: 'CALIFICAT' } });
+    }
+    revalidateProject(id, before.clientId);
+  }
+  revalidateProject(id, newClient?.id ?? before.clientId);
 });
 
 async function changeStatus(id: string, to: string, userId: string, extra: Prisma.ProjectUpdateInput = {}, payload: Record<string, unknown> = {}) {
