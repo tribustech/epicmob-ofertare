@@ -1,10 +1,11 @@
 import { prisma } from '@/lib/db';
 import { summarizeQuotePrices } from '@/lib/quote/price-summary';
-import { QUOTE_STATUSES, isWaitingStatus } from '@/lib/quote/status';
+import { QUOTE_STATUSES, isFollowUpStatus, isWaitingStatus } from '@/lib/quote/status';
 import { startOfToday } from './dates';
 import { contractOf, PROJECT_TAB_STATUSES } from './project-queries';
 
 const WAITING_STATUSES = QUOTE_STATUSES.filter(isWaitingStatus);
+const FOLLOW_UP_STATUSES = QUOTE_STATUSES.filter(isFollowUpStatus);
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
 const DAY_MS = 86_400_000;
@@ -42,7 +43,7 @@ export async function loadQuotesToFollowUp() {
   const quotes = await prisma.quote.findMany({
     where: {
       followUpAt: { lte: end },
-      status: { in: WAITING_STATUSES },
+      status: { in: FOLLOW_UP_STATUSES },
       project: { status: { in: PROJECT_TAB_STATUSES.active } },
     },
     orderBy: { followUpAt: 'asc' },
@@ -54,6 +55,25 @@ export async function loadQuotesToFollowUp() {
     followUpAt: q.followUpAt!, followUpNote: q.followUpNote,
     lateDays: Math.max(0, Math.round((startOfToday().getTime() - startOfDay(q.followUpAt!).getTime()) / DAY_MS)),
     project: q.project, sellPrice: prices.get(q.id)?.sellPrice ?? null,
+  }));
+}
+
+/** Proiecte care așteaptă o măsurătoare, fără dată stabilită: vorbești cu echipa și cu clientul,
+ *  apoi pui data. Cele mai vechi întâi. */
+export async function loadMeasurementsToSchedule() {
+  const quotes = await prisma.quote.findMany({
+    where: {
+      status: 'DE_MASURAT',
+      followUpAt: null,
+      project: { status: { in: PROJECT_TAB_STATUSES.active } },
+    },
+    orderBy: { createdAt: 'asc' },
+    include: { project: { select: { id: true, name: true, client: { select: { name: true, phone: true } } } } },
+  });
+  return quotes.map((q) => ({
+    id: q.id, version: q.version, createdAt: q.createdAt,
+    waitingDays: Math.round((Date.now() - q.createdAt.getTime()) / DAY_MS),
+    project: q.project,
   }));
 }
 

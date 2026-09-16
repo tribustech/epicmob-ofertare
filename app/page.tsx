@@ -5,7 +5,7 @@ import { daysFromToday, fmtDate, toDateInput } from '@/lib/crm/dates';
 import { LOST_REASON_LABELS } from '@/lib/crm/constants';
 import { loadLeadSources } from '@/lib/crm/client-queries';
 import { markLost, setNextAction } from '@/lib/crm/client-actions';
-import { loadActiveProjects, loadLeadsToContact, loadQuotesToFollowUp, loadStaleQuotes } from '@/lib/crm/dashboard-queries';
+import { loadActiveProjects, loadLeadsToContact, loadMeasurementsToSchedule, loadQuotesToFollowUp, loadStaleQuotes } from '@/lib/crm/dashboard-queries';
 import { loadDashboardMoney } from '@/lib/finance/dashboard-money';
 import { generateExpectedDocuments } from '@/lib/finance/recurring-generate';
 import { DOCUMENT_KIND_LABELS, type DocumentKind } from '@/lib/finance/constants';
@@ -43,8 +43,8 @@ function Empty({ text }: { text: string }) {
 
 export default async function Dashboard() {
   await generateExpectedDocuments(); // recurentele „așteptate" se generează lazy, fără cron
-  const [projects, leads, followUps, staleQuotes, money, sources] = await Promise.all([
-    loadActiveProjects(), loadLeadsToContact(), loadQuotesToFollowUp(), loadStaleQuotes(), loadDashboardMoney(), loadLeadSources(),
+  const [projects, leads, followUps, measurements, staleQuotes, money, sources] = await Promise.all([
+    loadActiveProjects(), loadLeadsToContact(), loadQuotesToFollowUp(), loadMeasurementsToSchedule(), loadStaleQuotes(), loadDashboardMoney(), loadLeadSources(),
   ]);
   const lostOptions = Object.entries(LOST_REASON_LABELS).map(([value, label]) => ({ value, label }));
   const today = fmtLong.format(new Date());
@@ -188,7 +188,25 @@ export default async function Dashboard() {
           )}
         </Panel>
 
-        <Panel title="De relansat" sub="oferte cu dată de revenire">
+        <Panel title="De programat măsurătoare" sub="fără dată stabilită">
+          {measurements.length === 0 ? (
+            <Empty text="Nicio măsurătoare de programat." />
+          ) : (
+            measurements.map((q) => (
+              <Link key={q.id} href={`/proiecte/${q.project?.id}`} className="block border-b px-5 py-3 transition-colors last:border-b-0 hover:bg-muted/50">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-[13.5px] font-semibold">{q.project?.name}</span>
+                  <span className="font-mono text-[12px] text-muted-foreground">{q.waitingDays} z</span>
+                </div>
+                <div className="mt-0.5 text-[12.5px] text-muted-foreground">
+                  {q.project?.client?.name ?? 'fără client'}{q.project?.client?.phone && ` · ${q.project.client.phone}`}
+                </div>
+              </Link>
+            ))
+          )}
+        </Panel>
+
+        <Panel title="De relansat" sub="măsurători și oferte cu dată">
           {followUps.length === 0 ? (
             <Empty text="Nicio ofertă de relansat azi." />
           ) : (

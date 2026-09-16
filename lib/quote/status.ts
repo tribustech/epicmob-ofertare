@@ -1,13 +1,14 @@
 /** Stările unei oferte, în ordinea ciclului de viață, plus etichete și culori.
  *  Un singur loc pentru tot ce ține de stare: pagina ofertei, antetul proiectului, dashboard. */
 export type QuoteStatus =
-  | 'DE_FACUT' | 'CIORNA' | 'TRIMISA' | 'IN_NEGOCIERE' | 'AMANATA' | 'ACCEPTATA' | 'RESPINSA';
+  | 'DE_MASURAT' | 'DE_FACUT' | 'CIORNA' | 'TRIMISA' | 'IN_NEGOCIERE' | 'AMANATA' | 'ACCEPTATA' | 'RESPINSA';
 
 export const QUOTE_STATUSES: QuoteStatus[] = [
-  'DE_FACUT', 'CIORNA', 'TRIMISA', 'IN_NEGOCIERE', 'AMANATA', 'ACCEPTATA', 'RESPINSA',
+  'DE_MASURAT', 'DE_FACUT', 'CIORNA', 'TRIMISA', 'IN_NEGOCIERE', 'AMANATA', 'ACCEPTATA', 'RESPINSA',
 ];
 
 export const QUOTE_STATUS_LABELS: Record<QuoteStatus, string> = {
+  DE_MASURAT: 'De măsurat',
   DE_FACUT: 'De făcut',
   CIORNA: 'Ciornă',
   TRIMISA: 'Trimisă',
@@ -18,6 +19,7 @@ export const QUOTE_STATUS_LABELS: Record<QuoteStatus, string> = {
 };
 
 export const QUOTE_STATUS_PILL: Record<QuoteStatus, string> = {
+  DE_MASURAT: 'bg-sky-100 text-sky-900 ring-1 ring-sky-300',
   DE_FACUT: 'bg-amber-100 text-amber-900 ring-1 ring-amber-300',
   CIORNA: 'bg-muted text-muted-foreground ring-1 ring-border',
   TRIMISA: 'bg-accent-blue text-accent-blue-foreground ring-1 ring-accent-blue-border',
@@ -42,6 +44,16 @@ export function isWaitingStatus(status: string): boolean {
 export function selectableStatuses(current: string): QuoteStatus[] {
   if (current === 'ACCEPTATA') return ['ACCEPTATA'];
   return QUOTE_STATUSES.filter((s) => s !== 'ACCEPTATA');
+}
+
+/** Stările cu o dată de urmărit: măsurătoarea de programat și ofertele aflate la client. */
+export function isFollowUpStatus(status: string): boolean {
+  return status === 'DE_MASURAT' || isWaitingStatus(status);
+}
+
+/** Ce întreabă rândul de programare, după stare. */
+export function followUpQuestion(status: string): string {
+  return status === 'DE_MASURAT' ? 'Când mergi la măsurat?' : 'Când revii la client?';
 }
 
 export function isQuoteStatus(s: string): s is QuoteStatus {

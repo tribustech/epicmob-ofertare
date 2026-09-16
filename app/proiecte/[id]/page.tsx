@@ -22,7 +22,7 @@ import {
   acceptQuote, advanceProject, createQuoteForProject, markProjectLost, moveQuoteToProject, setHoursWorked, updateProjectDetails,
 } from '@/lib/crm/project-actions';
 import { duplicateQuote } from '@/lib/quote/actions';
-import { isWaitingStatus } from '@/lib/quote/status';
+import { followUpQuestion, isFollowUpStatus } from '@/lib/quote/status';
 import { ActionForm } from '@/components/ActionForm';
 import { NumberInput, Select, SubmitButton, TextArea, TextInput } from '@/components/forms';
 import { FormModal } from '@/components/FormModal';
@@ -62,7 +62,7 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
   const latest = project.quotes[project.quotes.length - 1];
   // în antet arătăm oferta acceptată dacă există, altfel ultima versiune
   const latestQuote = accepted[accepted.length - 1] ?? latest;
-  const needsFollowUp = latestQuote && isWaitingStatus(latestQuote.status) && !latestQuote.followUpAt && !isClosed;
+  const needsFollowUp = latestQuote && isFollowUpStatus(latestQuote.status) && !latestQuote.followUpAt && !isClosed;
   const lostReasonOptions = Object.entries(LOST_REASON_LABELS).map(([value, label]) => ({ value, label }));
 
   return (
@@ -102,15 +102,16 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
             {needsFollowUp && (
               // oferta e la client fără dată de revenire — o pui aici, în două mișcări
               <ActionForm action={setQuoteFollowUp.bind(null, latestQuote.id)} className="mt-3 flex flex-wrap items-end gap-2 rounded-lg bg-amber-50 px-3 py-2 ring-1 ring-amber-200">
-                <span className="pb-1.5 text-[12.5px] font-semibold text-amber-900">Când revii la client?</span>
+                <span className="pb-1.5 text-[12.5px] font-semibold text-amber-900">{followUpQuestion(latestQuote.status)}</span>
                 <TextInput name="followUpAt" label="Data" type="date" required={false} mono />
                 <TextInput name="followUpNote" label="Notă" required={false} placeholder="sună după concediu" />
                 <div className="pb-0.5"><SubmitButton>Salvează</SubmitButton></div>
               </ActionForm>
             )}
-            {latestQuote?.followUpAt && isWaitingStatus(latestQuote.status) && (
+            {latestQuote?.followUpAt && isFollowUpStatus(latestQuote.status) && (
               <div className="mt-2 text-[12.5px] text-muted-foreground">
-                Revii la client pe <span className="font-mono font-semibold text-foreground">{fmtDate.format(latestQuote.followUpAt)}</span>
+                {latestQuote.status === 'DE_MASURAT' ? 'Măsurători pe ' : 'Revii la client pe '}
+                <span className="font-mono font-semibold text-foreground">{fmtDate.format(latestQuote.followUpAt)}</span>
                 {latestQuote.followUpNote && ` · ${latestQuote.followUpNote}`}
               </div>
             )}
@@ -265,8 +266,10 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
                       </td>
                       <td className={tdCls}>
                         <QuoteStatusPill status={q.status} />
-                        {q.followUpAt && isWaitingStatus(q.status) && (
-                          <div className="mt-1 font-mono text-[11px] text-muted-foreground">revin {fmtDate.format(q.followUpAt)}</div>
+                        {q.followUpAt && isFollowUpStatus(q.status) && (
+                          <div className="mt-1 font-mono text-[11px] text-muted-foreground">
+                            {q.status === 'DE_MASURAT' ? 'măsor' : 'revin'} {fmtDate.format(q.followUpAt)}
+                          </div>
                         )}
                       </td>
                       <td className={cn(tdCls, 'text-right font-mono text-[12.5px]')}>{q.cabinetCount}</td>
