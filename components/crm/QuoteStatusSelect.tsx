@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useTransition } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { FormState } from '@/lib/forms/form-action';
 import { QUOTE_STATUS_LABELS, QUOTE_STATUS_PILL, selectableStatuses, type QuoteStatus } from '@/lib/quote/status';
@@ -30,7 +31,10 @@ export function QuoteStatusSelect({ action, status, version, disabled }: {
   }
   return (
     <span className="inline-flex flex-col items-end gap-0.5">
-      <span className={cn('inline-flex items-center gap-1 rounded-full py-0.5 pl-3 pr-1.5 text-[12px] font-semibold', pill, pending && 'opacity-60')}>
+      <span className={cn(
+        'inline-flex cursor-pointer items-center gap-1 rounded-full py-1 pl-3 pr-2 text-[12px] font-semibold shadow-sm transition-shadow hover:shadow',
+        pill, pending && 'opacity-60',
+      )}>
         <span className="font-mono opacity-80">#{version}</span>
         <select
           ref={ref}
@@ -42,12 +46,13 @@ export function QuoteStatusSelect({ action, status, version, disabled }: {
             fd.set('status', e.target.value);
             startTransition(() => dispatch(fd));
           }}
-          className="cursor-pointer appearance-none bg-transparent py-0.5 pr-1 text-[12px] font-semibold outline-none"
+          className="cursor-pointer appearance-none bg-transparent pr-0.5 text-[12px] font-semibold outline-none"
         >
           {selectableStatuses(status).map((s) => (
             <option key={s} value={s} className="bg-background text-foreground">{QUOTE_STATUS_LABELS[s]}</option>
           ))}
         </select>
+        <ChevronDown className="size-3.5 opacity-70" aria-hidden />
       </span>
       {state.error && <span className="text-[11px] text-destructive">{state.error}</span>}
     </span>
