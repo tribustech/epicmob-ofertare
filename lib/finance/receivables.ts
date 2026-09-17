@@ -74,7 +74,7 @@ const dec = (d: { toNumber(): number } | null | undefined) => (d ? d.toNumber() 
 /** Proiectele active + montate: contract, încasat (pe tipuri), rest; plus lista încasărilor. */
 export async function loadReceivables() {
   const projects = await prisma.project.findMany({
-    where: { status: { in: PROJECT_TAB_STATUSES.active.concat('MONTAT') } },
+    where: { status: { in: PROJECT_TAB_STATUSES.active.concat('MONTAT') }, deletedAt: null },
     select: { id: true, name: true, status: true, deadlineAt: true, client: { select: { id: true, name: true } } },
   });
   const ids = projects.map((p) => p.id);

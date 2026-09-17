@@ -39,7 +39,7 @@ export async function loadDashboardMoney() {
   const personalDebtTotal = round2(personal.reduce((s, a) => s + a.debt, 0));
 
   // de încasat: proiectele active cu contract − încasat > 0
-  const activeProjects = await prisma.project.findMany({ where: { status: { in: PROJECT_TAB_STATUSES.active.concat('MONTAT') } }, select: { id: true, name: true } });
+  const activeProjects = await prisma.project.findMany({ where: { status: { in: PROJECT_TAB_STATUSES.active.concat('MONTAT') }, deletedAt: null }, select: { id: true, name: true } });
   const money = await loadProjectsMoney(activeProjects.map((p) => p.id));
   const receivables = activeProjects
     .map((p) => ({ id: p.id, name: p.name, remaining: money.get(p.id)?.receivable ?? 0 }))

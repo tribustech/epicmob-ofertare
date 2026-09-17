@@ -82,7 +82,7 @@ export async function loadExpenseFormOptions() {
   const [categories, projects, accounts, settings] = await Promise.all([
     prisma.costCategory.findMany({ where: { active: true }, orderBy: [{ scope: 'asc' }, { sortOrder: 'asc' }] }),
     prisma.project.findMany({
-      where: { status: { notIn: ['INCHIS', 'PIERDUT'] } },
+      where: { status: { notIn: ['INCHIS', 'PIERDUT'] }, deletedAt: null },
       orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
       select: { id: true, name: true, client: { select: { name: true } } },
     }),

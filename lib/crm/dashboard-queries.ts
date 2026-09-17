@@ -14,7 +14,7 @@ const DAY_MS = 86_400_000;
 /** Proiectele active, după deadline (fără deadline la coadă). */
 export async function loadActiveProjects(limit = 12) {
   const rows = await prisma.project.findMany({
-    where: { status: { in: PROJECT_TAB_STATUSES.active } },
+    where: { status: { in: PROJECT_TAB_STATUSES.active }, deletedAt: null },
     orderBy: [{ deadlineAt: { sort: 'asc', nulls: 'last' } }, { createdAt: 'desc' }],
     take: limit,
     include: { client: { select: { name: true } }, quotes: { select: { status: true, acceptedPrice: true } } },
@@ -27,7 +27,7 @@ export async function loadLeadsToContact() {
   const end = new Date();
   end.setHours(23, 59, 59, 999);
   const rows = await prisma.client.findMany({
-    where: { stage: { in: NEXT_ACTION_STAGES }, nextActionAt: { lte: end } },
+    where: { stage: { in: NEXT_ACTION_STAGES }, nextActionAt: { lte: end }, deletedAt: null },
     orderBy: { nextActionAt: 'asc' },
     select: {
       id: true, name: true, kind: true, phone: true, email: true, address: true, cui: true, source: true, wants: true,
@@ -45,7 +45,7 @@ export async function loadQuotesToFollowUp() {
     where: {
       followUpAt: { lte: end },
       status: { in: FOLLOW_UP_STATUSES },
-      project: { status: { in: PROJECT_TAB_STATUSES.active } },
+      project: { status: { in: PROJECT_TAB_STATUSES.active }, deletedAt: null },
     },
     orderBy: { followUpAt: 'asc' },
     include: { project: { select: { id: true, name: true, client: { select: { name: true } } } } },
@@ -66,7 +66,7 @@ export async function loadMeasurementsToSchedule() {
     where: {
       status: 'DE_MASURAT',
       followUpAt: null,
-      project: { status: { in: PROJECT_TAB_STATUSES.active } },
+      project: { status: { in: PROJECT_TAB_STATUSES.active }, deletedAt: null },
     },
     orderBy: { createdAt: 'asc' },
     include: { project: { select: { id: true, name: true, client: { select: { name: true, phone: true } } } } },
@@ -86,7 +86,7 @@ export async function loadStaleQuotes(days = 7) {
     where: {
       status: { in: WAITING_STATUSES },
       followUpAt: null,
-      project: { status: { in: PROJECT_TAB_STATUSES.active } },
+      project: { status: { in: PROJECT_TAB_STATUSES.active }, deletedAt: null },
     },
     include: { project: { select: { id: true, name: true, client: { select: { name: true } } } } },
   });

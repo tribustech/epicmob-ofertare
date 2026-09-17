@@ -7,7 +7,7 @@ import { prisma } from '@/lib/db';
 import { formAction } from '@/lib/forms/form-action';
 import { formDataToObject } from '@/lib/catalog/schemas';
 import { requireUser } from '@/lib/auth/current-user';
-import { clientDeleteBlocker } from './client-delete';
+import { purgeClients } from './trash-purge';
 import { logEvent } from './events';
 import { parseDateInput } from './dates';
 import {
@@ -15,6 +15,13 @@ import {
 } from './client-schemas';
 
 const money = (n: number | undefined) => (n == null ? null : new Prisma.Decimal(n.toFixed(2)));
+
+function revalidateTrash(id: string) {
+  revalidateClient(id);
+  revalidatePath('/proiecte');
+  revalidatePath('/calendar');
+  revalidatePath('/setari');
+}
 
 function revalidateClient(id: string) {
   revalidatePath('/'); // dashboard: „Leaduri de contactat"
@@ -111,16 +118,34 @@ export const createProjectForClient = formAction(async (clientId: string, fd: Fo
   revalidatePath('/proiecte');
 });
 
-/** Șterge fișa unui lead sau client. Merge doar pe fișe goale (vezi clientDeleteBlocker);
- *  evenimentele și notițele lui pleacă odată cu el, evenimentele din calendar rămân, fără legătură. */
+/** Mută în coșul de gunoi fișa unui lead sau client, cu tot cu proiectele lui. Nu se șterge
+ *  nimic pe bune: dispare din liste și se poate recupera 30 de zile (vezi lib/crm/trash.ts). */
 export const deleteClient = formAction(async (id: string) => {
   await requireUser();
-  const client = await prisma.client.findUniqueOrThrow({
-    where: { id },
-    select: { id: true, name: true, _count: { select: { projects: true, documents: true } } },
-  });
-  const blocker = clientDeleteBlocker({ name: client.name, projects: client._count.projects, documents: client._count.documents });
-  if (blocker) throw new Error(blocker);
-  await prisma.client.delete({ where: { id } });
-  revalidateClient(id);
+  const client = await prisma.client.findUniqueOrThrow({ where: { id }, select: { id: true, deletedAt: true } });
+  if (client.deletedAt) return;
+  const deletedAt = new Date();
+  await prisma.$transaction([
+    prisma.project.updateMany({ where: { clientId: id, deletedAt: null }, data: { deletedAt } }),
+    prisma.client.update({ where: { id }, data: { deletedAt } }),
+  ]);
+  revalidateTrash(id);
+});
+
+/** Scoate din coș clientul și proiectele puse acolo odată cu el. */
+export const restoreClient = formAction(async (id: string) => {
+  await requireUser();
+  await prisma.$transaction([
+    prisma.project.updateMany({ where: { clientId: id, deletedAt: { not: null } }, data: { deletedAt: null } }),
+    prisma.client.update({ where: { id }, data: { deletedAt: null } }),
+  ]);
+  revalidateTrash(id);
+});
+
+/** Ștergere definitivă, acum: fișa, proiectele, ofertele. Banii rămân în registru — mișcările
+ *  și alocările își pierd doar legătura cu proiectul șters. */
+export const purgeClient = formAction(async (id: string) => {
+  await requireUser();
+  await purgeClients([id]);
+  revalidateTrash(id);
 });

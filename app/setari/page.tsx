@@ -16,6 +16,12 @@ import { createLeadSource, renameLeadSource, setLeadSourceActive } from '@/lib/c
 import { monthLabel } from '@/lib/finance/month';
 import { fmtLei } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { fmtDate } from '@/lib/crm/dates';
+import { CLIENT_STAGE_LABELS, type ClientStage } from '@/lib/crm/constants';
+import { TRASH_DAYS, daysLeftInTrash } from '@/lib/crm/trash';
+import { loadTrash, purgeExpiredTrash } from '@/lib/crm/trash-purge';
+import { purgeClient, restoreClient } from '@/lib/crm/client-actions';
+import { DeleteButton } from '@/components/DeleteButton';
 
 const dateTimeFmt = new Intl.DateTimeFormat('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
@@ -57,6 +63,8 @@ export default async function SetariPage() {
   const bucketOptions = Object.entries(QUOTE_BUCKET_LABELS).map(([value, label]) => ({ value, label }));
   const ind = await loadIndicators();
   const leadSources = await prisma.leadSource.findMany({ orderBy: [{ active: 'desc' }, { sortOrder: 'asc' }] });
+  await purgeExpiredTrash(); // ce stă de peste 30 de zile dispare la deschiderea paginii
+  const trash = await loadTrash();
 
   return (
     <div className="space-y-8">
@@ -353,6 +361,66 @@ export default async function SetariPage() {
               ))}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Coș de gunoi</CardTitle>
+          <CardDescription>
+            Clienții și leadurile șterse stau aici {TRASH_DAYS} de zile, cu tot cu proiectele și ofertele lor.
+            După aceea dispar definitiv. Banii din registru rămân neatinși.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {trash.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Coșul e gol.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nume</TableHead>
+                  <TableHead>Șters</TableHead>
+                  <TableHead>Conținut</TableHead>
+                  <TableHead>Mai stă</TableHead>
+                  <TableHead className="text-right">Acțiuni</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {trash.map((c) => {
+                  const left = daysLeftInTrash(c.deletedAt);
+                  return (
+                    <TableRow key={c.id}>
+                      <TableCell className="font-semibold">
+                        {c.name}
+                        <div className="text-[11.5px] font-normal text-muted-foreground">{CLIENT_STAGE_LABELS[c.stage as ClientStage] ?? c.stage}{c.phone ? ` · ${c.phone}` : ''}</div>
+                      </TableCell>
+                      <TableCell className="font-mono text-[12.5px] text-muted-foreground">{fmtDate.format(c.deletedAt)}</TableCell>
+                      <TableCell className="text-[12.5px] text-muted-foreground">
+                        {c.projects === 0 ? 'fără proiecte' : `${c.projects} ${c.projects === 1 ? 'proiect' : 'proiecte'}`}
+                        {c.documents > 0 && ` · ${c.documents} ${c.documents === 1 ? 'document' : 'documente'}`}
+                      </TableCell>
+                      <TableCell className={cn('font-mono text-[12.5px]', left <= 3 && 'font-semibold text-red-600')}>
+                        {left} {left === 1 ? 'zi' : 'zile'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-2">
+                          <ActionForm action={restoreClient.bind(null, c.id)}>
+                            <Button type="submit" variant="outline" size="sm">Recuperează</Button>
+                          </ActionForm>
+                          <DeleteButton
+                            action={purgeClient.bind(null, c.id)}
+                            label="Șterge definitiv"
+                            confirmMessage={`Ștergi definitiv „${c.name}"${c.projects > 0 ? ` și cele ${c.projects} proiecte ale lui` : ''}? Nu se poate anula.`}
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -2,7 +2,7 @@ import { prisma } from '@/lib/db';
 
 /** Export CSV al clienților marcați remarketing (nume, telefon, email, sursă, ce vrea, buget, notă). */
 export async function GET() {
-  const rows = await prisma.client.findMany({ where: { remarketing: true }, orderBy: { name: 'asc' } });
+  const rows = await prisma.client.findMany({ where: { remarketing: true, deletedAt: null }, orderBy: { name: 'asc' } });
   const esc = (v: unknown) => {
     const s = v == null ? '' : String(v);
     return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;

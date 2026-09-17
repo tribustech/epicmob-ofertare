@@ -21,7 +21,7 @@ export async function loadLeads(tab: LeadTab, source?: string) {
     : tab === 'remarketing' ? { remarketing: true }
     : { stage: { in: LEAD_ACTIVE_STAGES } };
   const rows = await prisma.client.findMany({
-    where: { ...where, ...(source ? { source } : {}) },
+    where: { ...where, deletedAt: null, ...(source ? { source } : {}) },
     orderBy: [{ nextActionAt: { sort: 'asc', nulls: 'last' } }, { createdAt: 'desc' }],
   });
   return rows.map((c) => ({ ...c, budgetEstimate: c.budgetEstimate ? c.budgetEstimate.toNumber() : null }));
@@ -29,9 +29,9 @@ export async function loadLeads(tab: LeadTab, source?: string) {
 
 export async function countLeadTabs() {
   const [activi, pierduti, remarketing] = await Promise.all([
-    prisma.client.count({ where: { stage: { in: LEAD_ACTIVE_STAGES } } }),
-    prisma.client.count({ where: { stage: 'PIERDUT' } }),
-    prisma.client.count({ where: { remarketing: true } }),
+    prisma.client.count({ where: { stage: { in: LEAD_ACTIVE_STAGES }, deletedAt: null } }),
+    prisma.client.count({ where: { stage: 'PIERDUT', deletedAt: null } }),
+    prisma.client.count({ where: { remarketing: true, deletedAt: null } }),
   ]);
   return { activi, pierduti, remarketing };
 }
@@ -45,6 +45,7 @@ export async function loadClientsList(q?: string) {
   const rows = await prisma.client.findMany({
     where: {
       stage: { in: CLIENTS_STAGES },
+      deletedAt: null,
       ...(search
         ? { OR: [{ name: { contains: search, mode: 'insensitive' } }, { phone: { contains: search } }] }
         : {}),

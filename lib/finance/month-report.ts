@@ -38,7 +38,7 @@ async function fixedCostsForMonth(start: Date, end: Date) {
 export async function loadMonthFigures(key: string): Promise<MonthFigures & { projects: { id: string; name: string; client: string | null; mountedAt: Date | null; contract: number; direct: number; contribution: number; contributionPct: number | null }[]; fixedByCategory: { category: string; amount: number }[] }> {
   const m = parseMonthKey(key) ?? parseMonthKey(monthKey())!;
   const [mounted, fixed, cash] = await Promise.all([
-    prisma.project.findMany({ where: { mountedAt: { gte: m.start, lt: m.end } }, select: { id: true, name: true, mountedAt: true, client: { select: { name: true } } }, orderBy: { mountedAt: 'asc' } }),
+    prisma.project.findMany({ where: { mountedAt: { gte: m.start, lt: m.end }, deletedAt: null }, select: { id: true, name: true, mountedAt: true, client: { select: { name: true } } }, orderBy: { mountedAt: 'asc' } }),
     fixedCostsForMonth(m.start, m.end),
     prisma.movement.groupBy({ by: ['type'], where: { date: { gte: m.start, lt: m.end }, type: { in: ['IN', 'OUT'] } }, _sum: { amount: true } }),
   ]);

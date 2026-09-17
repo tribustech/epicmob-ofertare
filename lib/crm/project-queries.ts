@@ -20,7 +20,7 @@ export function contractOf(quotes: { status: string; acceptedPrice: { toNumber()
 
 export async function loadProjectsList(tab: ProjectTab) {
   const rows = await prisma.project.findMany({
-    where: { status: { in: PROJECT_TAB_STATUSES[tab] } },
+    where: { status: { in: PROJECT_TAB_STATUSES[tab] }, deletedAt: null },
     orderBy: [{ deadlineAt: { sort: 'asc', nulls: 'last' } }, { createdAt: 'desc' }],
     include: { client: { select: { id: true, name: true } }, quotes: { select: { status: true, acceptedPrice: true } } },
   });
@@ -37,7 +37,7 @@ export async function loadProjectsList(tab: ProjectTab) {
 
 export async function countProjectTabs() {
   const entries = await Promise.all(
-    (Object.keys(PROJECT_TAB_STATUSES) as ProjectTab[]).map(async (t) => [t, await prisma.project.count({ where: { status: { in: PROJECT_TAB_STATUSES[t] } } })] as const),
+    (Object.keys(PROJECT_TAB_STATUSES) as ProjectTab[]).map(async (t) => [t, await prisma.project.count({ where: { status: { in: PROJECT_TAB_STATUSES[t] }, deletedAt: null } })] as const),
   );
   return Object.fromEntries(entries) as Record<ProjectTab, number>;
 }
@@ -78,7 +78,7 @@ export async function loadQuoteContext(quoteId: string) {
 /** Proiectele active (pentru „Mută oferta în alt proiect"). */
 export async function loadProjectOptions(excludeId?: string) {
   const rows = await prisma.project.findMany({
-    where: { status: { notIn: ['INCHIS', 'PIERDUT'] }, ...(excludeId ? { id: { not: excludeId } } : {}) },
+    where: { status: { notIn: ['INCHIS', 'PIERDUT'] }, deletedAt: null, ...(excludeId ? { id: { not: excludeId } } : {}) },
     orderBy: { createdAt: 'desc' },
     select: { id: true, name: true, client: { select: { name: true } } },
   });
@@ -86,6 +86,6 @@ export async function loadProjectOptions(excludeId?: string) {
 }
 
 export async function loadClientOptions() {
-  const rows = await prisma.client.findMany({ where: { stage: { not: 'PIERDUT' } }, orderBy: { name: 'asc' }, select: { id: true, name: true } });
+  const rows = await prisma.client.findMany({ where: { stage: { not: 'PIERDUT' }, deletedAt: null }, orderBy: { name: 'asc' }, select: { id: true, name: true } });
   return rows.map((c) => ({ value: c.id, label: c.name }));
 }

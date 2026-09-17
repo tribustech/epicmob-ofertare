@@ -17,11 +17,11 @@ export async function loadCalendarMonth(key: string, today = new Date()): Promis
 
   const [projects, clients, docs, loans, manual] = await Promise.all([
     prisma.project.findMany({
-      where: { deadlineAt: inRange, status: { notIn: ['INCHIS', 'PIERDUT'] } },
+      where: { deadlineAt: inRange, status: { notIn: ['INCHIS', 'PIERDUT'] }, deletedAt: null },
       select: { id: true, name: true, deadlineAt: true, client: { select: { name: true } } },
     }),
     prisma.client.findMany({
-      where: { nextActionAt: inRange, stage: { not: 'PIERDUT' } },
+      where: { nextActionAt: inRange, stage: { not: 'PIERDUT' }, deletedAt: null },
       select: { id: true, name: true, nextActionAt: true, nextActionNote: true },
     }),
     prisma.document.findMany({

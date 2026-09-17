@@ -59,7 +59,7 @@ export default async function ClientiPage({ searchParams }: { searchParams: Prom
                   <td className={cn(tdCls, 'text-right font-mono text-[12.5px] font-semibold')}>{c.contractValue > 0 ? fmtLei(c.contractValue) : '—'}</td>
                   <td className={cn(tdCls, 'text-[12.5px] text-muted-foreground')}>{fmtDate.format(c.lastActivity)}</td>
                   <td className={cn(tdCls, 'text-right')}>
-                    <DeleteButton action={deleteClient.bind(null, c.id)} iconOnly floatingError label="Șterge clientul" confirmMessage={`Ștergi fișa „${c.name}"? Nu se poate anula.`} />
+                    <DeleteButton action={deleteClient.bind(null, c.id)} iconOnly floatingError label="Mută în coș" confirmMessage={`Muți „${c.name}" în coșul de gunoi? Se poate recupera 30 de zile din Setări.`} />
                   </td>
                 </LinkRow>
               ))}

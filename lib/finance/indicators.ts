@@ -22,7 +22,7 @@ export async function loadIndicators(today = new Date()) {
   const start = new Date(today.getFullYear(), today.getMonth() - (LOOKBACK_MONTHS - 1), 1);
   const [salaryCats, mounted] = await Promise.all([
     prisma.costCategory.findMany({ where: { scope: 'INDIRECT', name: { in: ['Salarii', 'Taxe stat'] } }, select: { id: true } }),
-    prisma.project.findMany({ where: { mountedAt: { gte: start }, hoursWorked: { not: null } }, select: { hoursWorked: true } }),
+    prisma.project.findMany({ where: { mountedAt: { gte: start }, hoursWorked: { not: null }, deletedAt: null }, select: { hoursWorked: true } }),
   ]);
   const salaryDocs = await prisma.document.findMany({
     where: { direction: 'EXPENSE', replacedBy: null, issuedAt: { gte: start }, categoryId: { in: salaryCats.map((c) => c.id) } },

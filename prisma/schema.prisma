@@ -250,6 +250,7 @@ model Client {
   remarketingNote String?
   createdById     String?
   createdBy       User?     @relation(fields: [createdById], references: [id])
+  deletedAt       DateTime? // în coșul de gunoi; se șterge definitiv după 30 de zile
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   projects        Project[]
@@ -260,6 +261,7 @@ model Client {
 
   @@index([stage])
   @@index([phone])
+  @@index([deletedAt])
 }
 
 // Proiect = o lucrare pentru un client. Are oferte (Quote), deadline promis, ciclu de viață.
@@ -277,6 +279,7 @@ model Project {
   lostReason  String?
   lostNote    String?
   hoursWorked Float?    // completat la Montat, opțional
+  deletedAt   DateTime? // în coșul de gunoi, odată cu clientul lui
   createdById String?
   createdBy   User?     @relation(fields: [createdById], references: [id])
   createdAt   DateTime  @default(now())
@@ -291,6 +294,7 @@ model Project {
 
   @@index([status, deadlineAt])
   @@index([clientId])
+  @@index([deletedAt])
 }
 
 // Intrare automată în timeline (client și/sau proiect), semnată de utilizator.

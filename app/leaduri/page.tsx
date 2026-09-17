@@ -130,7 +130,7 @@ export default async function LeaduriPage({ searchParams }: { searchParams: Prom
                       )}
                     </td>
                     <td className={cn(tdCls, 'text-right')}>
-                      <DeleteButton action={deleteClient.bind(null, l.id)} iconOnly floatingError label="Șterge leadul" confirmMessage={`Ștergi fișa „${l.name}"? Nu se poate anula.`} />
+                      <DeleteButton action={deleteClient.bind(null, l.id)} iconOnly floatingError label="Mută în coș" confirmMessage={`Muți „${l.name}" în coșul de gunoi? Se poate recupera 30 de zile din Setări.`} />
                     </td>
                   </LinkRow>
                 );
