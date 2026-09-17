@@ -7,6 +7,7 @@ import { prisma } from '@/lib/db';
 import { formAction } from '@/lib/forms/form-action';
 import { formDataToObject } from '@/lib/catalog/schemas';
 import { requireUser } from '@/lib/auth/current-user';
+import { clientDeleteBlocker } from './client-delete';
 import { logEvent } from './events';
 import { parseDateInput } from './dates';
 import {
@@ -108,4 +109,18 @@ export const createProjectForClient = formAction(async (clientId: string, fd: Fo
   if (client.stage === 'LEAD') await setStage(clientId, 'CALIFICAT', me.id);
   revalidateClient(clientId);
   revalidatePath('/proiecte');
+});
+
+/** Șterge fișa unui lead sau client. Merge doar pe fișe goale (vezi clientDeleteBlocker);
+ *  evenimentele și notițele lui pleacă odată cu el, evenimentele din calendar rămân, fără legătură. */
+export const deleteClient = formAction(async (id: string) => {
+  await requireUser();
+  const client = await prisma.client.findUniqueOrThrow({
+    where: { id },
+    select: { id: true, name: true, _count: { select: { projects: true, documents: true } } },
+  });
+  const blocker = clientDeleteBlocker({ name: client.name, projects: client._count.projects, documents: client._count.documents });
+  if (blocker) throw new Error(blocker);
+  await prisma.client.delete({ where: { id } });
+  revalidateClient(id);
 });

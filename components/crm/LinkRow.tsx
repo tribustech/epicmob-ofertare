@@ -9,7 +9,11 @@ export function LinkRow({ href, children, className }: { href: string; children:
   const router = useRouter();
   return (
     <tr
-      onClick={() => router.push(href)}
+      onClick={(e) => {
+        // butoanele și formularele din rând (ex. ștergerea) își păstrează click-ul
+        if ((e.target as HTMLElement).closest('button, a, form, input, select')) return;
+        router.push(href);
+      }}
       className={cn('cursor-pointer transition-colors hover:bg-muted/50', className)}
     >
       {children}

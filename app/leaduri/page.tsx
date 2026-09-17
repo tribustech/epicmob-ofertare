@@ -11,6 +11,8 @@ import { SidePanel } from '@/components/SidePanel';
 import { LinkRow } from '@/components/crm/LinkRow';
 import { ParamSelect } from '@/components/crm/ParamSelect';
 import { EmptyState, PageHeader, tableWrapCls, tdCls, thCls } from '@/components/crm/ui';
+import { DeleteButton } from '@/components/DeleteButton';
+import { deleteClient } from '@/lib/crm/client-actions';
 import { Button } from '@/components/ui/button';
 
 export const dynamic = 'force-dynamic';
@@ -94,6 +96,7 @@ export default async function LeaduriPage({ searchParams }: { searchParams: Prom
                 <th className={thCls}>Ce vrea</th>
                 <th className={cn(thCls, 'text-right')}>Buget</th>
                 <th className={thCls}>{tab === 'pierduti' ? 'Motiv' : 'Următoarea acțiune'}</th>
+                <th className={cn(thCls, 'w-10')}></th>
               </tr>
             </thead>
             <tbody>
@@ -125,6 +128,9 @@ export default async function LeaduriPage({ searchParams }: { searchParams: Prom
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
+                    </td>
+                    <td className={cn(tdCls, 'text-right')}>
+                      <DeleteButton action={deleteClient.bind(null, l.id)} iconOnly floatingError label="Șterge leadul" confirmMessage={`Ștergi fișa „${l.name}"? Nu se poate anula.`} />
                     </td>
                   </LinkRow>
                 );

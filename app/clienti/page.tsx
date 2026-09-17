@@ -4,6 +4,8 @@ import { fmtDate } from '@/lib/crm/dates';
 import { CLIENT_KIND_LABELS } from '@/lib/crm/constants';
 import { loadClientsList } from '@/lib/crm/client-queries';
 import { LinkRow } from '@/components/crm/LinkRow';
+import { DeleteButton } from '@/components/DeleteButton';
+import { deleteClient } from '@/lib/crm/client-actions';
 import { EmptyState, PageHeader, StagePill, tableWrapCls, tdCls, thCls } from '@/components/crm/ui';
 
 export const dynamic = 'force-dynamic';
@@ -41,6 +43,7 @@ export default async function ClientiPage({ searchParams }: { searchParams: Prom
                 <th className={cn(thCls, 'text-right')}>Proiecte</th>
                 <th className={cn(thCls, 'text-right')}>Valoare contracte</th>
                 <th className={thCls}>Ultima activitate</th>
+                <th className={cn(thCls, 'w-10')}></th>
               </tr>
             </thead>
             <tbody>
@@ -55,6 +58,9 @@ export default async function ClientiPage({ searchParams }: { searchParams: Prom
                   <td className={cn(tdCls, 'text-right font-mono text-[12.5px]')}>{c.projectCount}</td>
                   <td className={cn(tdCls, 'text-right font-mono text-[12.5px] font-semibold')}>{c.contractValue > 0 ? fmtLei(c.contractValue) : '—'}</td>
                   <td className={cn(tdCls, 'text-[12.5px] text-muted-foreground')}>{fmtDate.format(c.lastActivity)}</td>
+                  <td className={cn(tdCls, 'text-right')}>
+                    <DeleteButton action={deleteClient.bind(null, c.id)} iconOnly floatingError label="Șterge clientul" confirmMessage={`Ștergi fișa „${c.name}"? Nu se poate anula.`} />
+                  </td>
                 </LinkRow>
               ))}
             </tbody>
