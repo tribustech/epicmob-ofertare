@@ -47,7 +47,7 @@ export function ExpenseForm({ options, action, defaultProjectId, redirectTo, sta
   const direct = options.categories.filter((c) => c.scope === 'DIRECT');
   const defaultCategory = direct[0]?.value ?? options.categories[0]?.value ?? '';
   const today = toDateInput(new Date());
-  const cols = stacked ? 'grid-cols-1' : 'grid-cols-2';
+  const cols = stacked ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2';
 
   return (
     <ActionForm action={action} className="flex flex-col gap-6">
@@ -120,7 +120,7 @@ export function ExpenseForm({ options, action, defaultProjectId, redirectTo, sta
           <label className="flex items-center gap-1.5"><input type="radio" name="payMode" value="UNPAID" checked={payMode === 'UNPAID'} onChange={() => setPayMode('UNPAID')} /> Neplătit / proformă</label>
         </div>
         {payMode === 'PAID' ? (
-          <div className={cn('grid gap-3', stacked ? 'grid-cols-1' : 'grid-cols-3')}>
+          <div className={cn('grid gap-3', stacked ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-3')}>
             <Field label="Din contul">
               <select name="accountId" defaultValue={options.accounts[0]?.value ?? ''} className={inputCls}>
                 {options.accounts.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
@@ -130,7 +130,7 @@ export function ExpenseForm({ options, action, defaultProjectId, redirectTo, sta
             <Field label="Sumă plătită"><input name="payAmount" placeholder={amount || 'toată suma'} inputMode="decimal" className={cn(inputCls, 'font-mono')} /></Field>
           </div>
         ) : (
-          <div className={cn('grid gap-3', stacked ? 'grid-cols-1' : 'grid-cols-3')}>
+          <div className={cn('grid gap-3', stacked ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-3')}>
             <Field label="Scadență (opțional)"><input name="dueAt" type="date" className={cn(inputCls, 'font-mono')} /></Field>
           </div>
         )}

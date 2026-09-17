@@ -28,6 +28,7 @@ import { NumberInput, Select, SubmitButton, TextArea, TextInput } from '@/compon
 import { FormModal } from '@/components/FormModal';
 import { DeadlineBadge, ProjectStatusPill, QuoteStatusPill, microLabelCls, tableWrapCls, tdCls, thCls } from '@/components/crm/ui';
 import { QuoteStatusSelect } from '@/components/crm/QuoteStatusSelect';
+import { ListCard, ListCards } from '@/components/crm/ListCard';
 import { setQuoteFollowUp, setQuoteStatus } from '@/lib/quote/actions';
 import { Button } from '@/components/ui/button';
 
@@ -76,7 +77,7 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
       </div>
 
       {/* ───── antet ───── */}
-      <div className="flex flex-col gap-4 rounded-xl bg-card px-6 py-5 ring-1 ring-border">
+      <div className="flex flex-col gap-4 rounded-xl bg-card px-4 py-4 ring-1 ring-border sm:px-6 sm:py-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex flex-wrap items-center gap-3">
@@ -101,11 +102,11 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
             {project.description && <p className="mt-2 max-w-[720px] text-[13px] text-muted-foreground">{project.description}</p>}
             {needsFollowUp && (
               // oferta e la client fără dată de revenire — o pui aici, în două mișcări
-              <ActionForm action={setQuoteFollowUp.bind(null, latestQuote.id)} className="mt-3 flex flex-wrap items-end gap-2 rounded-lg bg-amber-50 px-3 py-2 ring-1 ring-amber-200">
-                <span className="pb-1.5 text-[12.5px] font-semibold text-amber-900">{followUpQuestion(latestQuote.status)}</span>
+              <ActionForm action={setQuoteFollowUp.bind(null, latestQuote.id)} className="mt-3 grid gap-2 rounded-lg bg-amber-50 px-3 py-2 ring-1 ring-amber-200 sm:flex sm:flex-wrap sm:items-end">
+                <span className="text-[12.5px] font-semibold text-amber-900 sm:pb-1.5">{followUpQuestion(latestQuote.status)}</span>
                 <TextInput name="followUpAt" label="Data" type="date" required={false} mono />
                 <TextInput name="followUpNote" label="Notă" required={false} placeholder="sună după concediu" />
-                <div className="pb-0.5"><SubmitButton>Salvează</SubmitButton></div>
+                <div className="sm:pb-0.5"><SubmitButton>Salvează</SubmitButton></div>
               </ActionForm>
             )}
             {latestQuote?.followUpAt && isFollowUpStatus(latestQuote.status) && (
@@ -117,7 +118,7 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             {latestQuote && (
               <QuoteStatusSelect action={setQuoteStatus.bind(null, latestQuote.id)} status={latestQuote.status} version={latestQuote.version} disabled={isClosed} />
             )}
@@ -162,7 +163,7 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
         <div className="grid grid-cols-2 gap-4 border-t pt-4 md:grid-cols-5">
           <div>
             <div className={microLabelCls}>Contract</div>
-            <div className="mt-1 font-mono text-2xl font-semibold tracking-tight">{money.contract > 0 ? fmtLei(money.contract) : '—'}</div>
+            <div className="mt-1 font-mono text-[19px] font-semibold sm:text-2xl tracking-tight">{money.contract > 0 ? fmtLei(money.contract) : '—'}</div>
             <div className="text-[12px] text-muted-foreground">
               {accepted.length === 0 ? 'nicio ofertă acceptată' : accepted.length === 1 ? `oferta v${accepted[0].version}` : `${accepted.length} oferte acceptate`}
               {money.contractChanges !== 0 && ` ${money.contractChanges > 0 ? '+' : '−'} ${fmtLei(Math.abs(money.contractChanges))} modificări`}
@@ -170,7 +171,7 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
           </div>
           <div>
             <div className={microLabelCls}>Încasat</div>
-            <div className="mt-1 font-mono text-2xl font-semibold tracking-tight text-accent-blue-foreground">{fmtLei(money.received)}</div>
+            <div className="mt-1 font-mono text-[19px] font-semibold sm:text-2xl tracking-tight text-accent-blue-foreground">{fmtLei(money.received)}</div>
             <div className="text-[12px] text-muted-foreground">
               {splitText || (money.contract > 0 ? 'nimic încasat încă' : 'fără contract')}
             </div>
@@ -180,7 +181,7 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
               <div className={microLabelCls}>De încasat</div>
               <span className="text-[11px] font-medium text-accent-blue-foreground">Bani →</span>
             </div>
-            <div className={cn('mt-1 font-mono text-2xl font-semibold tracking-tight', money.receivable > 0.005 ? (expected.late ? 'text-red-600' : 'text-accent-blue-foreground') : 'text-muted-foreground/50')}>
+            <div className={cn('mt-1 font-mono text-[19px] font-semibold sm:text-2xl tracking-tight', money.receivable > 0.005 ? (expected.late ? 'text-red-600' : 'text-accent-blue-foreground') : 'text-muted-foreground/50')}>
               {money.contract > 0 ? fmtLei(Math.max(0, money.receivable)) : '—'}
             </div>
             <div className={cn('text-[12px]', expected.late && money.receivable > 0.005 ? 'text-red-600' : 'text-muted-foreground')}>
@@ -189,7 +190,7 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
           </Link>
           <div>
             <div className={microLabelCls}>Cheltuit</div>
-            <div className="mt-1 font-mono text-2xl font-semibold tracking-tight">{fmtLei(money.spent)}</div>
+            <div className="mt-1 font-mono text-[19px] font-semibold sm:text-2xl tracking-tight">{fmtLei(money.spent)}</div>
             <div className="text-[12px] text-muted-foreground">
               {accepted.length > 0 && accepted[0].totalCost != null ? `estimat ${fmtLei(accepted.reduce((s, q) => s + (q.totalCost ?? 0), 0))}` : 'fără estimat'}
               {money.unpaidShare > 0.005 && ` · de plătit ${fmtLei(money.unpaidShare)}`}
@@ -197,7 +198,7 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
           </div>
           <div>
             <div className={microLabelCls}>Contribuție la zi</div>
-            <div className={cn('mt-1 font-mono text-2xl font-semibold tracking-tight', money.contract > 0 ? (money.contribution < 0 ? 'text-red-600' : 'text-emerald-700') : 'text-muted-foreground/50')}>
+            <div className={cn('mt-1 font-mono text-[19px] font-semibold sm:text-2xl tracking-tight', money.contract > 0 ? (money.contribution < 0 ? 'text-red-600' : 'text-emerald-700') : 'text-muted-foreground/50')}>
               {money.contract > 0 ? fmtLei(money.contribution) : '—'}
             </div>
             <div className="text-[12px] text-muted-foreground">{money.contributionPct != null ? `${money.contributionPct}% din contract` : 'contract − cheltuit'}</div>
@@ -206,7 +207,7 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
       </div>
 
       {/* ───── tab-uri ───── */}
-      <div className="flex gap-5 border-b border-[#d9d7d0]">
+      <div className="flex gap-5 overflow-x-auto border-b border-[#d9d7d0]">
         {TABS.map((t) => (
           <Link
             key={t.key}
@@ -243,7 +244,24 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
           {project.quotes.length === 0 ? (
             <div className="px-5 py-8 text-center text-[13px] text-muted-foreground">Nicio ofertă încă. Creează prima cu „Ofertă nouă".</div>
           ) : (
-            <table className="w-full border-collapse">
+            <>
+            <ListCards className="p-3">
+              {project.quotes.map((q) => (
+                <ListCard
+                  key={q.id}
+                  href={`/oferte/${q.id}`}
+                  title={<>#{q.version} {q.label ?? q.name}</>}
+                  subtitle={`${q.cabinetCount} ${q.cabinetCount === 1 ? 'corp' : 'corpuri'} · ${fmtDate.format(q.status === 'ACCEPTATA' && q.acceptedAt ? q.acceptedAt : q.updatedAt)}`}
+                  badge={<QuoteStatusPill status={q.status} />}
+                  meta={q.followUpAt && isFollowUpStatus(q.status)
+                    ? <span className="font-mono text-[12px]">{q.status === 'DE_MASURAT' ? 'măsor' : 'revin'} {fmtDate.format(q.followUpAt)}</span>
+                    : undefined}
+                  right={q.status === 'ACCEPTATA' && q.acceptedPrice != null ? fmtLei(q.acceptedPrice) : q.sellPrice != null ? fmtLei(q.sellPrice) : '—'}
+                  rightNote={q.totalCost != null ? `cost ${fmtLei(q.totalCost)}` : undefined}
+                />
+              ))}
+            </ListCards>
+            <table className="hidden w-full border-collapse sm:table">
               <thead>
                 <tr>
                   <th className={thCls}>Ofertă</th>
@@ -317,6 +335,7 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
                 })}
               </tbody>
             </table>
+            </>
           )}
         </div>
       ) : tab === 'costuri' ? (
@@ -435,7 +454,7 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
                 <FormModal trigger="Adaugă modificare" title="Modificare de contract" variant="outline" size="sm">
                   <ActionForm action={addContractChange.bind(null, project.id)} className="grid gap-3">
                     <TextInput name="description" label="Ce s-a schimbat" placeholder="a mai vrut 2 corpuri suspendate" />
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <TextInput name="amount" label="Sumă (± lei)" placeholder="1800 sau -500" mono />
                       <TextInput name="date" label="Data" type="date" defaultValue={todayInput} mono />
                     </div>
@@ -467,7 +486,7 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
             {/* (d) ore lucrate */}
             <div className="flex flex-col gap-2 rounded-xl bg-card p-5 ring-1 ring-border">
               <div className="text-[15px] font-bold">Ore lucrate</div>
-              <div className="font-mono text-2xl font-semibold tracking-tight">{project.hoursWorked != null ? project.hoursWorked : '—'}</div>
+              <div className="font-mono text-[19px] font-semibold sm:text-2xl tracking-tight">{project.hoursWorked != null ? project.hoursWorked : '—'}</div>
               <p className="text-[12px] text-muted-foreground">Se cere la Montat, opțional. Manopera directă = ore × tarif orar încărcat, când există destule proiecte cu ore.</p>
               <div>
                 <FormModal trigger={project.hoursWorked != null ? 'Schimbă' : 'Completează'} title="Ore lucrate" variant="outline" size="sm">
@@ -487,11 +506,11 @@ export default async function ProiectPage({ params, searchParams }: { params: Pr
               <div className="text-[15px] font-bold">Încasări</div>
               <FormModal trigger="Adaugă încasare" title="Adaugă încasare" size="sm">
                 <ActionForm action={addReceipt.bind(null, project.id)} className="grid gap-3">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <TextInput name="amount" label="Sumă (lei)" placeholder={money.receivable > 0 ? money.receivable.toFixed(2).replace('.', ',') : '0,00'} mono />
                     <TextInput name="incomeType" label="Tip" placeholder="Avans, Rată, Final sau ce vrei tu" required={false} suggestions={Object.values(INCOME_TYPE_LABELS)} />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <Select name="accountId" label="În contul" options={accountOptions} allowEmpty />
                     <TextInput name="date" label="Data" type="date" defaultValue={todayInput} mono />
                   </div>

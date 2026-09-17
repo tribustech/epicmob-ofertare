@@ -74,7 +74,7 @@ export default async function Dashboard() {
         </div>
         <div className={moneyCard}>
           <div className={microLabelCls}>Disponibil real</div>
-          <div className={cn('font-mono text-2xl font-semibold tracking-tight', money.available < 0 && 'text-red-600')}>{fmtLei(money.available)}</div>
+          <div className={cn('font-mono text-[19px] font-semibold sm:text-2xl tracking-tight', money.available < 0 && 'text-red-600')}>{fmtLei(money.available)}</div>
           <div className="mt-auto flex flex-col gap-1 border-t pt-2 text-muted-foreground">
             <div className={row}><span>Solduri conturi</span><span className="font-mono">{fmtLei(money.accountsTotal)}</span></div>
             <div className={row}><span>− Facturi neplătite</span><span className="font-mono">{fmtLei(money.unpaidTotal)}</span></div>
@@ -86,7 +86,7 @@ export default async function Dashboard() {
             <div className={microLabelCls}>De încasat</div>
             <span className="text-[11.5px] font-medium text-accent-blue-foreground">Detalii →</span>
           </div>
-          <div className="font-mono text-2xl font-semibold tracking-tight text-accent-blue-foreground">{fmtLei(money.receivableTotal)}</div>
+          <div className="font-mono text-[19px] font-semibold sm:text-2xl tracking-tight text-accent-blue-foreground">{fmtLei(money.receivableTotal)}</div>
           <div className="mt-auto flex flex-col gap-1 border-t pt-2">
             {money.receivables.slice(0, 3).map((p) => (
               <div key={p.id} className={row}><span className="truncate">{p.name}</span><span className="font-mono">{fmtLei(p.remaining)}</span></div>
@@ -96,7 +96,7 @@ export default async function Dashboard() {
         </Link>
         <div className={moneyCard}>
           <div className={microLabelCls}>Datorii</div>
-          <div className={cn('font-mono text-2xl font-semibold tracking-tight', money.debtsTotal > 0 && 'text-red-600')}>{fmtLei(money.debtsTotal)}</div>
+          <div className={cn('font-mono text-[19px] font-semibold sm:text-2xl tracking-tight', money.debtsTotal > 0 && 'text-red-600')}>{fmtLei(money.debtsTotal)}</div>
           <div className="mt-auto flex flex-col gap-1 border-t pt-2">
             <Link href="/finante/cheltuieli?status=NEPLATIT&luna=toate" className={cn(row, 'hover:underline')}><span>Facturi neplătite ({money.unpaid.length})</span><span className="font-mono">{fmtLei(money.unpaidTotal)}</span></Link>
             {money.loans.map((l) => (
@@ -122,13 +122,13 @@ export default async function Dashboard() {
               <Link
                 key={p.id}
                 href={`/proiecte/${p.id}`}
-                className="grid grid-cols-[minmax(0,1.6fr)_120px_150px_minmax(0,1fr)] items-center gap-4 border-b px-5 py-3 transition-colors last:border-b-0 hover:bg-muted/50"
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-b px-4 py-3 transition-colors last:border-b-0 hover:bg-muted/50 sm:grid-cols-[minmax(0,1.6fr)_120px_150px_minmax(0,1fr)] sm:gap-4 sm:px-5"
               >
                 <div className="min-w-0">
                   <div className="truncate text-[13.5px] font-semibold">{p.name}</div>
                   <div className="truncate text-[12px] text-muted-foreground">{p.client ?? 'fără client'}</div>
                 </div>
-                <ProjectStatusPill status={p.status} className="justify-self-start" />
+                <ProjectStatusPill status={p.status} className="justify-self-end sm:justify-self-start" />
                 <div className="min-w-0"><DeadlineBadge deadlineAt={p.deadlineAt} size="sm" /></div>
                 <div className="text-right font-mono text-[12.5px] font-semibold">{p.contract > 0 ? fmtLei(p.contract) : <span className="font-normal text-muted-foreground">fără contract</span>}</div>
               </Link>

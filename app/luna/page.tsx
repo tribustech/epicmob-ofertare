@@ -16,7 +16,7 @@ export default async function LunaPage({ searchParams }: { searchParams: Promise
   await generateExpectedDocuments();
   const [f, series] = await Promise.all([loadMonthFigures(key), loadMonthSeries(12, parseMonthKey(key)!.start)]);
   const isCurrent = key === monthKey();
-  const big = 'mt-1 font-mono text-2xl font-semibold tracking-tight';
+  const big = 'mt-1 font-mono text-[19px] font-semibold sm:text-2xl tracking-tight';
 
   return (
     <div className="space-y-5">

@@ -54,7 +54,7 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
               <StagePill stage={client.stage} />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div><div className={microLabelCls}>Telefon</div><div className="mt-0.5 font-mono text-[13px]">{client.phone ?? '—'}</div></div>
               <div><div className={microLabelCls}>Email</div><div className="mt-0.5 break-all text-[13px]">{client.email ?? '—'}</div></div>
               <div className="col-span-2"><div className={microLabelCls}>Adresă</div><div className="mt-0.5 text-[13px]">{client.address ?? '—'}</div></div>

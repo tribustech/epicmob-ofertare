@@ -44,7 +44,7 @@ export default async function ConturiPage() {
             <ActionForm action={transfer} className="grid gap-3">
               <Select name="fromAccountId" label="Din contul" options={accountOptions} allowEmpty />
               <Select name="toAccountId" label="În contul" options={accountOptions} allowEmpty />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <TextInput name="amount" label="Sumă (lei)" placeholder="1000" mono />
                 <TextInput name="date" label="Data" type="date" defaultValue={today} mono />
               </div>
@@ -55,7 +55,7 @@ export default async function ConturiPage() {
           <FormModal trigger="Ajustare" title="Ajustare de sold" size="sm">
             <ActionForm action={adjust} className="grid gap-3">
               <Select name="accountId" label="Cont" options={accountOptions} allowEmpty />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <TextInput name="countedBalance" label="Sold real numărat (lei)" placeholder="0" mono />
                 <TextInput name="date" label="Data" type="date" defaultValue={today} mono />
               </div>
