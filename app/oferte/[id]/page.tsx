@@ -26,7 +26,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { fmtLei, fmtNum } from '@/lib/format';
-import { CabinetRow } from './CabinetRow';
+import { CabinetCard, CabinetRow } from './CabinetRow';
 import {
   BulkCabinetEditor, type BulkFrontModel, type BulkFrontSupplier,
 } from '@/components/BulkCabinetEditor';
@@ -612,8 +612,42 @@ function CabinetsTable({ quoteId, cabinets, issues, bulkSelectable = false }: {
   if (cabinets.length === 0) {
     return <p className="text-sm text-muted-foreground">Niciun corp încă.</p>;
   }
+  // pe telefon: carduri; de la 640px: tabelul obișnuit
+  const rows = cabinets.map((c) => {
+    const incomplete = !isCabinetInputComplete(c.input);
+    return {
+      c,
+      incomplete,
+      dims: incomplete ? '—' : c.input.type === 'BLAT' ? `${c.input.widthMm}×${c.input.depthMm}` : `${c.input.widthMm}×${c.input.heightMm}×${c.input.depthMm}`,
+      actions: (
+        <>
+          <ActionForm action={duplicateCabinet.bind(null, c.id)} confirm="Sigur duplici acest corp?">
+            <Button type="submit" variant="ghost" size="icon-sm" title="Duplică" aria-label="Duplică"><Copy /></Button>
+          </ActionForm>
+          <DeleteButton action={deleteCabinet.bind(null, c.id)} label="Șterge corpul" iconOnly />
+        </>
+      ),
+    };
+  });
   return (
-    <Table>
+    <>
+    <div className="space-y-2 sm:hidden">
+      {rows.map(({ c, dims, actions }) => (
+        <CabinetCard
+          key={c.id}
+          cabinetId={c.id}
+          showSelection={bulkSelectable}
+          selectable={bulkSelectable && c.input.type !== 'BLAT'}
+          href={`/oferte/${quoteId}/corp/${c.id}`}
+          label={c.input.label}
+          typeLabel={TYPE_LABELS[c.input.type] ?? c.input.type}
+          dims={dims}
+          problems={cabinetProblems(issues.get(c.id), !isCabinetInputComplete(c.input))}
+          actions={actions}
+        />
+      ))}
+    </div>
+    <Table className="hidden sm:table">
       <TableHeader>
         <TableRow>
           {bulkSelectable && <TableHead className="w-10"><span className="sr-only">Selectare</span></TableHead>}
@@ -657,5 +691,6 @@ function CabinetsTable({ quoteId, cabinets, issues, bulkSelectable = false }: {
         })}
       </TableBody>
     </Table>
+    </>
   );
 }

@@ -46,7 +46,7 @@ export function AssemblyCardShell({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-start sm:justify-between">
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
@@ -56,7 +56,7 @@ export function AssemblyCardShell({
             <ChevronDown className={cn('mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform', !open && '-rotate-90')} />
             <CardTitle>{name} <span className="font-normal text-muted-foreground">{metaText}</span></CardTitle>
           </button>
-          <div className="flex items-center gap-1.5">
+          <div className="flex w-full flex-wrap items-center gap-1.5 sm:w-auto">
             {threeDSlot}
             <Dialog open={editOpen} onOpenChange={setEditOpen}>
               <DialogTrigger asChild>

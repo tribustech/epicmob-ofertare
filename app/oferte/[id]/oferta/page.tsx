@@ -53,6 +53,11 @@ const OFFER_CSS = `
 .oferta .section-head h2 { font-family:'Fraunces',Georgia,serif; font-weight:500; font-size:18px; margin:0; letter-spacing:-.01em; }
 .oferta .section-head .count { font-size:12px; color:var(--o-muted); }
 .oferta table { width:100%; border-collapse:collapse; }
+.oferta .tbl { overflow-x:auto; }
+@media (max-width:640px){
+  .oferta .tbl table { min-width:520px; }
+  .oferta .sheet { padding-left:16px; padding-right:16px; }
+}
 .oferta thead th { font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:var(--o-faint); text-align:left; font-weight:500; padding:12px 10px 8px; }
 .oferta tbody td { padding:10px; border-top:1px solid var(--o-line); font-size:13px; vertical-align:top; }
 .oferta tbody tr:nth-child(even) td { background:rgba(35,35,34,.025); }
@@ -183,6 +188,7 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
   };
 
   const cabTable = (list: LoadedCabinet[]) => (
+    <div className="tbl">
     <table>
       <thead>
         <tr><th>Corp</th><th>Dimensiuni</th><th>Corp (material)</th><th>Front</th></tr>
@@ -209,6 +215,7 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
         })}
       </tbody>
     </table>
+    </div>
   );
 
   const today = new Date().toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' });

@@ -29,10 +29,10 @@ export default async function PlanDebitarePage({ params }: { params: Promise<{ i
   const nested = quote.costs.needs.boards.filter((b) => b.layout !== null);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8 bg-white p-6 print:p-0">
-      <div className="flex items-start justify-between">
+    <div className="mx-auto max-w-4xl space-y-8 bg-white p-4 sm:p-6 print:p-0">
+      <div className="flex flex-col items-start justify-between gap-2 sm:flex-row">
         <div>
-          <h1 className="text-2xl font-bold">Plan debitare — {quoteRow.name}</h1>
+          <h1 className="text-xl font-bold sm:text-2xl">Plan debitare — {quoteRow.name}</h1>
           <p className="text-sm text-neutral-600">{new Date().toLocaleDateString('ro-RO')} · doar materialele la placă; cele la m² nu se optimizează</p>
         </div>
         <div className="flex gap-2 print:hidden">

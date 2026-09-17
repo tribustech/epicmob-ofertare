@@ -214,9 +214,9 @@ export default async function CorpPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="xl:relative xl:left-1/2 xl:w-[min(1800px,calc(100vw-3rem))] xl:-translate-x-1/2">
       <div className="space-y-5">
-        <div className="flex items-baseline justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">
-            Corp: <span className="font-mono text-xl">{input.label}</span>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+            Corp: <span className="font-mono text-[17px] sm:text-xl">{input.label}</span>
           </h1>
           <Link href={`/oferte/${id}`} className="text-[13px] font-medium text-accent-blue-foreground hover:underline">
             ← Înapoi la proiect

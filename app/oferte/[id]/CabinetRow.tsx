@@ -77,3 +77,47 @@ export function CabinetRow({
     </TableRow>
   );
 }
+
+/** Același corp, ca pe telefon: card în loc de rând de tabel. */
+export function CabinetCard({
+  cabinetId, showSelection, selectable, href, label, typeLabel, dims, problems, actions,
+}: {
+  cabinetId: string;
+  showSelection?: boolean;
+  selectable?: boolean;
+  href: string;
+  label: string;
+  typeLabel: string;
+  dims: string;
+  problems: { label: string; qty: number }[];
+  actions: ReactNode;
+}) {
+  const selection = useBulkCabinetSelection();
+  const total = problems.reduce((sum, p) => sum + p.qty, 0);
+  return (
+    <div className="rounded-xl bg-card p-3 ring-1 ring-border">
+      <div className="flex items-start gap-2.5">
+        {showSelection && selectable && (
+          <Checkbox
+            className="mt-0.5"
+            aria-label={`Selectează ${label}`}
+            checked={selection?.isSelected(cabinetId) ?? false}
+            onCheckedChange={(checked) => selection?.toggle(cabinetId, checked === true)}
+          />
+        )}
+        <Link href={href} className="min-w-0 flex-1">
+          <div className="truncate text-[14px] font-semibold">{label}</div>
+          <div className="mt-0.5 text-[12.5px] text-muted-foreground">{typeLabel} · {dims} mm</div>
+          {total === 0 ? (
+            <div className="mt-1 text-[12px] font-medium text-green-600">Complet</div>
+          ) : (
+            <ul className="mt-1 space-y-0.5 text-[12px] font-medium text-red-600">
+              {problems.map((p, i) => <li key={i}>{p.label}{p.qty > 1 ? ` × ${p.qty}` : ''}</li>)}
+            </ul>
+          )}
+        </Link>
+        <div className="flex shrink-0 items-center gap-1">{actions}</div>
+      </div>
+    </div>
+  );
+}

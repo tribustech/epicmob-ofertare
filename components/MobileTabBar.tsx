@@ -14,6 +14,9 @@ export function MobileTabBar({ userName, logout }: { userName: string; logout: R
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const tab = 'flex flex-1 flex-col items-center gap-0.5 py-2 text-[10.5px] font-medium';
+  // așezarea 3D ocupă tot ecranul și are propriile controale jos — bara ar acoperi-o
+  const immersive = pathname.endsWith('/asezare');
+  if (immersive) return null;
 
   return (
     <>
