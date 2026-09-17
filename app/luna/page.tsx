@@ -126,7 +126,7 @@ export default async function LunaPage({ searchParams }: { searchParams: Promise
 
       <div className="rounded-xl bg-card p-5 ring-1 ring-border">
         <div className="flex items-center gap-2 text-[15px] font-bold">Cash-flow-ul lunii <span className="rounded-full bg-muted px-2 py-px text-[10.5px] font-semibold text-muted-foreground">nu e profit</span></div>
-        <div className="mt-3 grid grid-cols-3 gap-4">
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
           <div><div className={microLabelCls}>Intrări</div><div className="mt-1 font-mono text-xl font-semibold text-emerald-700">{fmtLei(f.cashIn)}</div></div>
           <div><div className={microLabelCls}>Ieșiri</div><div className="mt-1 font-mono text-xl font-semibold">− {fmtLei(f.cashOut)}</div></div>
           <div><div className={microLabelCls}>Net cash</div><div className={cn('mt-1 font-mono text-xl font-semibold', f.cashIn - f.cashOut < 0 && 'text-red-600')}>{fmtLei(f.cashIn - f.cashOut)}</div></div>
