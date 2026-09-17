@@ -8,6 +8,7 @@ import { Select, SubmitButton, TextArea, TextInput } from '@/components/forms';
 import { FormModal } from '@/components/FormModal';
 import { LinkRow } from '@/components/crm/LinkRow';
 import { DeadlineBadge, EmptyState, PageHeader, ProjectStatusPill, tableWrapCls, tdCls, thCls } from '@/components/crm/ui';
+import { ListCard, ListCards } from '@/components/crm/ListCard';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,8 +39,8 @@ export default async function ProiectePage({ searchParams }: { searchParams: Pro
         </FormModal>
       </PageHeader>
 
-      <div className="flex items-center justify-between border-b border-[#d9d7d0]">
-        <div className="flex gap-5">
+      <div className="flex items-center justify-between gap-3 overflow-x-auto border-b border-[#d9d7d0]">
+        <div className="flex shrink-0 gap-5">
           {TABS.map((t) => (
             <Link
               key={t.key}
@@ -53,13 +54,28 @@ export default async function ProiectePage({ searchParams }: { searchParams: Pro
             </Link>
           ))}
         </div>
-        <div className="pb-1.5 text-[12px] text-muted-foreground">sortat după deadline</div>
+        <div className="hidden pb-1.5 text-[12px] text-muted-foreground sm:block">sortat după deadline</div>
       </div>
 
       {rows.length === 0 ? (
         <EmptyState title="Niciun proiect aici" text={tab === 'active' ? 'Creează un proiect de pe un lead sau cu butonul „Proiect nou".' : undefined} />
       ) : (
-        <div className={tableWrapCls}>
+        <>
+        <ListCards>
+          {rows.map((p) => (
+            <ListCard
+              key={p.id}
+              href={`/proiecte/${p.id}`}
+              title={p.name}
+              subtitle={p.client?.name ?? 'fără client'}
+              badge={<ProjectStatusPill status={p.status} />}
+              meta={<DeadlineBadge deadlineAt={p.deadlineAt} size="sm" />}
+              right={p.contract > 0 ? fmtLei(p.contract) : '—'}
+              rightNote={p.contract > 0 ? `încasat ${fmtLei(p.received)}` : `${p.quoteCount} ${p.quoteCount === 1 ? 'ofertă' : 'oferte'}`}
+            />
+          ))}
+        </ListCards>
+        <div className={cn(tableWrapCls, 'hidden sm:block')}>
           <table className="w-full border-collapse">
             <thead>
               <tr>
@@ -98,6 +114,7 @@ export default async function ProiectePage({ searchParams }: { searchParams: Pro
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

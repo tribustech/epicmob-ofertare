@@ -10,8 +10,9 @@ import { Select, SubmitButton, TextArea, TextInput } from '@/components/forms';
 import { SidePanel } from '@/components/SidePanel';
 import { LinkRow } from '@/components/crm/LinkRow';
 import { ParamSelect } from '@/components/crm/ParamSelect';
-import { EmptyState, PageHeader, tableWrapCls, tdCls, thCls } from '@/components/crm/ui';
+import { EmptyState, PageHeader, StagePill, tableWrapCls, tdCls, thCls } from '@/components/crm/ui';
 import { DeleteButton } from '@/components/DeleteButton';
+import { ListCard, ListCards } from '@/components/crm/ListCard';
 import { deleteClient } from '@/lib/crm/client-actions';
 import { Button } from '@/components/ui/button';
 
@@ -86,7 +87,32 @@ export default async function LeaduriPage({ searchParams }: { searchParams: Prom
           text={tab === 'activi' ? 'Adaugă primul lead cu butonul „Lead nou".' : undefined}
         />
       ) : (
-        <div className={tableWrapCls}>
+        <>
+        <ListCards>
+          {rows.map((l) => {
+            const days = l.nextActionAt ? daysFromToday(l.nextActionAt) : null;
+            return (
+              <ListCard
+                key={l.id}
+                href={`/clienti/${l.id}`}
+                title={l.name}
+                subtitle={l.phone ?? l.source ?? 'fără telefon'}
+                badge={<StagePill stage={l.stage} />}
+                meta={tab === 'pierduti'
+                  ? <span>{l.lostReason ?? 'fără motiv'}{l.lostNote ? ` · ${l.lostNote}` : ''}</span>
+                  : l.nextActionAt
+                    ? <span className={cn('font-mono text-[12px]', days != null && days < 0 ? 'text-red-600' : days === 0 ? 'text-amber-700' : '')}>
+                        {fmtDate.format(l.nextActionAt)}{l.nextActionNote ? <span className="font-sans text-muted-foreground"> · {l.nextActionNote}</span> : null}
+                      </span>
+                    : <span>fără următoarea acțiune</span>}
+                right={l.budgetEstimate != null ? fmtLei(l.budgetEstimate) : undefined}
+                rightNote={l.budgetEstimate != null ? 'buget' : undefined}
+                actions={<DeleteButton action={deleteClient.bind(null, l.id)} label="Mută în coș" confirmMessage={`Muți „${l.name}" în coșul de gunoi? Se poate recupera 30 de zile din Setări.`} />}
+              />
+            );
+          })}
+        </ListCards>
+        <div className={cn(tableWrapCls, 'hidden sm:block')}>
           <table className="w-full border-collapse">
             <thead>
               <tr>
@@ -138,6 +164,7 @@ export default async function LeaduriPage({ searchParams }: { searchParams: Prom
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

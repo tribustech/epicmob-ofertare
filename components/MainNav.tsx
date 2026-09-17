@@ -3,24 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { MAIN_NAV, isNavActive } from '@/lib/nav/items';
 
-export const MAIN_NAV = [
-  { href: '/', label: 'Dashboard' },
-  { href: '/leaduri', label: 'Leaduri' },
-  { href: '/clienti', label: 'Clienți' },
-  { href: '/proiecte', label: 'Proiecte' },
-  { href: '/finante', label: 'Finanțe' },
-  { href: '/luna', label: 'Luna' },
-  { href: '/calendar', label: 'Calendar' },
-  { href: '/cataloage', label: 'Cataloage' },
-  { href: '/setari', label: 'Setări' },
-] as const;
+export { MAIN_NAV };
 
-/** Navigația principală, cu elementul activ evidențiat (după prefixul căii). */
+/** Navigația principală (desktop), cu elementul activ evidențiat. Pe telefon o înlocuiește MobileTabBar. */
 export function MainNav() {
   const pathname = usePathname();
-  const isActive = (href: string) =>
-    href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`) || (href === '/proiecte' && pathname.startsWith('/oferte'));
+  const isActive = (href: string) => isNavActive(href, pathname);
   return (
     <div className="flex items-center gap-5">
       {MAIN_NAV.map((item) => (

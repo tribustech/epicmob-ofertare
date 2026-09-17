@@ -8,6 +8,7 @@ import { getSessionState } from '@/lib/auth/current-user';
 import { logout } from '@/lib/auth/actions';
 import { ActionForm } from '@/components/ActionForm';
 import { MainNav } from '@/components/MainNav';
+import { MobileTabBar } from '@/components/MobileTabBar';
 import { Button } from '@/components/ui/button';
 
 const sans = Instrument_Sans({ subsets: ['latin', 'latin-ext'], variable: '--font-sans' });
@@ -24,7 +25,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang="ro" className={cn("font-sans", sans.variable, mono.variable)}>
       <body className="min-h-screen bg-background text-foreground">
         {user && (
-          <header className="border-b bg-white print:hidden">
+          <header className="hidden border-b bg-white sm:block print:hidden">
             <nav className="mx-auto flex max-w-[1340px] items-center gap-9 px-6 py-4">
               <Link href="/" className="text-[15px] font-bold tracking-tight">
                 EpicMob <span className="font-medium text-muted-foreground">CRM</span>
@@ -39,7 +40,18 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             </nav>
           </header>
         )}
-        <main className="mx-auto max-w-[1340px] px-6 py-6">{children}</main>
+        {/* pe telefon: fără antet, bară fixă jos; spațiul de jos ține conținutul deasupra barei */}
+        <main className="mx-auto max-w-[1340px] px-4 pb-24 pt-4 sm:px-6 sm:pb-6 sm:pt-6">{children}</main>
+        {user && (
+          <MobileTabBar
+            userName={user.name}
+            logout={(
+              <ActionForm action={logout}>
+                <Button type="submit" variant="outline" size="sm" className="w-full">Ieși</Button>
+              </ActionForm>
+            )}
+          />
+        )}
       </body>
     </html>
   );

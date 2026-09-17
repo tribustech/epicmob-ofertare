@@ -4,6 +4,7 @@ import { fmtDate } from '@/lib/crm/dates';
 import { CLIENT_KIND_LABELS } from '@/lib/crm/constants';
 import { loadClientsList } from '@/lib/crm/client-queries';
 import { LinkRow } from '@/components/crm/LinkRow';
+import { ListCard, ListCards } from '@/components/crm/ListCard';
 import { DeleteButton } from '@/components/DeleteButton';
 import { deleteClient } from '@/lib/crm/client-actions';
 import { EmptyState, PageHeader, StagePill, tableWrapCls, tdCls, thCls } from '@/components/crm/ui';
@@ -33,7 +34,23 @@ export default async function ClientiPage({ searchParams }: { searchParams: Prom
           text={q ? 'Încearcă alt nume sau număr.' : 'Clienții apar aici după ce un lead primește un proiect (Calificat) sau un contract (Client).'}
         />
       ) : (
-        <div className={tableWrapCls}>
+        <>
+        <ListCards>
+          {rows.map((c) => (
+            <ListCard
+              key={c.id}
+              href={`/clienti/${c.id}`}
+              title={c.name}
+              subtitle={c.phone ?? CLIENT_KIND_LABELS[c.kind as 'PERSOANA' | 'FIRMA'] ?? c.kind}
+              badge={<StagePill stage={c.stage} />}
+              meta={<span>{c.projectCount} {c.projectCount === 1 ? 'proiect' : 'proiecte'} · ultima activitate {fmtDate.format(c.lastActivity)}</span>}
+              right={c.contractValue > 0 ? fmtLei(c.contractValue) : '—'}
+              rightNote={c.contractValue > 0 ? 'contracte' : undefined}
+              actions={<DeleteButton action={deleteClient.bind(null, c.id)} label="Mută în coș" confirmMessage={`Muți „${c.name}" în coșul de gunoi? Se poate recupera 30 de zile din Setări.`} />}
+            />
+          ))}
+        </ListCards>
+        <div className={cn(tableWrapCls, 'hidden sm:block')}>
           <table className="w-full border-collapse">
             <thead>
               <tr>
@@ -66,6 +83,7 @@ export default async function ClientiPage({ searchParams }: { searchParams: Prom
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );
