@@ -106,7 +106,17 @@ async function changeStatus(id: string, to: string, userId: string, extra: Prism
   if (to === 'INCHIS') stamps.closedAt = new Date();
   await prisma.project.update({ where: { id }, data: { status: to, ...stamps, ...extra } });
   await logEvent({ type: 'PROJECT_STATUS', projectId: id, clientId: before.clientId, userId, payload: { from: before.status, to, ...payload } });
+  // „Trece la Acceptat" = omul a semnat: abia acum e client, nu de la prima ofertă
+  if (to === 'ACCEPTAT' && before.clientId) await promoteToClient(before.clientId, userId);
   return before;
+}
+
+/** Ridică un lead la CLIENT (fără efect dacă e deja acolo). */
+async function promoteToClient(clientId: string, userId: string) {
+  const client = await prisma.client.findUniqueOrThrow({ where: { id: clientId }, select: { stage: true } });
+  if (client.stage === 'CLIENT') return;
+  await prisma.client.update({ where: { id: clientId }, data: { stage: 'CLIENT' } });
+  await logEvent({ type: 'CLIENT_STAGE', clientId, userId, payload: { from: client.stage, to: 'CLIENT' } });
 }
 
 /** „Trece la…": următoarea stare; la MONTAT se pot completa orele lucrate. */
@@ -187,13 +197,7 @@ export const acceptQuote = formAction(async (quoteId: string, fd: FormData) => {
   }
   if (quote.project.status === 'OFERTARE') await changeStatus(quote.projectId!, 'ACCEPTAT', me.id);
 
-  if (quote.project.clientId) {
-    const client = await prisma.client.findUniqueOrThrow({ where: { id: quote.project.clientId }, select: { stage: true } });
-    if (client.stage !== 'CLIENT') {
-      await prisma.client.update({ where: { id: quote.project.clientId }, data: { stage: 'CLIENT' } });
-      await logEvent({ type: 'CLIENT_STAGE', clientId: quote.project.clientId, userId: me.id, payload: { from: client.stage, to: 'CLIENT' } });
-    }
-  }
+  if (quote.project.clientId) await promoteToClient(quote.project.clientId, me.id);
   revalidateProject(quote.projectId!, quote.project.clientId);
   revalidatePath(`/oferte/${quoteId}`);
 });
