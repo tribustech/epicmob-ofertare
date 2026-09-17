@@ -17,7 +17,7 @@ const ITEMS = [
 export function FinanteSubnav() {
   const pathname = usePathname();
   return (
-    <div className="flex gap-5 border-b border-[#d9d7d0]">
+    <div className="flex gap-5 overflow-x-auto border-b border-[#d9d7d0]">
       {ITEMS.map((item) => {
         const active = item.exact
           ? pathname === item.href || pathname.startsWith('/finante/conturi')
@@ -27,7 +27,7 @@ export function FinanteSubnav() {
             key={item.href}
             href={item.href}
             className={cn(
-              '-mb-px border-b-2 px-0.5 pb-2.5 pt-2 text-[13.5px] font-medium',
+              '-mb-px shrink-0 whitespace-nowrap border-b-2 px-0.5 pb-2.5 pt-2 text-[13.5px] font-medium',
               active ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground',
             )}
           >

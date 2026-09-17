@@ -8,6 +8,7 @@ import { createExpense } from '@/lib/finance/document-actions';
 import { monthKey, monthLabel, recentMonthKeys } from '@/lib/finance/month';
 import { SidePanel } from '@/components/SidePanel';
 import { LinkRow } from '@/components/crm/LinkRow';
+import { ListCard, ListCards } from '@/components/crm/ListCard';
 import { ParamSelect } from '@/components/crm/ParamSelect';
 import { EmptyState, tableWrapCls, tdCls, thCls } from '@/components/crm/ui';
 import { ExpenseForm } from '@/components/finance/ExpenseForm';
@@ -54,7 +55,7 @@ export default async function CheltuieliPage({ searchParams }: { searchParams: P
         </SidePanel>
       </div>
 
-      <div className="flex gap-5 text-[12.5px] text-muted-foreground">
+      <div className="flex flex-wrap gap-x-5 gap-y-1 text-[12.5px] text-muted-foreground">
         <span>{rows.length} documente · total <span className="font-mono font-semibold text-foreground">{fmtLei(total)}</span></span>
         <span>de plătit <span className={cn('font-mono font-semibold', unpaid > 0 ? 'text-red-600' : 'text-foreground')}>{fmtLei(unpaid)}</span></span>
       </div>
@@ -62,7 +63,22 @@ export default async function CheltuieliPage({ searchParams }: { searchParams: P
       {rows.length === 0 ? (
         <EmptyState title="Nicio cheltuială pentru filtrele alese" text="Adaugă prima cu butonul din dreapta. Bonurile de la magazin merg și de pe telefon, din /finante/cheltuieli/noua." />
       ) : (
-        <div className={tableWrapCls}>
+        <>
+        <ListCards>
+          {rows.map((d) => (
+            <ListCard
+              key={d.id}
+              href={withDoc(d.id)}
+              title={<>{d.counterparty}{d.expected && <span className="ml-1.5 rounded-full border border-amber-200 bg-amber-50 px-2 py-px text-[10.5px] font-semibold text-amber-800">așteptat</span>}</>}
+              subtitle={`${fmtDate.format(d.issuedAt)} · ${DOCUMENT_KIND_LABELS[d.kind as DocumentKind] ?? d.kind}${d.number ? ` ${d.number}` : ''}`}
+              badge={<span className={cn('inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold', PAYMENT_STATUS_PILL[d.status])}>{PAYMENT_STATUS_LABELS[d.status]}</span>}
+              meta={<span>{d.allocations.length > 0 ? d.allocations.map((a) => a.projectName).join(', ') : d.category ?? 'indirect'}</span>}
+              right={fmtLei(d.amount)}
+              rightNote={d.status === 'PARTIAL' ? `rest ${fmtLei(d.remaining)}` : undefined}
+            />
+          ))}
+        </ListCards>
+        <div className={cn(tableWrapCls, 'hidden sm:block')}>
           <table className="w-full border-collapse">
             <thead>
               <tr>
@@ -103,6 +119,7 @@ export default async function CheltuieliPage({ searchParams }: { searchParams: P
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {doc && (
