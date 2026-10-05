@@ -218,6 +218,13 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
     </div>
   );
 
+  // feroneria vizibilă pentru client (mărunțișurile de montaj rămân doar în calcul)
+  const HIDDEN_HW = new Set(['HOLTSURUB', 'SUPORT_POLITA', 'CLEMA_SOCLU', 'SINA_SUSPENDARE']);
+  const hardwareRows = quote.hardwareLines
+    .map((l) => ({ id: l.hardwareId, qty: l.qty, item: snapshot.hardware.find((h) => h.id === l.hardwareId) }))
+    .filter((h) => h.item && h.qty > 0 && !HIDDEN_HW.has(h.item.category))
+    .map((h) => ({ id: h.id, qty: h.qty, name: h.item!.name }));
+
   const today = new Date().toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
@@ -309,6 +316,15 @@ export default async function OfertaPage({ params }: { params: Promise<{ id: str
                 </li>
               ))}
               {freeLines.map((l, i) => (<li key={`f${i}`}>{l.name}</li>))}
+            </ul>
+          </section>
+        )}
+
+        {hardwareRows.length > 0 && (
+          <section className="section">
+            <div className="section-head"><h2>Feronerie</h2></div>
+            <ul className="plain lists">
+              {hardwareRows.map((h) => (<li key={h.id}>{h.name} — <span className="dim">{h.qty} buc</span></li>))}
             </ul>
           </section>
         )}
