@@ -118,6 +118,7 @@ export interface CabinetInput {
   };
   doors: number;                   // 0 = fără uși; exclusiv cu drawers. Uși pe lățime (coloane)
   doorRows?: number;               // uși pe înălțime (rânduri, una peste alta); implicit 1 → total = doors × doorRows
+  doorRowHeightsMm?: number[];     // înălțimea nominală per rând (sus → jos), ca la sertare; lipsă = împărțire egală
   drawers?: DrawerOptions;         // sertare pe orice tip de corp; exclusiv cu doors
   carcassMaterialId: string;
   mdfCarcass?: {                   // carcasă MDF vopsit — cotată per m² ca fronturile

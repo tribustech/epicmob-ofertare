@@ -4,7 +4,7 @@
 // piciorul nu se randează), z: 0→D spate→față (fronturile la z=D, adâncime FRONT_THICKNESS_MM).
 import { LEGGED_TYPES } from './constants';
 import { findMaterial } from './carcass';
-import { drawerFrontHeights, resolveFalseFronts } from './fronts';
+import { doorRowHeights, drawerFrontHeights, resolveFalseFronts } from './fronts';
 import { pickSlideNominal } from './drawers';
 import { FRONT_THICKNESS_MM } from './costing';
 import type { CabinetInput, Catalogs, ConstructionConstants, PieceInstance } from './types';
@@ -98,9 +98,14 @@ export function assignPlacements(
         const seg = pc.key.split(':');
         const i = Number(seg[1]);
         const r = seg.length > 2 ? Number(seg[2]) : 0; // rândul (0 = sus)
+        // rândurile pot avea înălțimi diferite: coborâm cu înălțimile nominale ale rândurilor de deasupra
+        const rowHeights = doorRowHeights(input, cc, legDeduct);
+        let rowTopY = frontTopY;
+        for (let k = 0; k < r; k++) rowTopY -= rowHeights[k] + cc.frontGapMm;
+        if (r > 0 && isGola) rowTopY += cc.golaFrontDeductMm; // GOLA scurtează doar rândul de sus
         pc.placement = {
           x: frontX0 + i * (pc.widthMm + cc.frontGapMm),
-          y: frontTopY - r * (pc.lengthMm + cc.frontGapMm) - pc.lengthMm, z: D,
+          y: rowTopY - pc.lengthMm, z: D,
           w: pc.widthMm, h: pc.lengthMm, d: FRONT_THICKNESS_MM,
         };
         break;

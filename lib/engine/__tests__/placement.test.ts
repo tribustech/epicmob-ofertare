@@ -56,3 +56,13 @@ describe('assignPlacements — uși pe rânduri', () => {
     expect(sus.y).toBeCloseTo(jos.y + jos.h + cc.frontGapMm);
   });
 });
+
+describe('assignPlacements — uși pe rânduri cu înălțimi diferite', () => {
+  it('rândul de jos începe sub rândul de sus + rost, oricare ar fi înălțimile', () => {
+    const { pieces } = expandCabinet(bazaInput({ doors: 1, doorRows: 2, doorRowHeightsMm: [500, 216] }), TEST_CATALOGS, cc);
+    const [sus, jos] = pieces.filter((p) => p.key.startsWith('usa:')).map((p) => p.placement!);
+    expect(sus.h).toBe(500);
+    expect(jos.h).toBe(216);
+    expect(sus.y).toBeCloseTo(jos.y + jos.h + cc.frontGapMm);
+  });
+});

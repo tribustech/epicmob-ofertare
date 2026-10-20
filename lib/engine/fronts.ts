@@ -44,6 +44,28 @@ export function doorRowCount(input: Pick<CabinetInput, 'doorRows'>): number {
   return Math.max(1, Math.trunc(input.doorRows ?? 1));
 }
 
+/** Înălțimile nominale ale rândurilor de uși (sus → jos), ca drawerFrontHeights: suma lor =
+ *  înălțimea corpului − picior − luft sus/jos − rosturile dintre rânduri. Profilul GOLA (sus)
+ *  și prelungirea frontului fără mâner (jos) se aplică după, pe primul/ultimul rând. */
+export function doorRowHeights(
+  input: CabinetInput, cc: ConstructionConstants, legHeightMm?: number,
+): number[] {
+  const rows = doorRowCount(input);
+  const custom = input.doorRowHeightsMm;
+  if (rows > 1 && custom) {
+    if (custom.length !== rows) {
+      throw new Error(`Corpul ${input.label}: doorRowHeightsMm nu corespunde cu numărul de rânduri de uși`);
+    }
+    if (custom.some((h) => !(h > 0))) {
+      throw new Error(`Corpul ${input.label}: doorRowHeightsMm conține o valoare imposibilă`);
+    }
+    return custom;
+  }
+  const legDeduct = legHeightMm && LEGGED_TYPES.has(input.type) ? legHeightMm : 0;
+  const usable = input.heightMm - legDeduct - 2 * cc.outerGapMm - (rows - 1) * cc.frontGapMm;
+  return Array.from({ length: rows }, () => usable / rows);
+}
+
 function doorLabel(col: number, cols: number, row: number, rows: number): string {
   if (rows === 1) return cols > 1 ? `Ușă ${col + 1}` : 'Ușă'; // etichetele istorice
   const rowName = rows === 2 ? (row === 0 ? 'sus' : 'jos') : `rând ${row + 1}`;
@@ -191,19 +213,25 @@ export function expandFronts(
     const doorW = assertPositiveDim(
       (usableW - (input.doors - 1) * cc.frontGapMm) / input.doors, 'lățime ușă', input.label,
     );
-    // uși pe înălțime (una peste alta): înălțimea frontului se împarte egal pe rânduri
+    // uși pe înălțime (una peste alta): înălțimi nominale per rând (egale sau date de operator);
+    // profilul GOLA scurtează rândul de sus, prelungirea fără mâner pe cel de jos
     const rows = doorRowCount(input);
-    const doorH = assertPositiveDim(
-      (frontH - (rows - 1) * cc.frontGapMm) / rows, 'înălțime ușă', input.label,
-    );
-    const doorHCalc = rows > 1
-      ? dim('Înălțime', [
-          ...frontHTerms,
-          { label: `${rows - 1}× luft între rânduri`, valueMm: -(rows - 1) * cc.frontGapMm },
-          { label: `partea celorlalte ${rows - 1} rânduri`, valueMm: -doorH * (rows - 1) },
-        ])
-      : frontHCalc;
+    const nominals = doorRowHeights(input, cc, legHeightMm);
+    const gola = handleType === 'GOLA' ? cc.golaFrontDeductMm : 0;
+    const ext = handleType === 'FARA' ? input.handle?.frontExtensionMm ?? 0 : 0;
+    const customRows = rows > 1 && !!input.doorRowHeightsMm;
     for (let r = 0; r < rows; r++) {
+      const doorH = rows === 1 ? frontH : assertPositiveDim(
+        nominals[r] - (r === 0 ? gola : 0) + (r === rows - 1 ? ext : 0),
+        `înălțime ușă rând ${r + 1}`, input.label,
+      );
+      const doorHCalc = rows === 1 ? frontHCalc : customRows ? undefined : dim('Înălțime', [
+        ...frontHTerms.filter((t) => t.label !== 'profil GOLA' && t.label !== 'prelungire front'),
+        { label: `${rows - 1}× luft între rânduri`, valueMm: -(rows - 1) * cc.frontGapMm },
+        { label: `partea celorlalte ${rows - 1} rânduri`, valueMm: -nominals[r] * (rows - 1) },
+        ...(r === 0 && gola ? [{ label: 'profil GOLA', valueMm: -gola }] : []),
+        ...(r === rows - 1 && ext ? [{ label: 'prelungire front', valueMm: ext }] : []),
+      ]);
       for (let i = 0; i < input.doors; i++) {
         pieces.push({
           // un singur rând păstrează cheile istorice `usa:i` (override-urile salvate pe piese rămân valabile)
@@ -212,7 +240,7 @@ export function expandFronts(
           lengthMm: doorH, widthMm: doorW, materialId: material.id,
           edges: perim, edgeAxis: FRONT_AXES,
           calc: {
-            length: doorHCalc,
+            ...(doorHCalc ? { length: doorHCalc } : {}),
             width: dim('Lățime', [
               ...widthTermsBase,
               ...(input.doors > 1 ? [

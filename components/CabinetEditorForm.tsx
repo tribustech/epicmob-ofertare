@@ -290,6 +290,8 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     const cur = (initial.drawerFrontHeightsMm ?? '').split(',').map((s) => Number(s.trim()));
     return !(cur.length === n && cur.every((h, i) => Math.abs(h - eq[i]) < 0.15));
   });
+  const doorRowsRecalc = (prev: Record<string, string>) =>
+    prev.frontType === 'USI' && Math.trunc(Number(prev.doorRows) || 1) > 1 && !doorHeightsTouched;
   const onHeightChange = (v: string) => {
     markTouched('heightMm');
     setValues((prev) => {
@@ -298,6 +300,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
       return {
         ...prev, heightMm: v,
         ...(recalc ? { drawerFrontHeightsMm: equalHeights(Number(v) - legDeduct, n).join(', ') } : {}),
+        ...(doorRowsRecalc(prev) ? { doorRowHeightsMm: equalHeights(Number(v) - legDeduct, Number(prev.doorRows)).join(', ') } : {}),
       };
     });
   };
@@ -309,6 +312,34 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
       ...prev, drawersCount: v,
       drawerFrontHeightsMm: n > 0 ? equalHeights(Number(prev.heightMm) - legDeduct, n).join(', ') : '',
     }));
+  };
+  // uși pe rânduri: aceeași logică de înălțimi ca la sertare (egale până le atinge operatorul)
+  const doorRowsN = Math.max(1, Math.trunc(Number(values.doorRows) || 1));
+  const doorRowHeights = (values.doorRowHeightsMm ?? '')
+    .split(',').map((s) => Number(s.trim())).filter((n) => Number.isFinite(n) && n > 0);
+  const [doorHeightsTouched, setDoorHeightsTouched] = useState(() => {
+    const n = Math.max(1, Math.trunc(Number(initial.doorRows) || 1));
+    if (initial.frontType !== 'USI' || n <= 1 || !initial.doorRowHeightsMm) return false;
+    const eq = equalHeights(Number(initial.heightMm) - legDeduct, n);
+    const cur = initial.doorRowHeightsMm.split(',').map((s) => Number(s.trim()));
+    return !(cur.length === n && cur.every((h, i) => Math.abs(h - eq[i]) < 0.15));
+  });
+  const fmtRowH = (h: number) => (Number.isFinite(h) && h > 0 ? String(h) : '');
+  const onDoorRowsChange = (v: string) => {
+    const n = Math.max(1, Math.trunc(Number(v) || 1));
+    setDoorHeightsTouched(false); // re-împărțim egal la schimbarea numărului de rânduri
+    setValues((prev) => ({
+      ...prev, doorRows: v,
+      doorRowHeightsMm: n > 1 ? equalHeights(Number(prev.heightMm) - legDeduct, n).join(', ') : '',
+    }));
+  };
+  const setDoorRowHeight = (i: number, v: string) => {
+    setDoorHeightsTouched(true);
+    const next = doorRowHeights.length === doorRowsN
+      ? [...doorRowHeights]
+      : equalHeights(Number(values.heightMm) - legDeduct, doorRowsN);
+    next[i] = Number(v);
+    set('doorRowHeightsMm', next.join(', '));
   };
   const setDrawerHeight = (i: number, v: string) => {
     setHeightsTouched(true);
@@ -332,6 +363,9 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
       if (prev.frontType === 'SERTARE' && n > 0 && !heightsTouched) {
         next.drawerFrontHeightsMm = equalHeights(d.heightMm - legDeduct, n).join(', ');
       }
+      if (doorRowsRecalc(prev)) {
+        next.doorRowHeightsMm = equalHeights(d.heightMm - legDeduct, Number(prev.doorRows)).join(', ');
+      }
     }
     if (which !== 'height') next.depthMm = String(d.depthMm);
     return next;
@@ -354,6 +388,10 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const drawerSum = drawerHeights.reduce((a, b) => a + b, 0);
   const drawerSumMismatch = drawersCount > 0 && drawerHeights.length === drawersCount
     && Math.abs(drawerSum - usableDrawerH) > 1;
+  const usableDoorH = Number(values.heightMm) - legDeduct - 2 * cc.outerGapMm - (doorRowsN - 1) * cc.frontGapMm;
+  const doorRowSum = doorRowHeights.reduce((a, b) => a + b, 0);
+  const doorRowSumMismatch = frontType === 'USI' && doorRowsN > 1 && doorRowHeights.length === doorRowsN
+    && Math.abs(doorRowSum - usableDoorH) > 1;
   const minDrawerFrontH = drawersCount > 0 && drawerHeights.length === drawersCount
     ? Math.min(...drawerHeights) : null;
   const noTandemboxFits = values.drawersSystem === 'TANDEMBOX' && minDrawerFrontH !== null
@@ -572,7 +610,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     carcassMaterialId: 'materiale', carcassFrontEdgeId: 'materiale', frontKind: 'materiale', frontMaterialId: 'materiale',
     frontPerimeterId: 'materiale', mdfSupplierId: 'materiale', mdfModelId: 'materiale', mdfFinish: 'materiale',
     mdfFaces: 'materiale', mdfRalCode: 'materiale', mdfColorCategory: 'materiale',
-    frontType: 'fronturi', doors: 'fronturi', withShelves: 'fronturi', shelves: 'fronturi',
+    frontType: 'fronturi', doors: 'fronturi', doorRows: 'fronturi', doorRowHeightsMm: 'fronturi', withShelves: 'fronturi', shelves: 'fronturi',
     shelfMaterialId: 'fronturi', shelfDecorMatters: 'fronturi', shelfDecorAxis: 'fronturi',
     drawersCount: 'fronturi', drawersSystem: 'fronturi', drawersBottomMaterialId: 'fronturi', drawerFrontHeightsMm: 'fronturi',
     tandemboxHeightMm: 'fronturi', doorOpening: 'fronturi', falsStangaMm: 'fronturi', falsDreaptaMm: 'fronturi',
@@ -918,11 +956,34 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <NumField label="Uși pe lățime (coloane)" value={values.doors} onChange={(v) => { setDoorsTouched(true); set('doors', v); }} error={showError('doors')} />
-                  <NumField label="Uși pe înălțime (rânduri)" value={values.doorRows ?? '1'} onChange={(v) => set('doorRows', v)} error={showError('doorRows')} />
+                  <NumField label="Uși pe înălțime (rânduri)" value={values.doorRows ?? '1'} onChange={onDoorRowsChange} error={showError('doorRows')} />
                 </div>
+                {doorRowsN > 1 && (
+                  <div className="space-y-2">
+                    {Array.from({ length: doorRowsN }, (_, i) => (
+                      <div key={i} className="grid grid-cols-2 items-center gap-3">
+                        <Label className="font-normal">
+                          {i === 0 ? 'Rând 1 (sus)' : i === doorRowsN - 1 ? `Rând ${i + 1} (jos)` : `Rând ${i + 1}`}
+                        </Label>
+                        <NumField
+                          label="Înălțime ușă (mm)"
+                          value={fmtRowH(doorRowHeights.length === doorRowsN ? doorRowHeights[i] : equalHeights(Number(values.heightMm) - legDeduct, doorRowsN)[i])}
+                          onChange={(v) => setDoorRowHeight(i, v)}
+                        />
+                      </div>
+                    ))}
+                    <FieldError error={showError('doorRowHeightsMm')} />
+                    {doorRowSumMismatch && (
+                      <p className="rounded bg-amber-50 px-2 py-1 text-sm text-amber-800">
+                        ⚠ Suma ușilor ({fmtNum(doorRowSum, 1)}mm) nu se încadrează — util {fmtNum(usableDoorH, 1)}mm
+                        (înălțime corp minus rosturi).
+                      </p>
+                    )}
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground">
                   Convenție atelier: până în 600mm lățime → 1 ușă; peste → 2 uși.
-                  Uși una peste alta: pune 2+ rânduri (înălțimea se împarte egal).
+                  Uși una peste alta: pune 2+ rânduri; înălțimile pornesc egale și se pot schimba pe fiecare rând.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <NumField label="Fals stânga (mm)" value={values.falsStangaMm} onChange={(v) => set('falsStangaMm', v)} error={showError('falsStangaMm')} />

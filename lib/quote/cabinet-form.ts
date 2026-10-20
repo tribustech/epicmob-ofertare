@@ -28,6 +28,7 @@ export const cabinetFormSchema = z
     shelfRoundedSide: z.enum(['LEFT', 'RIGHT']).default('RIGHT'),
     doors: intNonNeg,
     doorRows: z.coerce.number().int().min(1).max(6).default(1),
+    doorRowHeightsMm: z.preprocess(emptyToUndefined, z.string().optional()),
     carcassMaterialId: z.string().min(1, 'Alege materialul carcasei'),
     // carcasă MDF vopsit — aceeași configurație ca la fronturi
     carcassMdfSupplierId: optStr,
@@ -90,6 +91,11 @@ export const cabinetFormSchema = z
     const heights = parseDrawerHeights(d.drawerFrontHeightsMm);
     return heights.length === d.drawersCount && heights.every((h) => h > 0);
   }, { message: 'Înălțimile sertarelor nu corespund cu numărul de sertare', path: ['drawerFrontHeightsMm'] })
+  .refine((d) => {
+    if (d.frontType !== 'USI' || d.doorRows <= 1 || !d.doorRowHeightsMm) return true;
+    const heights = parseDrawerHeights(d.doorRowHeightsMm);
+    return heights.length === d.doorRows && heights.every((h) => h > 0);
+  }, { message: 'Înălțimile ușilor nu corespund cu numărul de rânduri', path: ['doorRowHeightsMm'] })
   .refine((d) => !d.backEnabled || !!d.backMaterialId, {
     message: 'Alege materialul pentru spate',
     path: ['backMaterialId'],
@@ -134,6 +140,8 @@ export function toCabinetInput(d: CabinetFormData, pieces?: PiecesConfigForm): C
       : undefined,
     doors: d.frontType === 'USI' ? d.doors : 0,
     doorRows: d.frontType === 'USI' && d.doorRows > 1 ? d.doorRows : undefined,
+    doorRowHeightsMm: d.frontType === 'USI' && d.doorRows > 1 && d.doorRowHeightsMm
+      ? parseDrawerHeights(d.doorRowHeightsMm) : undefined,
     drawers:
       d.frontType === 'SERTARE'
         ? {

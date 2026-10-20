@@ -91,11 +91,19 @@ export function buildIsoModel(input: CabinetInput, cc: ConstructionConstants): C
     if (isGola) {
       golaBars.push({ xMm: g, yMm: H - g - deduct, wMm: W - 2 * g, hMm: deduct });
     }
-    // uși pe înălțime: rândul 0 e sus; un singur rând = desenul istoric
+    // uși pe înălțime: rândul 0 e sus; un singur rând = desenul istoric.
+    // GOLA scurtează rândul de sus, prelungirea fără mâner coboară rândul de jos
     const rows = Math.max(1, Math.trunc(input.doorRows ?? 1));
-    const rowH = (doorH - (rows - 1) * gap) / rows;
+    const nominals = rows > 1 && input.doorRowHeightsMm?.length === rows
+      ? input.doorRowHeightsMm
+      : Array.from({ length: rows }, () => (frontH - (rows - 1) * gap) / rows);
+    let rowTop = H - g;
     for (let r = 0; r < rows; r++) {
-      const y = doorY + (rows - 1 - r) * (rowH + gap);
+      const top = r === 0 && isGola ? rowTop - deduct : rowTop;
+      const rowH = rows === 1 ? doorH
+        : nominals[r] - (r === 0 && isGola ? deduct : 0) + (r === rows - 1 ? doorH - frontH + (isGola ? deduct : 0) : 0);
+      const y = rows === 1 ? doorY : top - rowH;
+      rowTop -= nominals[r] + gap;
       for (let i = 0; i < input.doors; i++) {
         const x = frontX0 + i * (doorW + gap);
         // mânerul pe muchia dinspre mijloc la 2 uși; pe dreapta la o singură ușă

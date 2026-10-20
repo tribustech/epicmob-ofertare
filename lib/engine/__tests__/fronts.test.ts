@@ -53,6 +53,25 @@ describe('expandFronts — uși', () => {
     ]);
   });
 
+  it('înălțimi diferite pe rânduri (doorRowHeightsMm): fiecare ușă ia înălțimea rândului ei', () => {
+    const input = bazaInput({ doors: 1, doorRows: 2, doorRowHeightsMm: [500, 216] });
+    const { pieces, fronts } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    expect(pieces.map((p) => p.lengthMm)).toEqual([500, 216]);
+    expect(fronts.map((f) => f.heightMm)).toEqual([500, 216]);
+  });
+
+  it('doorRowHeightsMm cu număr greșit de valori → eroare', () => {
+    const input = bazaInput({ doors: 1, doorRows: 3, doorRowHeightsMm: [500, 216] });
+    expect(() => expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION)).toThrow(/rânduri de uși/);
+  });
+
+  it('GOLA pe uși pe rânduri: profilul scurtează doar rândul de sus', () => {
+    const cc = DEFAULT_CONSTRUCTION;
+    const input = bazaInput({ doors: 1, doorRows: 2, doorRowHeightsMm: [400, 316], handle: { type: 'GOLA' } });
+    const { pieces } = expandFronts(input, TEST_CATALOGS, cc);
+    expect(pieces.map((p) => p.lengthMm)).toEqual([400 - cc.golaFrontDeductMm, 316]);
+  });
+
   it('grilă de uși 2 × 2: 4 uși, cheile includ rândul', () => {
     const input = bazaInput({ doors: 2, doorRows: 2 });
     const { pieces } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
