@@ -452,6 +452,8 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     setHw((prev) => ({ ...prev, extra: updater(prev.extra ?? []) }));
 
   const pickerMaterials = useMemo(() => snapshot.materials.filter((m) => m.category !== 'BLAT'), [snapshot]);
+  // la nivel de piesă operatorul poate alege orice material din catalog (inclusiv blaturi)
+  const pieceMaterials = snapshot.materials;
   const boardMaterials = useMemo(
     () => pickerMaterials.filter((m) => m.kind !== 'STICLA_RAMA' && m.kind !== 'STICLA_POLITA'),
     [pickerMaterials],
@@ -465,12 +467,12 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
     [pickerMaterials],
   );
   // culoarea piesei în viewportul 3D depinde de tipul materialului (PAL/MDF/…)
-  const materialKindById: Record<string, string> = Object.fromEntries(pickerMaterials.map((m) => [m.id, m.kind ?? 'PAL']));
+  const materialKindById: Record<string, string> = Object.fromEntries(pieceMaterials.map((m) => [m.id, m.kind ?? 'PAL']));
   // marcaj „»»»" în 3D pentru piesele cu material cu decor direcțional (snapshot-uri vechi înghețate: lipsă = false);
   // operatorul poate corecta din editor — corecția se salvează în catalog și se ține minte optimist local
   const [grainOverrides, setGrainOverrides] = useState<Record<string, boolean>>({});
   const materialGrainById: Record<string, boolean> = {
-    ...Object.fromEntries(pickerMaterials.map((m) => [m.id, m.hasGrain ?? false])),
+    ...Object.fromEntries(pieceMaterials.map((m) => [m.id, m.hasGrain ?? false])),
     ...grainOverrides,
   };
   const shelfIsGlass = materialKindById[values.shelfMaterialId] === 'STICLA_POLITA';
@@ -1302,7 +1304,7 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             hiddenKeys={hiddenKeys}
             onToggleVisibility={toggleVisibility}
             onShowAll={() => setHiddenKeys(new Set())}
-            materials={pickerMaterials}
+            materials={pieceMaterials}
             edgeBands={snapshot.edgeBands}
             addingFree={addingFree}
             onAddFree={() => setAddingFree(true)}

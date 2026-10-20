@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import type { ConfiguratorCatalogItem } from './PiecesColumn';
+import { SearchableSelect } from './SearchableSelect';
 
 const selectCls = cn(
   'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none',
@@ -184,17 +185,17 @@ export function PiecePanel(props: {
       <div className="grid gap-1.5">
         <Label className={fieldLabelCls}>Material</Label>
         {/* la piese libere nu există „automat": materialul e chiar cel din cfg.free */}
-        <select
-          className={selectCls}
+        <SearchableSelect
           value={freeEntry ? freeEntry.materialId : (override?.materialId ?? '')}
-          onChange={(e) => setMaterial(e.target.value)}
-        >
-          {!freeEntry && <option value="">Automat — {currentMaterialName}</option>}
-          {freeEntry && !activeMaterials.some((m) => m.id === freeEntry.materialId) && (
-            <option value={freeEntry.materialId}>{currentMaterialName}</option>
-          )}
-          {activeMaterials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-        </select>
+          onChange={setMaterial}
+          searchPlaceholder="Caută material…"
+          options={[
+            ...(!freeEntry ? [{ value: '', label: `Automat — ${currentMaterialName}` }] : []),
+            ...(freeEntry && !activeMaterials.some((m) => m.id === freeEntry.materialId)
+              ? [{ value: freeEntry.materialId, label: currentMaterialName }] : []),
+            ...activeMaterials.map((m) => ({ value: m.id, label: m.name })),
+          ]}
+        />
       </div>
 
       <div className="grid gap-2">
@@ -449,10 +450,12 @@ function FreePieceForm(props: {
       </div>
       <div className="grid gap-1.5">
         <Label className={fieldLabelCls}>Material</Label>
-        <select className={selectCls} value={materialId} onChange={(e) => setMaterialId(e.target.value)}>
-          <option value="" disabled>Selectează…</option>
-          {activeMaterials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-        </select>
+        <SearchableSelect
+          value={materialId}
+          onChange={setMaterialId}
+          searchPlaceholder="Caută material…"
+          options={activeMaterials.map((m) => ({ value: m.id, label: m.name }))}
+        />
       </div>
       <div className="flex gap-2">
         <Button type="button" onClick={add} disabled={!valid}>Adaugă</Button>
