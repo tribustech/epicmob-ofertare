@@ -45,6 +45,7 @@ function cabinetInputToFormValues(input: CabinetInput, cc: ConstructionConstants
     shelfRounded: input.shelf?.roundedCorner ? 'true' : 'false',
     shelfRoundedSide: input.shelf?.roundedCorner ?? 'RIGHT',
     doors: String(Math.max(input.doors, 1)),
+    doorRows: String(input.doorRows ?? 1),
     doorOpening: input.doorOpening ?? 'BALAMALE',
     carcassMaterialId: input.carcassMaterialId,
     carcassMdfSupplierId: input.mdfCarcass?.supplierId ?? '',

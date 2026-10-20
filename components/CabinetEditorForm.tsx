@@ -533,7 +533,8 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
   const frontSummary =
     frontType === 'USI'
       ? [
-          `Uși · ${plural(Number(values.doors) || 0, 'ușă', 'uși')}`,
+          `Uși · ${plural((Number(values.doors) || 0) * Math.max(1, Number(values.doorRows) || 1), 'ușă', 'uși')}`
+            + (Math.max(1, Number(values.doorRows) || 1) > 1 ? ` (${values.doors || 0} × ${values.doorRows})` : ''),
           withShelves ? (piecesCfg.honeycomb ? 'fagure' : plural(Number(values.shelves) || 0, 'poliță', 'polițe')) : null,
           handleSummary,
         ].filter(Boolean).join(' · ')
@@ -916,10 +917,12 @@ export function CabinetEditorForm(props: CabinetEditorFormProps) {
             {frontType === 'USI' && (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <NumField label="Uși" value={values.doors} onChange={(v) => { setDoorsTouched(true); set('doors', v); }} error={showError('doors')} />
+                  <NumField label="Uși pe lățime (coloane)" value={values.doors} onChange={(v) => { setDoorsTouched(true); set('doors', v); }} error={showError('doors')} />
+                  <NumField label="Uși pe înălțime (rânduri)" value={values.doorRows ?? '1'} onChange={(v) => set('doorRows', v)} error={showError('doorRows')} />
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Convenție atelier: până în 600mm lățime → 1 ușă; peste → 2 uși.
+                  Uși una peste alta: pune 2+ rânduri (înălțimea se împarte egal).
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <NumField label="Fals stânga (mm)" value={values.falsStangaMm} onChange={(v) => set('falsStangaMm', v)} error={showError('falsStangaMm')} />

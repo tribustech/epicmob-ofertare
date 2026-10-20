@@ -61,9 +61,6 @@ export function buildIsoModel(input: CabinetInput, cc: ConstructionConstants): C
   // GOLA: golul profilului rămâne sus; FARA: prelungirea coboară sub linia corpului
   const doorY = isGola ? g : g - (doorH - frontH);
 
-  // prinderea (profil GOLA / freză J) e pe muchia de sus a frontului, indiferent de tipul corpului
-  const doorJStrip = (x: number, w: number): IsoRect =>
-    ({ xMm: x, yMm: doorY + doorH - J_STRIP_MM, wMm: w, hMm: J_STRIP_MM });
 
   if (fS > 0) fronts.push({ kind: 'FALS', xMm: 0, yMm: doorY, wMm: fS - gap / 2, hMm: doorH });
   if (fD > 0) fronts.push({ kind: 'FALS', xMm: W - (fD - gap / 2), yMm: doorY, wMm: fD - gap / 2, hMm: doorH });
@@ -94,17 +91,24 @@ export function buildIsoModel(input: CabinetInput, cc: ConstructionConstants): C
     if (isGola) {
       golaBars.push({ xMm: g, yMm: H - g - deduct, wMm: W - 2 * g, hMm: deduct });
     }
-    for (let i = 0; i < input.doors; i++) {
-      const x = frontX0 + i * (doorW + gap);
-      // mânerul pe muchia dinspre mijloc la 2 uși; pe dreapta la o singură ușă
-      const handleX = input.doors === 2 && i === 0 ? x + doorW - HANDLE_INSET_MM
-        : input.doors === 2 ? x + HANDLE_INSET_MM
-        : x + doorW - HANDLE_INSET_MM;
-      fronts.push({
-        kind: 'USA', xMm: x, yMm: doorY, wMm: doorW, hMm: doorH,
-        ...(markKind ? { handle: { xMm: handleX, yMm: doorY + doorH / 2, kind: markKind, vertical: true } } : {}),
-        ...(isJ ? { jStrip: doorJStrip(x, doorW) } : {}),
-      });
+    // uși pe înălțime: rândul 0 e sus; un singur rând = desenul istoric
+    const rows = Math.max(1, Math.trunc(input.doorRows ?? 1));
+    const rowH = (doorH - (rows - 1) * gap) / rows;
+    for (let r = 0; r < rows; r++) {
+      const y = doorY + (rows - 1 - r) * (rowH + gap);
+      for (let i = 0; i < input.doors; i++) {
+        const x = frontX0 + i * (doorW + gap);
+        // mânerul pe muchia dinspre mijloc la 2 uși; pe dreapta la o singură ușă
+        const handleX = input.doors === 2 && i === 0 ? x + doorW - HANDLE_INSET_MM
+          : input.doors === 2 ? x + HANDLE_INSET_MM
+          : x + doorW - HANDLE_INSET_MM;
+        fronts.push({
+          kind: 'USA', xMm: x, yMm: y, wMm: doorW, hMm: rowH,
+          ...(markKind ? { handle: { xMm: handleX, yMm: y + rowH / 2, kind: markKind, vertical: true } } : {}),
+          // prinderea (freză J) e pe muchia de sus a fiecărei uși
+          ...(isJ ? { jStrip: { xMm: x, yMm: y + rowH - J_STRIP_MM, wMm: doorW, hMm: J_STRIP_MM } } : {}),
+        });
+      }
     }
   }
 

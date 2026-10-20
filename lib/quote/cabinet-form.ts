@@ -27,6 +27,7 @@ export const cabinetFormSchema = z
     shelfRounded: checkbox,
     shelfRoundedSide: z.enum(['LEFT', 'RIGHT']).default('RIGHT'),
     doors: intNonNeg,
+    doorRows: z.coerce.number().int().min(1).max(6).default(1),
     carcassMaterialId: z.string().min(1, 'Alege materialul carcasei'),
     // carcasă MDF vopsit — aceeași configurație ca la fronturi
     carcassMdfSupplierId: optStr,
@@ -132,6 +133,7 @@ export function toCabinetInput(d: CabinetFormData, pieces?: PiecesConfigForm): C
         }
       : undefined,
     doors: d.frontType === 'USI' ? d.doors : 0,
+    doorRows: d.frontType === 'USI' && d.doorRows > 1 ? d.doorRows : undefined,
     drawers:
       d.frontType === 'SERTARE'
         ? {

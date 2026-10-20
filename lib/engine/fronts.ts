@@ -39,6 +39,18 @@ export function resolveFalseFronts(
   return { stangaMm: 0, dreaptaMm: 0 };
 }
 
+/** Rânduri de uși (pe înălțime); lipsă/invalid = 1. */
+export function doorRowCount(input: Pick<CabinetInput, 'doorRows'>): number {
+  return Math.max(1, Math.trunc(input.doorRows ?? 1));
+}
+
+function doorLabel(col: number, cols: number, row: number, rows: number): string {
+  if (rows === 1) return cols > 1 ? `Ușă ${col + 1}` : 'Ușă'; // etichetele istorice
+  const rowName = rows === 2 ? (row === 0 ? 'sus' : 'jos') : `rând ${row + 1}`;
+  const colName = cols === 1 ? '' : cols === 2 ? (col === 0 ? 'stânga' : 'dreapta') : `${col + 1}`;
+  return ['Ușă', rowName, colName].filter(Boolean).join(' ');
+}
+
 export function expandFronts(
   input: CabinetInput,
   catalogs: Catalogs,
@@ -179,24 +191,39 @@ export function expandFronts(
     const doorW = assertPositiveDim(
       (usableW - (input.doors - 1) * cc.frontGapMm) / input.doors, 'lățime ușă', input.label,
     );
-    for (let i = 0; i < input.doors; i++) {
-      pieces.push({
-        key: `usa:${i}`, cabinetLabel: input.label, name: 'Ușă',
-        label: input.doors > 1 ? `Ușă ${i + 1}` : 'Ușă',
-        lengthMm: frontH, widthMm: doorW, materialId: material.id,
-        edges: perim, edgeAxis: FRONT_AXES,
-        calc: {
-          length: frontHCalc,
-          width: dim('Lățime', [
-            ...widthTermsBase,
-            ...(input.doors > 1 ? [
-              { label: `${input.doors - 1}× luft între uși`, valueMm: -(input.doors - 1) * cc.frontGapMm },
-              { label: `partea celorlalte ${input.doors - 1} uși`, valueMm: -doorW * (input.doors - 1) },
-            ] : []),
-          ]),
-        },
-      });
-      fronts.push({ kind: 'USA', widthMm: doorW, heightMm: frontH });
+    // uși pe înălțime (una peste alta): înălțimea frontului se împarte egal pe rânduri
+    const rows = doorRowCount(input);
+    const doorH = assertPositiveDim(
+      (frontH - (rows - 1) * cc.frontGapMm) / rows, 'înălțime ușă', input.label,
+    );
+    const doorHCalc = rows > 1
+      ? dim('Înălțime', [
+          ...frontHTerms,
+          { label: `${rows - 1}× luft între rânduri`, valueMm: -(rows - 1) * cc.frontGapMm },
+          { label: `partea celorlalte ${rows - 1} rânduri`, valueMm: -doorH * (rows - 1) },
+        ])
+      : frontHCalc;
+    for (let r = 0; r < rows; r++) {
+      for (let i = 0; i < input.doors; i++) {
+        pieces.push({
+          // un singur rând păstrează cheile istorice `usa:i` (override-urile salvate pe piese rămân valabile)
+          key: rows > 1 ? `usa:${i}:${r}` : `usa:${i}`, cabinetLabel: input.label, name: 'Ușă',
+          label: doorLabel(i, input.doors, r, rows),
+          lengthMm: doorH, widthMm: doorW, materialId: material.id,
+          edges: perim, edgeAxis: FRONT_AXES,
+          calc: {
+            length: doorHCalc,
+            width: dim('Lățime', [
+              ...widthTermsBase,
+              ...(input.doors > 1 ? [
+                { label: `${input.doors - 1}× luft între uși`, valueMm: -(input.doors - 1) * cc.frontGapMm },
+                { label: `partea celorlalte ${input.doors - 1} uși`, valueMm: -doorW * (input.doors - 1) },
+              ] : []),
+            ]),
+          },
+        });
+        fronts.push({ kind: 'USA', widthMm: doorW, heightMm: doorH });
+      }
     }
     if (doorW > cc.doorMaxWidthMm) {
       warnings.push({

@@ -32,7 +32,8 @@ export function handleExtraCost(
   const h = input.handle;
   if (!h) return [];
   const drawerCols = Math.max(1, input.drawers?.columns ?? 1);
-  const frontCount = (input.doors > 0 ? input.doors : 0) + (input.drawers?.count ?? 0) * drawerCols;
+  const doorCount = input.doors > 0 ? input.doors * Math.max(1, Math.trunc(input.doorRows ?? 1)) : 0;
+  const frontCount = doorCount + (input.drawers?.count ?? 0) * drawerCols;
   const lines: FreeLine[] = [];
   if (h.type === 'PROFIL_J' && frontCount > 0) {
     lines.push({ name: `Prelucrare profil J — ${input.label}`, amount: frontCount * prices.profilJPerFront });

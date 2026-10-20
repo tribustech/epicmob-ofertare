@@ -39,6 +39,27 @@ describe('expandFronts — uși', () => {
     });
   });
 
+  it('uși una peste alta (doorRows): înălțimea se împarte pe rânduri, lățimea rămâne pe coloane', () => {
+    const gap = DEFAULT_CONSTRUCTION.frontGapMm;
+    const input = bazaInput({ doors: 1, doorRows: 2 });
+    const { pieces, fronts } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    expect(pieces.map((p) => [p.key, p.label])).toEqual([['usa:0:0', 'Ușă sus'], ['usa:0:1', 'Ușă jos']]);
+    const doorH = (718 - gap) / 2;
+    expect(pieces[0]).toMatchObject({ lengthMm: doorH, widthMm: 598 });
+    expect(pieces[0].calc?.length?.resultMm).toBeCloseTo(doorH);
+    expect(fronts).toEqual([
+      { kind: 'USA', widthMm: 598, heightMm: doorH },
+      { kind: 'USA', widthMm: 598, heightMm: doorH },
+    ]);
+  });
+
+  it('grilă de uși 2 × 2: 4 uși, cheile includ rândul', () => {
+    const input = bazaInput({ doors: 2, doorRows: 2 });
+    const { pieces } = expandFronts(input, TEST_CATALOGS, DEFAULT_CONSTRUCTION);
+    expect(pieces.map((p) => p.label)).toEqual(['Ușă sus stânga', 'Ușă sus dreapta', 'Ușă jos stânga', 'Ușă jos dreapta']);
+    expect(new Set(pieces.map((p) => p.key)).size).toBe(4);
+  });
+
   it('MDF înfoliat: fără cant chiar dacă frontPerimeterId e setat', () => {
     const input = bazaInput({
       frontMaterialId: 'mdf-infoliat',

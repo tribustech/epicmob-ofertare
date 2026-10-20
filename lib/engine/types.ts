@@ -116,7 +116,8 @@ export interface CabinetInput {
     materialId?: string; decorAxis?: 'LR' | 'FB';
     roundedCorner?: 'LEFT' | 'RIGHT'; roundedRadiusMm?: number;
   };
-  doors: number;                   // 0 = fără uși; exclusiv cu drawers
+  doors: number;                   // 0 = fără uși; exclusiv cu drawers. Uși pe lățime (coloane)
+  doorRows?: number;               // uși pe înălțime (rânduri, una peste alta); implicit 1 → total = doors × doorRows
   drawers?: DrawerOptions;         // sertare pe orice tip de corp; exclusiv cu doors
   carcassMaterialId: string;
   mdfCarcass?: {                   // carcasă MDF vopsit — cotată per m² ca fronturile

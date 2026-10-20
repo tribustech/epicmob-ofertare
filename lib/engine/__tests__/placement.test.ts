@@ -45,3 +45,14 @@ describe('assignPlacements — fronturi de sertar (poziție 3D)', () => {
     expect(boxes.every((p) => p.placement)).toBe(true);
   });
 });
+
+describe('assignPlacements — uși pe rânduri', () => {
+  it('2 uși una peste alta: aceeași coloană, ușa de sus deasupra celei de jos, fără suprapunere', () => {
+    const { pieces } = expandCabinet(bazaInput({ doors: 1, doorRows: 2 }), TEST_CATALOGS, cc);
+    const doors = pieces.filter((p) => p.key.startsWith('usa:'));
+    expect(doors).toHaveLength(2);
+    const [sus, jos] = doors.map((p) => p.placement!);
+    expect(sus.x).toBe(jos.x);
+    expect(sus.y).toBeCloseTo(jos.y + jos.h + cc.frontGapMm);
+  });
+});

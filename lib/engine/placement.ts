@@ -94,11 +94,13 @@ export function assignPlacements(
       case pc.key === 'fals:dreapta':
         pc.placement = { x: W - pc.widthMm, y: frontTopY - pc.lengthMm, z: D, w: pc.widthMm, h: pc.lengthMm, d: FRONT_THICKNESS_MM };
         break;
-      case /^usa:\d+$/.test(pc.key): {
-        const i = Number(pc.key.split(':')[1]);
+      case /^usa:\d+(:\d+)?$/.test(pc.key): {
+        const seg = pc.key.split(':');
+        const i = Number(seg[1]);
+        const r = seg.length > 2 ? Number(seg[2]) : 0; // rândul (0 = sus)
         pc.placement = {
           x: frontX0 + i * (pc.widthMm + cc.frontGapMm),
-          y: frontTopY - pc.lengthMm, z: D,
+          y: frontTopY - r * (pc.lengthMm + cc.frontGapMm) - pc.lengthMm, z: D,
           w: pc.widthMm, h: pc.lengthMm, d: FRONT_THICKNESS_MM,
         };
         break;
