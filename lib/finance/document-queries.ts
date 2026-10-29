@@ -92,7 +92,7 @@ export async function loadExpenseFormOptions() {
   return {
     categories: categories.map((c) => ({ value: c.id, label: c.name, scope: c.scope as 'DIRECT' | 'INDIRECT' })),
     projects: projects.map((p) => ({ value: p.id, label: p.client ? `${p.name} · ${p.client.name}` : p.name })),
-    accounts: accounts.map((a) => ({ value: a.value, label: a.label, balance: a.balance })),
+    accounts: accounts.map((a) => ({ value: a.value, label: a.label, kind: a.kind, balance: a.balance })),
     vatPayer: settings?.vatPayer ?? false,
     vatDefaultPct: settings?.vatDefaultPct ?? 21,
   };

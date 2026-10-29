@@ -2,14 +2,18 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { SESSION_COOKIE, sessionCookieOptions } from '@/lib/auth/cookie';
 import { shouldRenew, signSession, verifySession } from '@/lib/auth/jwt';
 
+/** Webhook-uri apelate de servicii externe; se autentifică singure (secret în header). */
+const PUBLIC_PREFIXES = ['/api/telegram'];
+
 /**
- * Protejează tot în afară de /login și fișierele statice. Verifică doar semnătura și expirarea
+ * Protejează tot în afară de /login, webhook-uri și fișierele statice. Verifică doar semnătura și expirarea
  * JWT-ului (fără DB pe Edge); starea `active` a userului se verifică în getCurrentUser().
  */
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
   // fișiere statice din public/ (decoruri, ral, favicon) — orice cale cu extensie trece
   if (/\.[a-z0-9]+$/i.test(pathname)) return NextResponse.next();
+  if (PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return NextResponse.next();
   const session = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
   const isLogin = pathname === '/login';
 

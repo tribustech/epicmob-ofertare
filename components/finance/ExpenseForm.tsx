@@ -11,7 +11,7 @@ import type { ExpenseFormOptions } from '@/lib/finance/document-queries';
 import type { FormState } from '@/lib/forms/form-action';
 import { ActionForm } from '@/components/ActionForm';
 import { fieldLabelCls, SubmitButton } from '@/components/forms';
-import { AllocationRows } from './AllocationRows';
+import { AllocationRows, type AllocationRow } from './AllocationRows';
 
 const inputCls = 'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-[14px] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm';
 
@@ -28,21 +28,37 @@ function Step({ n, title }: { n: number; title: string }) {
   );
 }
 
+/** Valori precompletate (ex. dintr-un bon citit de bot). Sumele sunt text, ca în input. */
+export interface ExpenseDefaults {
+  kind?: string;
+  issuedAt?: string; // YYYY-MM-DD
+  counterparty?: string;
+  amount?: string;
+  number?: string;
+  categoryId?: string;
+  allocations?: AllocationRow[];
+  payMode?: 'PAID' | 'UNPAID';
+  accountId?: string;
+  note?: string;
+}
+
 /**
  * „Adaugă cheltuială" — un singur formular, trei pași pe același ecran:
  * 1. documentul, 2. pe ce proiect (alocări), 3. plata. Merge și în panou lateral, și pe pagină (mobil).
  */
-export function ExpenseForm({ options, action, defaultProjectId, redirectTo, stacked }: {
+export function ExpenseForm({ options, action, defaultProjectId, redirectTo, stacked, defaults, submitLabel = 'Salvează cheltuiala' }: {
   options: ExpenseFormOptions;
   action: (fd: FormData) => Promise<FormState>;
   defaultProjectId?: string;
   redirectTo?: string;
   stacked?: boolean; // layout vertical (mobil)
+  defaults?: ExpenseDefaults;
+  submitLabel?: string;
 }) {
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState(defaults?.amount ?? '');
   const [vatMode, setVatMode] = useState<'INCLUS' | 'ADAUGAT' | 'FARA'>('INCLUS');
   const [vatPct, setVatPct] = useState(String(options.vatDefaultPct));
-  const [payMode, setPayMode] = useState<'PAID' | 'UNPAID'>('PAID');
+  const [payMode, setPayMode] = useState<'PAID' | 'UNPAID'>(defaults?.payMode ?? 'PAID');
   const total = useMemo(() => { const n = parseMoneyInput(amount); return Number.isFinite(n) ? n : 0; }, [amount]);
   const direct = options.categories.filter((c) => c.scope === 'DIRECT');
   const defaultCategory = direct[0]?.value ?? options.categories[0]?.value ?? '';
@@ -55,29 +71,31 @@ export function ExpenseForm({ options, action, defaultProjectId, redirectTo, sta
 
       <section className="flex flex-col gap-3">
         <Step n={1} title="Documentul" />
-        <div className="rounded-lg border border-dashed border-[#d4d4d0] px-3 py-2.5 text-[12px] text-muted-foreground">
-          Poza bonului / facturii — după conectarea la Cloudflare R2.
-        </div>
+        {!defaults && (
+          <div className="rounded-lg border border-dashed border-[#d4d4d0] px-3 py-2.5 text-[12px] text-muted-foreground">
+            Ai poza bonului? Trimite-o botului de Telegram (Setări → Conectează Telegram) și apare în De validat.
+          </div>
+        )}
         <div className={cn('grid gap-3', cols)}>
           <Field label="Tip">
-            <select name="kind" defaultValue="BON" className={inputCls}>
+            <select name="kind" defaultValue={defaults?.kind ?? 'BON'} className={inputCls}>
               {Object.entries(DOCUMENT_KIND_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </Field>
           <Field label="Data">
-            <input name="issuedAt" type="date" defaultValue={today} className={cn(inputCls, 'font-mono')} />
+            <input name="issuedAt" type="date" defaultValue={defaults?.issuedAt ?? today} className={cn(inputCls, 'font-mono')} />
           </Field>
           <Field label="Furnizor" className={stacked ? '' : 'col-span-2'}>
-            <input name="counterparty" required placeholder="OMV, Darel Distribution…" className={inputCls} />
+            <input name="counterparty" required defaultValue={defaults?.counterparty} placeholder="OMV, Darel Distribution…" className={inputCls} />
           </Field>
           <Field label="Sumă (lei)">
             <input name="amount" value={amount} onChange={(e) => setAmount(e.target.value)} required inputMode="decimal" placeholder="240,00" className={cn(inputCls, 'font-mono text-base')} />
           </Field>
           <Field label="Nr. document">
-            <input name="number" placeholder="opțional" className={cn(inputCls, 'font-mono')} />
+            <input name="number" defaultValue={defaults?.number} placeholder="opțional" className={cn(inputCls, 'font-mono')} />
           </Field>
           <Field label="Categorie implicită" className={stacked ? '' : 'col-span-2'}>
-            <select name="categoryId" defaultValue={options.categories.find((c) => c.scope === 'INDIRECT')?.value ?? defaultCategory} className={inputCls}>
+            <select name="categoryId" defaultValue={defaults?.categoryId ?? options.categories.find((c) => c.scope === 'INDIRECT')?.value ?? defaultCategory} className={inputCls}>
               <optgroup label="Indirecte (firmă)">
                 {options.categories.filter((c) => c.scope === 'INDIRECT').map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
               </optgroup>
@@ -110,7 +128,10 @@ export function ExpenseForm({ options, action, defaultProjectId, redirectTo, sta
 
       <section className="flex flex-col gap-3">
         <Step n={2} title="Pe ce proiect" />
-        <AllocationRows projects={options.projects} categories={direct} total={total} defaultCategoryId={defaultCategory} defaultProjectId={defaultProjectId} />
+        <AllocationRows
+          projects={options.projects} categories={direct} total={total} defaultCategoryId={defaultCategory} defaultProjectId={defaultProjectId}
+          initial={defaults?.allocations?.map((a) => ({ ...a, categoryId: a.categoryId || defaultCategory }))}
+        />
       </section>
 
       <section className="flex flex-col gap-3">
@@ -122,7 +143,7 @@ export function ExpenseForm({ options, action, defaultProjectId, redirectTo, sta
         {payMode === 'PAID' ? (
           <div className={cn('grid gap-3', stacked ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-3')}>
             <Field label="Din contul">
-              <select name="accountId" defaultValue={options.accounts[0]?.value ?? ''} className={inputCls}>
+              <select name="accountId" defaultValue={defaults?.accountId ?? options.accounts[0]?.value ?? ''} className={inputCls}>
                 {options.accounts.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
               </select>
             </Field>
@@ -134,11 +155,11 @@ export function ExpenseForm({ options, action, defaultProjectId, redirectTo, sta
             <Field label="Scadență (opțional)"><input name="dueAt" type="date" className={cn(inputCls, 'font-mono')} /></Field>
           </div>
         )}
-        <Field label="Notă" className="mt-1"><input name="note" placeholder="opțional" className={inputCls} /></Field>
+        <Field label="Notă" className="mt-1"><input name="note" defaultValue={defaults?.note} placeholder="opțional" className={inputCls} /></Field>
       </section>
 
       <div className="flex items-center gap-3 border-t pt-4">
-        <SubmitButton>Salvează cheltuiala</SubmitButton>
+        <SubmitButton>{submitLabel}</SubmitButton>
         <span className="text-[12px] text-muted-foreground">{total > 0 ? fmtLei(total) : 'completează suma'}{payMode === 'PAID' ? ' · plătit' : ' · neplătit'}</span>
       </div>
     </ActionForm>

@@ -19,10 +19,13 @@
     "db:studio": "prisma studio",
     "db:create-user": "tsx scripts/create-user.ts",
     "db:migrate-crm": "tsx scripts/migrate-crm.ts",
-    "db:seed-finante": "tsx scripts/seed-finante.ts"
+    "db:seed-finante": "tsx scripts/seed-finante.ts",
+    "bot:webhook": "tsx scripts/telegram-webhook.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",
+    "@aws-sdk/client-s3": "^3.1160.0",
+    "@aws-sdk/s3-request-presigner": "^3.1160.0",
     "@google/genai": "^2.20.0",
     "@prisma/client": "^6.19.3",
     "@react-three/drei": "^10.7.7",

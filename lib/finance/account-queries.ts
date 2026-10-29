@@ -75,7 +75,7 @@ export async function loadAccountOptions() {
     prisma.account.findMany({ where: { active: true }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }),
     loadBalances(),
   ]);
-  return accounts.map((a) => ({ value: a.id, label: a.name, balance: balances.get(a.id) ?? 0 }));
+  return accounts.map((a) => ({ value: a.id, label: a.name, kind: a.kind, balance: balances.get(a.id) ?? 0 }));
 }
 
 export async function loadAdjustments() {

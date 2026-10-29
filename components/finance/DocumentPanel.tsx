@@ -138,9 +138,17 @@ export function DocumentPanel({ doc, options }: { doc: Doc; options: ExpenseForm
 
       <section className="border-t pt-4">
         <div className={microLabelCls}>Poză</div>
-        <div className="mt-1 text-[12.5px] text-muted-foreground">
-          {doc.attachments.length > 0 ? `${doc.attachments.length} fișier(e)` : 'Fără poză. Upload-ul vine după conectarea la Cloudflare R2.'}
-        </div>
+        {doc.attachments.length > 0 ? (
+          <div className="mt-1.5 flex flex-wrap gap-2">
+            {doc.attachments.map((a, i) => (
+              <a key={a.id} href={`/api/fisiere/${a.id}`} target="_blank" rel="noreferrer" className="rounded-lg border px-2.5 py-1 text-[12.5px] font-medium hover:bg-muted">
+                {a.mime === 'application/pdf' ? 'PDF' : 'Poză'} {i + 1}
+              </a>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-1 text-[12.5px] text-muted-foreground">Fără poză. Pozele vin cu bonurile trimise pe Telegram.</div>
+        )}
       </section>
 
       <div className="text-[11.5px] text-muted-foreground">adăugat de {doc.createdBy ?? 'sistem'} · {fmtDate.format(doc.createdAt)}</div>

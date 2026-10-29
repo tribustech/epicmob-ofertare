@@ -58,6 +58,7 @@ export const DEFAULT_COST_CATEGORIES: { name: string; scope: 'DIRECT' | 'INDIREC
   { name: 'Taxe stat', scope: 'INDIRECT' },
   { name: 'Combustibil', scope: 'INDIRECT' },
   { name: 'Unelte/consumabile', scope: 'INDIRECT' },
+  { name: 'Stoc atelier', scope: 'INDIRECT' }, // feronerie/materiale luate „să avem", încă fără proiect
   { name: 'Marketing', scope: 'INDIRECT' },
   { name: 'Abonamente', scope: 'INDIRECT' },
   { name: 'Altele', scope: 'INDIRECT' },
