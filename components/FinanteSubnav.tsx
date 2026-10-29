@@ -8,13 +8,14 @@ const ITEMS = [
   { href: '/finante', label: 'Conturi', exact: true },
   { href: '/finante/incasari', label: 'Încasări' },
   { href: '/finante/cheltuieli', label: 'Cheltuieli' },
+  { href: '/finante/de-validat', label: 'De validat' },
   { href: '/finante/recurente', label: 'Recurente' },
   { href: '/finante/imprumuturi', label: 'Împrumuturi' },
   { href: '/finante/ajustari', label: 'Ajustări' },
 ];
 
 /** Sub-navigația Finanțe (nivel 2). Registrul unui cont (/finante/conturi/…) ține „Conturi" activ. */
-export function FinanteSubnav() {
+export function FinanteSubnav({ pendingCount = 0 }: { pendingCount?: number }) {
   const pathname = usePathname();
   return (
     <div className="flex gap-5 overflow-x-auto border-b border-[#d9d7d0]">
@@ -32,6 +33,9 @@ export function FinanteSubnav() {
             )}
           >
             {item.label}
+            {item.href === '/finante/de-validat' && pendingCount > 0 && (
+              <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-px font-mono text-[11px] font-semibold text-amber-800">{pendingCount}</span>
+            )}
           </Link>
         );
       })}

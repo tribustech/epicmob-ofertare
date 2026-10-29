@@ -22,6 +22,8 @@ import { TRASH_DAYS, daysLeftInTrash } from '@/lib/crm/trash';
 import { loadTrash, purgeExpiredTrash } from '@/lib/crm/trash-purge';
 import { purgeClient, restoreClient } from '@/lib/crm/client-actions';
 import { DeleteButton } from '@/components/DeleteButton';
+import { createLinkCode } from '@/lib/inbox/link-code';
+import { unlinkChat } from '@/lib/inbox/link-actions';
 
 const dateTimeFmt = new Intl.DateTimeFormat('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
@@ -58,6 +60,8 @@ export default async function SetariPage() {
     hardware.filter((h) => h.category === cat).map((h) => ({ value: h.id, label: h.name }));
   const me = await getCurrentUser();
   const users = await prisma.user.findMany({ orderBy: [{ active: 'desc' }, { name: 'asc' }] });
+  const botUsername = process.env.TELEGRAM_BOT_USERNAME;
+  const myChats = me ? await prisma.chatLink.findMany({ where: { userId: me.id }, orderBy: { createdAt: 'asc' } }) : [];
   const categories = await prisma.costCategory.findMany({ orderBy: [{ scope: 'asc' }, { active: 'desc' }, { sortOrder: 'asc' }] });
   const scopeOptions = Object.entries(COST_SCOPE_LABELS).map(([value, label]) => ({ value, label }));
   const bucketOptions = Object.entries(QUOTE_BUCKET_LABELS).map(([value, label]) => ({ value, label }));
@@ -69,6 +73,33 @@ export default async function SetariPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold tracking-tight">Setări</h1>
+
+      {me && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Bonuri pe Telegram</CardTitle>
+            <CardDescription>Trimiți poza bonului sau a facturii botului, alegi proiectul și plata, iar bonul apare în Finanțe → De validat.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-[13.5px]">
+            {botUsername ? (
+              <div>
+                <a href={`https://t.me/${botUsername}?start=${createLinkCode(me.id)}`} target="_blank" rel="noreferrer" className="inline-flex h-8 items-center rounded-lg bg-foreground px-3 font-medium text-background">
+                  Conectează Telegram
+                </a>
+                <span className="ml-2 text-[12.5px] text-muted-foreground">Deschide-l de pe telefon, apoi apasă Start în Telegram. Link-ul e personal și expiră în 7 zile.</span>
+              </div>
+            ) : (
+              <div className="text-muted-foreground">Botul nu e configurat încă (lipsește TELEGRAM_BOT_USERNAME).</div>
+            )}
+            {myChats.map((c) => (
+              <div key={c.id} className="flex items-center gap-3">
+                <span>Conectat: {c.displayName ?? c.externalId} ({c.channel === 'TELEGRAM' ? 'Telegram' : 'WhatsApp'})</span>
+                <ActionForm action={unlinkChat.bind(null, c.id)}><Button type="submit" variant="outline" size="xs">Deconectează</Button></ActionForm>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
