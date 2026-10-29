@@ -17,13 +17,15 @@ Reguli:
 - paymentHint: CASH dacă pe bon apare NUMERAR sau colegul spune cash; CARD dacă apare CARD; TRANSFER pentru facturi cu plată ulterioară (OP); altfel NECUNOSCUT.
 - vatPct: cota TVA dominantă (de obicei 21), sau null.
 - summary: ce s-a cumpărat, max 80 de caractere, în română (ex. „șuruburi, silicon, discuri flex").
-- projectId: DOAR un id din lista de proiecte primită, dacă textul colegului sau documentul (adresa de livrare, numele clientului) îl indică clar. Altfel null — nu ghici.
+- projectId: DOAR un id din lista de proiecte primită, dacă textul colegului sau documentul (adresa de livrare, numele clientului) îl indică clar. Altfel null — nu ghici. Dacă textul spune „stoc", „pentru atelier", „să avem": null.
 - categoryName: EXACT unul din numele de categorii primite, cel mai potrivit (ex. Feronerie, Plăci, Transport, Combustibil, Unelte/consumabile).
+- items: produsele de pe document, max 30, fiecare cu totalul liniei în lei (cu TVA). Pentru mesaje doar text: [].
+- split: DOAR dacă colegul spune explicit în text că bonul se împarte (pe proiecte și/sau stoc). Fiecare rând are project = id din listă sau "STOC" (cumpărat pentru atelier, nu pentru un proiect) și amount = suma în lei, sau null pentru „restul". Folosește items ca să calculezi sumele (ex. „balamalele sunt pentru stoc, restul Popescu" → STOC cu suma liniilor de balamale, proiectul Popescu cu null). Dacă nu se cere împărțire: [].
 - notes: orice e neclar (poză neclară, sume care nu se leagă), altfel null.
 - Textul colegului are prioritate față de ce citești în poză.
 
 Răspunde DOAR cu JSON valid, exact în forma:
-{"kind":"BON","counterparty":"Dedeman","counterpartyCui":"RO2816464","number":"0123","issuedAt":"2026-10-14","total":1234.5,"currency":"RON","vatPct":21,"paymentHint":"CARD","summary":"…","projectId":null,"categoryName":"Feronerie","notes":null}`;
+{"kind":"BON","counterparty":"Dedeman","counterpartyCui":"RO2816464","number":"0123","issuedAt":"2026-10-14","total":1234.5,"currency":"RON","vatPct":21,"paymentHint":"CARD","summary":"…","projectId":null,"categoryName":"Feronerie","notes":null,"items":[{"name":"Balama Blum Clip Top x20","total":480}],"split":[]}`;
 
 export interface ReceiptFile { mimeType: string; bytes: Uint8Array }
 

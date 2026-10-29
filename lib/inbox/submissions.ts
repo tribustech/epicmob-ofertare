@@ -2,16 +2,18 @@
  * Bot cheltuieli — nucleul, independent de canal. Adaptorul (Telegram acum, WhatsApp mai târziu)
  * traduce mesajele în apelurile de aici și dă un `ChatOut` prin care răspundem.
  *
- * Fluxul: poză/PDF/text → Submission PRIMIT → AI citește → colegul alege proiectul → alege plata →
- * DE_VALIDAT → în aplicație cineva (Alesia) aprobă (devine Document) sau respinge.
+ * Fluxul: poză/PDF/text → Submission PRIMIT → AI citește → colegul alege proiectul (unul, mai multe
+ * cu împărțire, stoc / general sau „nu știu") → alege plata → DE_VALIDAT → în aplicație cineva
+ * (Alesia) aprobă (devine Document) sau respinge.
  */
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getFileBytes, putFile, submissionFileKey } from '@/lib/storage/s3';
 import { extractReceipt } from './extract';
+import { splitEqual } from '@/lib/finance/documents';
 import {
-  PAYMENT_METHOD_LABELS, describeReceipt, encodeAction, normalizeReceipt, projectChoices,
-  type BotAction, type ReceiptFields,
+  PAYMENT_METHOD_LABELS, describeReceipt, encodeAction, normalizeReceipt, parseAmountsText, projectChoices,
+  type BotAction, type ReceiptFields, type SplitMode,
 } from './receipt';
 import type { Keyboard } from './telegram-api';
 
@@ -81,6 +83,32 @@ const fieldsOf = (s: { kind: string | null; counterparty: string | null; issuedA
   counterparty: s.counterparty, issuedAt: s.issuedAt, amount: s.amount ? s.amount.toNumber() : null, number: s.number, summary: s.summary,
 });
 
+const STOCK_CATEGORY = 'Stoc atelier';
+/** O trimitere care așteaptă sume scrise de coleg nu mai e „în așteptare" după atâta timp. */
+const AWAIT_AMOUNTS_MS = 30 * 60 * 1000;
+
+const withAllocs = { allocations: { include: { project: { include: { client: true } } } } } as const;
+type SubWithAllocs = Prisma.SubmissionGetPayload<{ include: typeof withAllocs }>;
+
+const loadSub = (id: string) => prisma.submission.findUnique({ where: { id }, include: withAllocs });
+
+const fmtMoney = (n: number) => new Intl.NumberFormat('ro-RO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+const projectName = (p: { name: string; client: { name: string } | null }) => (p.client ? `${p.name} · ${p.client.name}` : p.name);
+
+/** „Bucătărie · Popescu 300,00 · Dressing · Ionescu 934,50 + stoc 120,00", „stoc / general" etc. */
+export function allocationText(s: SubWithAllocs): string {
+  if (s.noProject) return 'stoc / general atelier';
+  if (!s.allocations.length) return 'nu știu — decide Alesia';
+  if (s.allocations.length === 1 && (s.allocations[0].amount == null || (s.amount && s.allocations[0].amount.equals(s.amount)))) {
+    return projectName(s.allocations[0].project);
+  }
+  if (s.splitMode === 'ALESIA') return `${s.allocations.map((a) => projectName(a.project)).join(', ')} — împarte Alesia`;
+  const parts = s.allocations.map((a) => `${projectName(a.project)} ${a.amount ? fmtMoney(a.amount.toNumber()) : '?'}`);
+  const allocated = s.allocations.reduce((t, a) => t + (a.amount?.toNumber() ?? 0), 0);
+  const rest = s.amount ? s.amount.toNumber() - allocated : 0;
+  return parts.join(' · ') + (rest > 0.005 ? ` + stoc ${fmtMoney(rest)}` : '');
+}
+
 /** Citește documentul cu AI-ul și trimite colegului pasul „pe ce proiect?". */
 export async function readAndAskProject(submissionId: string, out: ChatOut) {
   const sub = await prisma.submission.findUniqueOrThrow({ where: { id: submissionId }, include: { attachments: true, sender: true } });
@@ -101,80 +129,236 @@ export async function readAndAskProject(submissionId: string, out: ChatOut) {
     extractError = e instanceof Error ? e.message : 'Citirea a eșuat.';
   }
 
-  const updated = await prisma.submission.update({
+  await prisma.submission.update({
     where: { id: sub.id },
     data: fields
       ? {
           extracted: raw as Prisma.InputJsonValue, extractError: null, kind: fields.kind, counterparty: fields.counterparty, number: fields.number,
           issuedAt: fields.issuedAt, amount: fields.amount, vatPct: fields.vatPct, summary: fields.summary, projectId: fields.projectId,
-          categoryId: fields.categoryId, paymentMethod: fields.paymentMethod, step: 'PROIECT',
+          categoryId: fields.categoryId, paymentMethod: fields.paymentMethod, items: fields.items as Prisma.InputJsonValue,
+          splitMode: fields.split ? 'PROPUS' : null, step: 'PROIECT',
+          allocations: fields.split ? { create: fields.split.map((r) => ({ projectId: r.projectId, amount: r.amount })) } : undefined,
         }
       : { extractError, step: 'PROIECT' },
   });
 
+  const updated = (await loadSub(sub.id))!;
   const intro = fields
     ? `Am citit:\n${describeReceipt(fieldsOf(updated))}`
     : `Nu am reușit să citesc ${sub.attachments.length ? 'documentul' : 'mesajul'}, dar îl trimit la validare așa cum e. Alesia completează datele.`;
-  const choices = projectChoices(projects, updated.projectId);
-  const kb: Keyboard = [
-    ...choices.map((p) => [{ label: `${p.suggested ? '⭐ ' : ''}${truncate(p.label, 40)}`, data: encodeAction({ kind: 'project', submissionId: sub.id, projectId: p.id, noProject: false }) }]),
-    [
-      { label: '🏢 Firmă (fără proiect)', data: encodeAction({ kind: 'project', submissionId: sub.id, projectId: null, noProject: true }) },
-      { label: '❓ Nu știu', data: encodeAction({ kind: 'project', submissionId: sub.id, projectId: null, noProject: false }) },
-    ],
-    [{ label: '✖ Anulează', data: encodeAction({ kind: 'cancel', submissionId: sub.id }) }],
-  ];
-  const messageId = await out.send(sub.chatId, `${intro}\n\nPe ce proiect?`, kb);
+  const proposal = updated.splitMode === 'PROPUS' ? `\n\nAm înțeles așa: ${allocationText(updated)}` : '';
+  const messageId = await out.send(sub.chatId, `${intro}${proposal}\n\n${updated.splitMode === 'PROPUS' ? 'E corect? Sau alege altfel:' : 'Pe ce proiect?'}`, await projectKeyboard(updated, projects));
   await prisma.submission.update({ where: { id: sub.id }, data: { botMessageId: messageId } });
+}
+
+/** Tastatura pasului „pe ce proiect?" — un proiect dintr-un tap, sau bifat mai multe în modul MULTI. */
+async function projectKeyboard(s: SubWithAllocs, projects?: { id: string; label: string }[]): Promise<Keyboard> {
+  const list = projects ?? (await activeProjects());
+  const multi = s.step === 'MULTI';
+  const selected = multi ? s.allocations.map((a) => a.projectId) : [];
+  const id = s.id;
+  const rows: Keyboard = [];
+  if (!multi && s.splitMode === 'PROPUS') rows.push([{ label: '✅ Da, așa', data: encodeAction({ kind: 'accept', submissionId: id }) }]);
+  for (const p of projectChoices(list, s.projectId, selected, multi ? 8 : 5)) {
+    const mark = p.selected ? '✅ ' : multi ? '◻️ ' : p.suggested ? '⭐ ' : '';
+    rows.push([{ label: `${mark}${truncate(p.label, 40)}`, data: encodeAction({ kind: 'project', submissionId: id, projectId: p.id }) }]);
+  }
+  if (multi) {
+    if (selected.length) rows.push([{ label: `➡️ Gata (${selected.length} ${selected.length === 1 ? 'proiect' : 'proiecte'})`, data: encodeAction({ kind: 'done', submissionId: id }) }]);
+  } else {
+    rows.push([{ label: '✂️ Împart pe mai multe proiecte', data: encodeAction({ kind: 'multi', submissionId: id }) }]);
+    rows.push([
+      { label: '📦 Stoc / general atelier', data: encodeAction({ kind: 'stock', submissionId: id }) },
+      { label: '❓ Nu știu', data: encodeAction({ kind: 'unknown', submissionId: id }) },
+    ]);
+  }
+  rows.push([{ label: '✖ Anulează', data: encodeAction({ kind: 'cancel', submissionId: id }) }]);
+  return rows;
+}
+
+const paymentKeyboard = (id: string): Keyboard => [
+  [
+    { label: '💵 Cash', data: encodeAction({ kind: 'payment', submissionId: id, method: 'CASH' }) },
+    { label: '💳 Card firmă', data: encodeAction({ kind: 'payment', submissionId: id, method: 'CARD' }) },
+  ],
+  [{ label: '🧾 Neplătit / transfer', data: encodeAction({ kind: 'payment', submissionId: id, method: 'NEPLATIT' }) }],
+  [{ label: '✖ Anulează', data: encodeAction({ kind: 'cancel', submissionId: id }) }],
+];
+
+function paymentPrompt(s: SubWithAllocs) {
+  const hint = s.paymentMethod ? `\n(pe document pare ${PAYMENT_METHOD_LABELS[s.paymentMethod as keyof typeof PAYMENT_METHOD_LABELS].toLowerCase()})` : '';
+  return `${describeReceipt(fieldsOf(s))}\nProiect: ${allocationText(s)}\n\nCum s-a plătit?${hint}`;
+}
+
+async function goToPayment(id: string, out: ChatOut) {
+  const s = await prisma.submission.update({ where: { id }, data: { step: 'PLATA' }, include: withAllocs });
+  if (s.botMessageId) await out.edit(s.chatId, s.botMessageId, paymentPrompt(s), paymentKeyboard(s.id));
 }
 
 /** Butoanele din bot. Doar cel care a trimis bonul le poate apăsa. Întoarce textul pentru „toast". */
 export async function handleAction(action: BotAction, actorUserId: string, out: ChatOut): Promise<string> {
-  const sub = await prisma.submission.findUnique({ where: { id: action.submissionId }, include: { project: { include: { client: true } } } });
+  const sub = await loadSub(action.submissionId);
   if (!sub || sub.senderId !== actorUserId) return 'Nu poți modifica trimiterea asta.';
   if (sub.status !== 'PRIMIT') return 'Trimiterea a fost deja procesată.';
   const msgId = sub.botMessageId;
+  const edit = async (text: string, kb?: Keyboard) => { if (msgId) await out.edit(sub.chatId, msgId, text, kb); };
+  const clearAllocs = prisma.submissionAllocation.deleteMany({ where: { submissionId: sub.id } });
 
-  if (action.kind === 'cancel') {
-    await prisma.submission.update({ where: { id: sub.id }, data: { status: 'ANULAT', step: 'GATA' } });
-    if (msgId) await out.edit(sub.chatId, msgId, `✖ Anulat.\n${describeReceipt(fieldsOf(sub))}`);
-    return 'Anulat';
-  }
+  switch (action.kind) {
+    case 'cancel':
+      await prisma.submission.update({ where: { id: sub.id }, data: { status: 'ANULAT', step: 'GATA' } });
+      await edit(`✖ Anulat.\n${describeReceipt(fieldsOf(sub))}`);
+      return 'Anulat';
 
-  if (action.kind === 'project') {
-    const updated = await prisma.submission.update({
-      where: { id: sub.id },
-      data: { projectId: action.projectId, noProject: action.noProject, step: 'PLATA' },
-      include: { project: { include: { client: true } } },
-    });
-    const kb: Keyboard = [
-      [
-        { label: '💵 Cash', data: encodeAction({ kind: 'payment', submissionId: sub.id, method: 'CASH' }) },
-        { label: '💳 Card firmă', data: encodeAction({ kind: 'payment', submissionId: sub.id, method: 'CARD' }) },
-      ],
-      [{ label: '🧾 Neplătit / transfer', data: encodeAction({ kind: 'payment', submissionId: sub.id, method: 'NEPLATIT' }) }],
-      [{ label: '✖ Anulează', data: encodeAction({ kind: 'cancel', submissionId: sub.id }) }],
-    ];
-    const hint = updated.paymentMethod ? `\n(pe document pare ${PAYMENT_METHOD_LABELS[updated.paymentMethod as keyof typeof PAYMENT_METHOD_LABELS].toLowerCase()})` : '';
-    if (msgId) await out.edit(sub.chatId, msgId, `${describeReceipt(fieldsOf(updated))}\nProiect: ${projectLabel(updated)}\n\nCum s-a plătit?${hint}`, kb);
-    return 'Proiect salvat';
-  }
+    case 'accept':
+      await goToPayment(sub.id, out);
+      return 'Împărțire salvată';
 
-  const updated = await prisma.submission.update({
-    where: { id: sub.id },
-    data: { paymentMethod: action.method, status: 'DE_VALIDAT', step: 'GATA' },
-    include: { project: { include: { client: true } } },
-  });
-  if (msgId) {
-    await out.edit(sub.chatId, msgId,
-      `✅ Trimis la validare\n${describeReceipt(fieldsOf(updated))}\nProiect: ${projectLabel(updated)} · Plată: ${PAYMENT_METHOD_LABELS[action.method]}`);
+    case 'project': {
+      if (sub.step === 'MULTI') {
+        const has = sub.allocations.some((a) => a.projectId === action.projectId);
+        await (has
+          ? prisma.submissionAllocation.deleteMany({ where: { submissionId: sub.id, projectId: action.projectId } })
+          : prisma.submissionAllocation.create({ data: { submissionId: sub.id, projectId: action.projectId } }));
+        const s = (await loadSub(sub.id))!;
+        await edit(`${describeReceipt(fieldsOf(s))}\n\nBifează proiectele, apoi apasă Gata:`, await projectKeyboard(s));
+        return has ? 'Debifat' : 'Bifat';
+      }
+      await prisma.$transaction([
+        clearAllocs,
+        prisma.submission.update({
+          where: { id: sub.id },
+          data: { noProject: false, splitMode: null, allocations: { create: { projectId: action.projectId, amount: sub.amount } } },
+        }),
+      ]);
+      await goToPayment(sub.id, out);
+      return 'Proiect salvat';
+    }
+
+    case 'multi': {
+      // pornim de la propunere / proiectul sugerat, fără sume
+      const start = sub.allocations.length ? sub.allocations.map((a) => a.projectId) : sub.projectId ? [sub.projectId] : [];
+      await prisma.$transaction([
+        clearAllocs,
+        prisma.submission.update({
+          where: { id: sub.id },
+          data: { step: 'MULTI', noProject: false, splitMode: null, allocations: { create: start.map((projectId) => ({ projectId })) } },
+        }),
+      ]);
+      const s = (await loadSub(sub.id))!;
+      await edit(`${describeReceipt(fieldsOf(s))}\n\nBifează proiectele, apoi apasă Gata:`, await projectKeyboard(s));
+      return 'Alege proiectele';
+    }
+
+    case 'done': {
+      if (sub.allocations.length === 0) return 'Bifează cel puțin un proiect.';
+      if (sub.allocations.length === 1) {
+        await prisma.submissionAllocation.updateMany({ where: { submissionId: sub.id }, data: { amount: sub.amount } });
+        await goToPayment(sub.id, out);
+        return 'Proiect salvat';
+      }
+      await prisma.submission.update({ where: { id: sub.id }, data: { step: 'IMPARTIRE' } });
+      const kb: Keyboard = [
+        ...(sub.amount ? [[{ label: '⚖️ Egal', data: encodeAction({ kind: 'split', submissionId: sub.id, mode: 'EGAL' }) }]] : []),
+        [{ label: '✍️ Scriu sumele', data: encodeAction({ kind: 'split', submissionId: sub.id, mode: 'SUME' }) }],
+        [{ label: '👩‍💼 Las-o pe Alesia', data: encodeAction({ kind: 'split', submissionId: sub.id, mode: 'ALESIA' }) }],
+        [{ label: '✖ Anulează', data: encodeAction({ kind: 'cancel', submissionId: sub.id }) }],
+      ];
+      await edit(`${describeReceipt(fieldsOf(sub))}\nProiecte: ${sub.allocations.map((a) => projectName(a.project)).join(', ')}\n\nCum împart suma?`, kb);
+      return 'Cum împart?';
+    }
+
+    case 'split':
+      return applySplitMode(sub, action.mode, out);
+
+    case 'stock': {
+      // ce e deja indirect rămâne (ex. Combustibil); o categorie de proiect (ex. Feronerie) devine „Stoc atelier"
+      const current = sub.categoryId ? await prisma.costCategory.findUnique({ where: { id: sub.categoryId } }) : null;
+      const stock = current?.scope === 'INDIRECT' ? current : await prisma.costCategory.findFirst({ where: { name: STOCK_CATEGORY, scope: 'INDIRECT' } });
+      await prisma.$transaction([
+        clearAllocs,
+        prisma.submission.update({ where: { id: sub.id }, data: { noProject: true, splitMode: null, categoryId: stock?.id ?? sub.categoryId } }),
+      ]);
+      await goToPayment(sub.id, out);
+      return 'Stoc / general';
+    }
+
+    case 'unknown':
+      await prisma.$transaction([
+        clearAllocs,
+        prisma.submission.update({ where: { id: sub.id }, data: { noProject: false, splitMode: null } }),
+      ]);
+      await goToPayment(sub.id, out);
+      return 'Decide Alesia';
+
+    case 'payment': {
+      const updated = await prisma.submission.update({
+        where: { id: sub.id },
+        data: { paymentMethod: action.method, status: 'DE_VALIDAT', step: 'GATA' },
+        include: withAllocs,
+      });
+      await edit(`✅ Trimis la validare\n${describeReceipt(fieldsOf(updated))}\nProiect: ${allocationText(updated)} · Plată: ${PAYMENT_METHOD_LABELS[action.method]}`);
+      return 'Trimis la validare';
+    }
   }
-  return 'Trimis la validare';
 }
 
-function projectLabel(s: { noProject: boolean; project: { name: string; client: { name: string } | null } | null }) {
-  if (s.project) return s.project.client ? `${s.project.name} · ${s.project.client.name}` : s.project.name;
-  return s.noProject ? 'firmă (fără proiect)' : 'nu știu — decide Alesia';
+async function applySplitMode(sub: SubWithAllocs, mode: SplitMode, out: ChatOut): Promise<string> {
+  if (mode === 'EGAL') {
+    if (!sub.amount) return 'Nu știu totalul — alege altă variantă.';
+    const parts = splitEqual(sub.amount.toNumber(), sub.allocations.length);
+    await prisma.$transaction([
+      ...sub.allocations.map((a, i) => prisma.submissionAllocation.update({ where: { id: a.id }, data: { amount: parts[i] } })),
+      prisma.submission.update({ where: { id: sub.id }, data: { splitMode: 'EGAL' } }),
+    ]);
+    await goToPayment(sub.id, out);
+    return 'Împărțit egal';
+  }
+  if (mode === 'ALESIA') {
+    await prisma.$transaction([
+      prisma.submissionAllocation.updateMany({ where: { submissionId: sub.id }, data: { amount: null } }),
+      prisma.submission.update({ where: { id: sub.id }, data: { splitMode: 'ALESIA' } }),
+    ]);
+    await goToPayment(sub.id, out);
+    return 'Împarte Alesia';
+  }
+  await prisma.submission.update({ where: { id: sub.id }, data: { step: 'SUME', splitMode: 'SUME' } });
+  const names = sub.allocations.map((a) => a.project.client?.name ?? a.project.name);
+  const example = names.length >= 2 ? `${names[0]} 300, rest ${names[1]}` : `${names[0]} 300`;
+  if (sub.botMessageId) {
+    await out.edit(sub.chatId, sub.botMessageId,
+      `${describeReceipt(fieldsOf(sub))}\n\nScrie-mi sumele într-un mesaj, ex.:\n${example}\n(poți pune și „stoc 120" pentru ce rămâne în atelier)`,
+      [[{ label: '✖ Anulează', data: encodeAction({ kind: 'cancel', submissionId: sub.id }) }]]);
+  }
+  return 'Scrie sumele';
+}
+
+/** Dacă colegul are un bon care așteaptă sume scrise, mesajul lui text e pentru el, nu un bon nou. */
+export async function findAwaitingAmounts(channel: Channel, chatId: string, senderId: string) {
+  return prisma.submission.findFirst({
+    where: { channel, chatId, senderId, status: 'PRIMIT', step: 'SUME', updatedAt: { gte: new Date(Date.now() - AWAIT_AMOUNTS_MS) } },
+    orderBy: { updatedAt: 'desc' },
+    select: { id: true },
+  });
+}
+
+export async function handleAmountsText(submissionId: string, text: string, out: ChatOut) {
+  const sub = (await loadSub(submissionId))!;
+  const projects = sub.allocations.map((a) => ({ id: a.projectId, label: projectName(a.project) }));
+  const parsed = parseAmountsText(text, projects, sub.amount?.toNumber() ?? null);
+  if (!parsed.ok) {
+    await out.send(sub.chatId, `${parsed.error}\nÎncearcă din nou, ex.: ${projects[0]?.label.split(' · ').pop()} 300, rest …`);
+    return;
+  }
+  await prisma.$transaction([
+    prisma.submissionAllocation.deleteMany({ where: { submissionId: sub.id } }),
+    prisma.submission.update({ where: { id: sub.id }, data: { step: 'PLATA', allocations: { create: parsed.rows.map((r) => ({ projectId: r.projectId, amount: r.amount })) } } }),
+  ]);
+  const s = (await loadSub(sub.id))!;
+  // mesajul vechi cu butoane a rămas deasupra răspunsului; îl închidem și continuăm într-unul nou
+  if (s.botMessageId) await out.edit(s.chatId, s.botMessageId, `${describeReceipt(fieldsOf(s))}\nProiect: ${allocationText(s)}`);
+  const messageId = await out.send(s.chatId, paymentPrompt(s), paymentKeyboard(s.id));
+  await prisma.submission.update({ where: { id: s.id }, data: { botMessageId: messageId } });
 }
 
 function truncate(s: string, n: number) {

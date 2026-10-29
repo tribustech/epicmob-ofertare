@@ -4,7 +4,9 @@
  */
 import { verifyLinkCode } from './link-code';
 import { decodeAction } from './receipt';
-import { addFile, findLinkedUser, handleAction, linkChat, openSubmission, readAndAskProject, type ChatOut } from './submissions';
+import {
+  addFile, findAwaitingAmounts, findLinkedUser, handleAction, handleAmountsText, linkChat, openSubmission, readAndAskProject, type ChatOut,
+} from './submissions';
 import { answerCallback, downloadFile, editMessage, sendMessage } from './telegram-api';
 
 interface TgUser { id: number; first_name?: string; last_name?: string; username?: string }
@@ -32,7 +34,8 @@ const MAX_BYTES = 20 * 1024 * 1024;
 
 const HELP = [
   'Trimite-mi poza bonului / facturii (sau PDF-ul). Mai multe pagini → trimite-le ca album.',
-  'Scrie în descrierea pozei pentru ce e, ex. „feronerie Popescu, am dat cash".',
+  'Scrie în descrierea pozei pentru ce e, ex. „feronerie Popescu, am dat cash" sau „balamalele pentru stoc, restul Popescu".',
+  'Un bon pe mai multe proiecte: „Împart pe mai multe proiecte". Ce cumperi să avem în atelier: „Stoc / general".',
   'Plată cash fără bon? Scrie doar text: „250 lei motorină, montaj Popescu".',
   'Eu citesc datele, tu alegi proiectul și plata, apoi Alesia validează în aplicație.',
 ].join('\n');
@@ -79,6 +82,14 @@ export async function handleTelegramUpdate(update: TgUpdate): Promise<void> {
   }
   const text = (msg.caption ?? msg.text ?? '').trim() || null;
   if (!file && !text) return; // sticker, locație etc.
+  // răspunsul la „Scriu sumele" (doar text) continuă bonul început, nu deschide unul nou
+  if (!file && text) {
+    const waiting = await findAwaitingAmounts('TELEGRAM', chatId, user.id);
+    if (waiting) {
+      await handleAmountsText(waiting.id, text, out);
+      return;
+    }
+  }
   if (file && file.size && file.size > MAX_BYTES) {
     await sendMessage(chatId, 'Fișierul e prea mare (max 20MB). Trimite o poză în loc de fișier.');
     return;

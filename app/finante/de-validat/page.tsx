@@ -28,6 +28,21 @@ const STATUS_LABEL: Record<string, string> = { DE_VALIDAT: 'De validat', APROBAT
 const payLabel = (m: string | null) => (m ? PAYMENT_METHOD_LABELS[m as keyof typeof PAYMENT_METHOD_LABELS] ?? m : '—');
 const kindLabel = (k: string | null) => (k ? DOCUMENT_KIND_LABELS[k as DocumentKind] ?? k : 'Document');
 
+type Sub = NonNullable<Awaited<ReturnType<typeof loadSubmission>>>;
+
+/** Ce a ales colegul: un proiect, mai multe cu sume, stoc, sau nimic. */
+function splitText(s: Sub): string {
+  if (s.noProject) return 'stoc / general atelier';
+  if (!s.allocations.length) return 'nu știe — alege tu proiectul';
+  const name = (a: Sub['allocations'][number]) => (a.project.client ? `${a.project.name} · ${a.project.client.name}` : a.project.name);
+  const how = s.splitMode === 'ALESIA' ? ' (împarte tu sumele)' : s.splitMode === 'EGAL' ? ' (egal)' : '';
+  return s.allocations.map((a) => (s.allocations.length > 1 && a.amount ? `${name(a)} ${fmtLei(a.amount.toNumber())}` : name(a))).join(' · ') + how;
+}
+
+function itemsOf(json: unknown): { name: string; total: number | null }[] {
+  return Array.isArray(json) ? (json as { name: string; total: number | null }[]) : [];
+}
+
 /** Bonurile/facturile trimise prin bot, care așteaptă validarea (devin cheltuieli la aprobare). */
 export default async function DeValidatPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
@@ -112,6 +127,17 @@ export default async function DeValidatPage({ searchParams }: { searchParams: Pr
             <section className="flex flex-col gap-2">
               <div className={microLabelCls}>Trimis de {sub.sender?.name ?? '—'} · {fmtDate.format(sub.createdAt)}</div>
               {sub.text && <div className="rounded-lg bg-muted px-3 py-2 text-[13px]">„{sub.text}"</div>}
+              <div className="text-[13px]"><span className="text-muted-foreground">Ales în bot:</span> {splitText(sub)}</div>
+              {itemsOf(sub.items).length > 0 && (
+                <details className="text-[12.5px]">
+                  <summary className="cursor-pointer text-muted-foreground">Produse citite de pe bon ({itemsOf(sub.items).length})</summary>
+                  <ul className="mt-1 space-y-0.5">
+                    {itemsOf(sub.items).map((it, i) => (
+                      <li key={i} className="flex justify-between gap-3"><span>{it.name}</span><span className="font-mono">{it.total != null ? fmtLei(it.total) : ''}</span></li>
+                    ))}
+                  </ul>
+                </details>
+              )}
               {sub.extractError && <div className="text-[12.5px] text-red-700">AI-ul nu a putut citi documentul: {sub.extractError}</div>}
               {sub.attachments.length > 0 ? (
                 <div className="grid grid-cols-2 gap-2">

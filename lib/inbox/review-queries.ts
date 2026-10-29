@@ -16,14 +16,14 @@ export async function loadSubmissions(view: 'pending' | 'istoric') {
     include: {
       sender: { select: { name: true } },
       reviewedBy: { select: { name: true } },
-      project: { select: { name: true, client: { select: { name: true } } } },
+      allocations: { include: { project: { select: { name: true, client: { select: { name: true } } } } } },
       _count: { select: { attachments: true } },
     },
   });
   return rows.map((s) => ({
     id: s.id, status: s.status, createdAt: s.createdAt, sender: s.sender?.name ?? null, reviewedBy: s.reviewedBy?.name ?? null,
     kind: s.kind, counterparty: s.counterparty, number: s.number, issuedAt: s.issuedAt, amount: s.amount?.toNumber() ?? null,
-    project: s.project ? (s.project.client ? `${s.project.name} · ${s.project.client.name}` : s.project.name) : s.noProject ? 'firmă' : null,
+    project: s.noProject ? 'stoc / general' : s.allocations.length ? s.allocations.map((a) => a.project.client?.name ?? a.project.name).join(', ') : null,
     paymentMethod: s.paymentMethod, text: s.text, rejectReason: s.rejectReason, documentId: s.documentId, attachments: s._count.attachments,
   }));
 }
@@ -31,7 +31,10 @@ export async function loadSubmissions(view: 'pending' | 'istoric') {
 export async function loadSubmission(id: string) {
   return prisma.submission.findUnique({
     where: { id },
-    include: { sender: { select: { name: true } }, attachments: { orderBy: { createdAt: 'asc' } }, category: true },
+    include: {
+      sender: { select: { name: true } }, attachments: { orderBy: { createdAt: 'asc' } }, category: true,
+      allocations: { include: { project: { select: { name: true, client: { select: { name: true } } } } } },
+    },
   });
 }
 
@@ -39,8 +42,9 @@ type Sub = NonNullable<Awaited<ReturnType<typeof loadSubmission>>>;
 
 /** Precompletarea formularului de validare: ce a citit AI-ul + ce a ales colegul în bot. */
 export function reviewDefaults(s: Sub, options: ExpenseFormOptions): ExpenseDefaults {
-  const amount = s.amount ? s.amount.toFixed(2).replace('.', ',') : '';
-  const direct = s.category?.scope === 'DIRECT' ? s.category.id : undefined;
+  const fmt = (d: { toFixed(n: number): string } | null) => (d ? d.toFixed(2).replace('.', ',') : '');
+  const amount = fmt(s.amount);
+  const direct = s.category?.scope === 'DIRECT' ? s.category.id : '';
   const indirect = s.category?.scope === 'INDIRECT' ? s.category.id : undefined;
   const kindOf = (k: string) => options.accounts.find((a) => a.kind === k)?.value;
   const accountId = s.paymentMethod === 'CASH' ? kindOf('CASH') : s.paymentMethod === 'CARD' ? kindOf('CARD') ?? kindOf('BANCA') : undefined;
@@ -52,8 +56,10 @@ export function reviewDefaults(s: Sub, options: ExpenseFormOptions): ExpenseDefa
     amount,
     number: s.number ?? undefined,
     categoryId: indirect,
-    projectId: s.projectId && options.projects.some((p) => p.value === s.projectId) ? s.projectId : undefined,
-    allocCategoryId: direct,
+    // proiectele închise între timp dispar din formular; Alesia vede împărțirea și în nota de sus
+    allocations: s.allocations
+      .filter((a) => options.projects.some((p) => p.value === a.projectId))
+      .map((a) => ({ projectId: a.projectId, amount: fmt(a.amount), categoryId: direct })),
     payMode: s.paymentMethod === 'NEPLATIT' ? 'UNPAID' : 'PAID',
     accountId,
     note: note.slice(0, 300),

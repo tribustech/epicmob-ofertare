@@ -295,6 +295,7 @@ model Project {
   notes           Note[]
   calendarEvents  CalendarEvent[]
   submissions     Submission[]
+  submissionAllocations SubmissionAllocation[]
 
   @@index([status, deadlineAt])
   @@index([clientId])
@@ -578,7 +579,7 @@ model Submission {
   senderId      String?
   sender        User?         @relation("SubmissionSender", fields: [senderId], references: [id], onDelete: SetNull)
   status        String        @default("PRIMIT") // PRIMIT | DE_VALIDAT | APROBAT | RESPINS | ANULAT
-  step          String        @default("CITIRE") // CITIRE | PROIECT | PLATA | GATA (conversația din bot)
+  step          String        @default("CITIRE") // CITIRE | PROIECT | IMPARTIRE | SUME | PLATA | GATA (conversația din bot)
   text          String?       // caption / mesajul text al colegului
   extracted     Json?         // răspunsul brut al AI-ului
   extractError  String?
@@ -589,9 +590,11 @@ model Submission {
   amount        Decimal?      @db.Decimal(12, 2)
   vatPct        Float?
   summary       String?       // ce s-a cumpărat, pe scurt
-  projectId     String?
+  projectId     String?       // proiectul sugerat de AI (⭐ în bot); alegerea colegului e în `allocations`
   project       Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  noProject     Boolean       @default(false) // colegul a ales „firmă (fără proiect)"
+  noProject     Boolean       @default(false) // colegul a ales „stoc / general atelier" (cheltuială indirectă)
+  splitMode     String?       // EGAL | SUME | ALESIA | PROPUS — cum s-a împărțit pe proiecte
+  items         Json?         // produsele de pe bon citite de AI: [{ name, total }]
   categoryId    String?
   category      CostCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   paymentMethod String?       // CASH | CARD | NEPLATIT
@@ -604,7 +607,21 @@ model Submission {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   attachments   Attachment[]
+  allocations   SubmissionAllocation[]
 
   @@unique([channel, chatId, mediaGroupId])
   @@index([status, createdAt])
+}
+
+// Pe ce proiecte merge bonul, ales în bot. Suma lipsește până se împarte („Las-o pe Alesia" / sume necitite).
+// Partea nealocată a bonului rămâne cheltuială indirectă (stoc / general).
+model SubmissionAllocation {
+  id           String     @id @default(cuid())
+  submissionId String
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  projectId    String
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  amount       Decimal?   @db.Decimal(12, 2)
+
+  @@unique([submissionId, projectId])
 }

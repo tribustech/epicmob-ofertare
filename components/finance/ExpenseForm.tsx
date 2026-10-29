@@ -11,7 +11,7 @@ import type { ExpenseFormOptions } from '@/lib/finance/document-queries';
 import type { FormState } from '@/lib/forms/form-action';
 import { ActionForm } from '@/components/ActionForm';
 import { fieldLabelCls, SubmitButton } from '@/components/forms';
-import { AllocationRows } from './AllocationRows';
+import { AllocationRows, type AllocationRow } from './AllocationRows';
 
 const inputCls = 'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-[14px] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm';
 
@@ -36,8 +36,7 @@ export interface ExpenseDefaults {
   amount?: string;
   number?: string;
   categoryId?: string;
-  projectId?: string;
-  allocCategoryId?: string;
+  allocations?: AllocationRow[];
   payMode?: 'PAID' | 'UNPAID';
   accountId?: string;
   note?: string;
@@ -131,7 +130,7 @@ export function ExpenseForm({ options, action, defaultProjectId, redirectTo, sta
         <Step n={2} title="Pe ce proiect" />
         <AllocationRows
           projects={options.projects} categories={direct} total={total} defaultCategoryId={defaultCategory} defaultProjectId={defaultProjectId}
-          initial={defaults?.projectId ? [{ projectId: defaults.projectId, amount: defaults.amount ?? '', categoryId: defaults.allocCategoryId ?? defaultCategory }] : undefined}
+          initial={defaults?.allocations?.map((a) => ({ ...a, categoryId: a.categoryId || defaultCategory }))}
         />
       </section>
 
